@@ -26,7 +26,7 @@ export default function DeployTestPage() {
             🚀 배포 테스트 페이지
           </h1>
           <p className="text-lg text-gray-600">
-            프론트엔드 자동 배포가 성공적으로 완료되었습니다!
+            프론트엔드 자동 배포가 성공적으로 완료되었습니다!!!!!!!!!!!!!
           </p>
         </div>
 
