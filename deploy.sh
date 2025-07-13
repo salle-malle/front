@@ -15,9 +15,15 @@ if pm2 list | grep -q "salle-malle-front"; then
     pm2 delete salle-malle-front
 fi
 
+# pnpm 설치 (없는 경우)
+if ! command -v pnpm &> /dev/null; then
+    echo "pnpm 설치 중..."
+    sudo npm install -g pnpm
+fi
+
 # 의존성 설치
 echo "의존성 설치 중..."
-npm ci --only=production
+pnpm install --frozen-lockfile --prod
 
 # 환경 변수 설정
 if [ -f .env.production ]; then
