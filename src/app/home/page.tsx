@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const newsItems = [
   {
@@ -59,6 +60,7 @@ const stocks = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   return (
     <div className="flex flex-col h-screen">
       <TopNavigation />
@@ -127,7 +129,7 @@ export default function HomePage() {
               <div
                 key={stock.id}
                 className="flex justify-between items-center p-2 rounded hover:bg-gray-50 cursor-pointer"
-                onClick={() => (window.location.href = `/stock/${stock.code}`)}
+                onClick={() => router.push(`/stock/${stock.code}`)}
               >
                 <div>
                   <div className="font-medium">{stock.name}</div>

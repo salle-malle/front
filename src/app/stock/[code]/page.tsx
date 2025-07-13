@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { TopNavigation } from "@/components/top-navigation";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import { TopNavigation } from "@/src/components/top-navigation";
+import { BottomNavigation } from "@/src/components/bottom-navigation";
 import {
   Card,
   CardContent,
