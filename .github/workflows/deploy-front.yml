@@ -64,7 +64,6 @@ jobs:
           scp package.json ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/salle-malle-front/
           scp pnpm-lock.yaml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/salle-malle-front/
           scp next.config.mjs ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/salle-malle-front/
-          scp .env.production ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/salle-malle-front/
 
           # Copy deployment script
           scp deploy.sh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/salle-malle-front/
