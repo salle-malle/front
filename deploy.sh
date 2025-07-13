@@ -23,7 +23,7 @@ fi
 
 # 의존성 설치
 echo "의존성 설치 중..."
-pnpm install --frozen-lockfile --prod
+pnpm install --prod
 
 # 환경 변수 설정
 if [ -f .env.production ]; then
