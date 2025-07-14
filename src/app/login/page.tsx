@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { TopNavigation } from "@/src/components/top-navigation";
 import Image from "next/image";
 
 export default function LoginPage() {
@@ -16,7 +15,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      <TopNavigation />
       <div className="flex flex-1 flex-col items-center justify-center w-full px-6">
         <div className="w-full max-w-xs flex flex-col gap-7">
           <div className="flex flex-row items-center">
