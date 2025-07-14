@@ -8,9 +8,8 @@ export function TopNavigation() {
   const router = useRouter();
 
   return (
-    <nav className="flex justify-between items-center p-4 bg-white border-b">
+    <nav className="flex justify-between items-center p-5 bg-white border-b border-gray-200 shadow-md">
       <div className="text-xl font-bold text-blue-600">볼래말래</div>
-
       <div className="flex space-x-2">
         <Button
           variant="ghost"
