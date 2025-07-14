@@ -29,12 +29,12 @@ export default function LoginPage() {
           <div className="w-full flex flex-col gap-5">
             <Input
               placeholder="아이디"
-              style={{ borderRadius: "8px", height: "38px" }}
+              style={{ borderRadius: "10px", height: "43px" }}
               className="w-full text-left transition-colors duration-150 focus:border-[#2978ee]"
             />
             <Input
               placeholder="비밀번호"
-              style={{ borderRadius: "8px", height: "38px" }}
+              style={{ borderRadius: "10px", height: "43px" }}
               className="w-full text-left transition-colors duration-150 focus:border-[#2978ee]"
               type="password"
             />
