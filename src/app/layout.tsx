@@ -64,8 +64,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem
-          disableTransitionOnChange
-        >
+          disableTransitionOnChange>
           {/* 2. 기존 div 구조를 ConditionalLayout 컴포넌트로 대체 */}
           <ConditionalLayout>{children}</ConditionalLayout>
           <Toaster />
