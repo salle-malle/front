@@ -6,7 +6,7 @@ import { Button } from "@/src/components/ui/button";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { useRouter } from "next/navigation";
 
-export default function SignupLandingPage() {
+export default function PhoneNumberPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [authCode, setAuthCode] = useState("");

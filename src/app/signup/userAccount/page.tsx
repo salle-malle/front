@@ -6,7 +6,7 @@ import { Button } from "@/src/components/ui/button";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { useRouter } from "next/navigation";
 
-export default function SignupLandingPage() {
+export default function UserAccountPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [authCode, setAuthCode] = useState("");
@@ -136,7 +136,7 @@ export default function SignupLandingPage() {
 
       <div className="mb-9 flex justify-center">
         <Button
-          onClick={() => router.push("/signup/phoneNumber")}
+          onClick={() => router.push("/signup/accountRegister")}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
         >
           다음
