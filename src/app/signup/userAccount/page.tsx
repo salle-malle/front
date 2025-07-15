@@ -10,8 +10,9 @@ export default function SignupLandingPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [authCode, setAuthCode] = useState("");
-  const [focusNumber, setFocusNumber] = useState(false);
-  const [focusCode, setFocusCode] = useState(false);
+  const [focusId, setFocusId] = useState(false);
+  const [focusNickname, setFocusNickname] = useState(false);
+  const [focusPassword, setFocusPassword] = useState(false);
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -23,9 +24,9 @@ export default function SignupLandingPage() {
             className="text-lg text-black mt-10 mb-[75px]"
             style={{ fontWeight: 500 }}
           >
-            휴대폰 번호를 입력해주세요
+            사용하실 계정을 알려주세요
           </p>
-           <p
+          <p
             className="text-xs text-[#848A92] mt-[-70px] mb-[60px]"
             style={{ fontWeight: 400 }}
           >
@@ -33,19 +34,19 @@ export default function SignupLandingPage() {
           </p>
 
           <label
-            style={{ color: focusNumber ? "#2978EE" : "#848A92" }}
+            style={{ color: focusId ? "#2978EE" : "#848A92" }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="phoneNumber"
           >
-            휴대폰 번호
+            아이디
           </label>
           <div className="relative flex flex-col gap-1">
             <Input
               id="phoneNumber"
               value={phoneNumber}
               onChange={e => setPhoneNumber(e.target.value)}
-              onFocus={() => setFocusNumber(true)}
-              onBlur={() => setFocusNumber(false)}
+              onFocus={() => setFocusId(true)}
+              onBlur={() => setFocusId(false)}
               className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
               inputMode="tel"
               enterKeyHint="done"
@@ -64,24 +65,47 @@ export default function SignupLandingPage() {
               }}
               tabIndex={-1}
             >
-              전송
+              확인
             </Button>
           </div>
 
           <label
-            style={{ color: focusCode ? "#2978EE" : "#848A92" }}
+            style={{ color: focusPassword ? "#2978EE" : "#848A92" }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="authCode"
           >
-            인증 번호
+            비밀번호
           </label>
           <div className="relative flex flex-col gap-1">
             <Input
               id="authCode"
               value={authCode}
               onChange={e => setAuthCode(e.target.value)}
-              onFocus={() => setFocusCode(true)}
-              onBlur={() => setFocusCode(false)}
+              onFocus={() => setFocusPassword(true)}
+              onBlur={() => setFocusPassword(false)}
+              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+              inputMode="numeric"
+              enterKeyHint="done"
+              style={{ scrollMarginTop: 100 }}
+              autoComplete="one-time-code"
+            />
+          </div>
+
+
+          <label
+            style={{ color: focusNickname ? "#2978EE" : "#848A92" }}
+            className="block text-sm font-medium mt-10 mb-1"
+            htmlFor="authCode"
+          >
+            닉네임
+          </label>
+          <div className="relative flex flex-col gap-1">
+            <Input
+              id="authCode"
+              value={authCode}
+              onChange={e => setAuthCode(e.target.value)}
+              onFocus={() => setFocusNickname(true)}
+              onBlur={() => setFocusNickname(false)}
               className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
               inputMode="numeric"
               enterKeyHint="done"
@@ -103,7 +127,7 @@ export default function SignupLandingPage() {
               <span
                 className={`transition-colors duration-150 text-white`}
               >
-                인증
+                확인
               </span>
             </Button>
           </div>
@@ -112,7 +136,7 @@ export default function SignupLandingPage() {
 
       <div className="mb-9 flex justify-center">
         <Button
-          onClick={() => router.push("/signup/userAccount")}
+          onClick={() => router.push("/signup/phoneNumber")}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
         >
           다음
