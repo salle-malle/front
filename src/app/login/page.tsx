@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleLogin = () => {
     // 로그인 로직
@@ -46,7 +48,7 @@ export default function LoginPage() {
               </Button>
               <Button
                 className="bg-[#bad6ff5a] text-[#0064FF] w-full transition-colors duration-150 hover:bg-[#a0c6ff2d]"
-              >
+                onClick={() => router.push("/signup")}>
                 회원가입
               </Button>
             </div>
