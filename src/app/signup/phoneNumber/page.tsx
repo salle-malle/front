@@ -13,6 +13,18 @@ export default function PhoneNumberPage() {
   const [focusNumber, setFocusNumber] = useState(false);
   const [focusCode, setFocusCode] = useState(false);
 
+  // 입력값이 있거나 포커스일 때 파란색, 아니면 회색
+  const getUnderlineClass = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "border-[#2978EE]"
+      : "border-gray-300";
+  };
+  const getLabelColor = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "#2978EE"
+      : "#848A92";
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       <TopNavigation showBackButton title="" />
@@ -25,7 +37,7 @@ export default function PhoneNumberPage() {
           >
             휴대폰 번호를 입력해주세요
           </p>
-           <p
+          <p
             className="text-xs text-[#848A92] mt-[-70px] mb-[60px]"
             style={{ fontWeight: 400 }}
           >
@@ -33,7 +45,7 @@ export default function PhoneNumberPage() {
           </p>
 
           <label
-            style={{ color: focusNumber ? "#2978EE" : "#848A92" }}
+            style={{ color: getLabelColor(focusNumber, phoneNumber) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="phoneNumber"
           >
@@ -46,7 +58,7 @@ export default function PhoneNumberPage() {
               onChange={e => setPhoneNumber(e.target.value)}
               onFocus={() => setFocusNumber(true)}
               onBlur={() => setFocusNumber(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusNumber, phoneNumber)}`}
               inputMode="tel"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -69,7 +81,7 @@ export default function PhoneNumberPage() {
           </div>
 
           <label
-            style={{ color: focusCode ? "#2978EE" : "#848A92" }}
+            style={{ color: getLabelColor(focusCode, authCode) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="authCode"
           >
@@ -82,7 +94,7 @@ export default function PhoneNumberPage() {
               onChange={e => setAuthCode(e.target.value)}
               onFocus={() => setFocusCode(true)}
               onBlur={() => setFocusCode(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusCode, authCode)}`}
               inputMode="numeric"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}

@@ -15,6 +15,17 @@ export default function AccountRegisterPage() {
   const [appSecret, setAppSecret] = useState("");
   const [focusAppSecret, setFocusAppSecret] = useState(false);
 
+  const getUnderlineClass = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "border-[#2978EE]"
+      : "border-gray-300";
+  };
+  const getLabelColor = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "#2978EE"
+      : "#848A92";
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       <TopNavigation showBackButton title="" />
@@ -35,7 +46,7 @@ export default function AccountRegisterPage() {
           </p>
 
           <label
-            style={{ color: focusAccountNumber ? "#2978EE" : "#848A92" }}
+            style={{ color: getLabelColor(focusAccountNumber, accountNumber) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="accountNumber"
           >
@@ -48,7 +59,7 @@ export default function AccountRegisterPage() {
               onChange={e => setAccountNumber(e.target.value)}
               onFocus={() => setFocusAccountNumber(true)}
               onBlur={() => setFocusAccountNumber(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusAccountNumber, accountNumber)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -71,7 +82,7 @@ export default function AccountRegisterPage() {
           </div>
 
           <label
-            style={{ color: focusAppKey ? "#2978EE" : "#848A92" }}
+            style={{ color: getLabelColor(focusAppKey, appKey) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="appKey"
           >
@@ -84,7 +95,7 @@ export default function AccountRegisterPage() {
               onChange={e => setAppKey(e.target.value)}
               onFocus={() => setFocusAppKey(true)}
               onBlur={() => setFocusAppKey(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusAppKey, appKey)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -92,9 +103,8 @@ export default function AccountRegisterPage() {
             />
           </div>
 
-
           <label
-            style={{ color: focusAppSecret ? "#2978EE" : "#848A92" }}
+            style={{ color: getLabelColor(focusAppSecret, appSecret) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="authCode"
           >
@@ -107,7 +117,7 @@ export default function AccountRegisterPage() {
               onChange={e => setAppSecret(e.target.value)}
               onFocus={() => setFocusAppSecret(true)}
               onBlur={() => setFocusAppSecret(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusAppSecret, appSecret)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}

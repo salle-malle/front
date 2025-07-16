@@ -11,6 +11,17 @@ export default function SignupLandingPage() {
   const [name, setName] = useState("");
   const [focus, setFocus] = useState(false);
 
+  const getUnderlineClass = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "border-[#2978EE]"
+      : "border-gray-300";
+  };
+  const getLabelColor = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "#2978EE"
+      : "#848A92";
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       <TopNavigation showBackButton={true} title="" />
@@ -24,7 +35,7 @@ export default function SignupLandingPage() {
             이름을 알려주세요
           </p>
           <label
-            style={{ color: focus ? "#2978EE" : "#848A92" }}
+            style={{ color: getLabelColor(focus, name) }}
             className="block text-sm font-medium mt-10 mb-1"
           >
             이름
@@ -34,7 +45,7 @@ export default function SignupLandingPage() {
             onChange={(e) => setName(e.target.value)}
             onFocus={() => setFocus(true)}
             onBlur={() => setFocus(false)}
-            className="w-full h-10 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
+            className={`w-full h-10 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focus, name)}`}
             inputMode="text"
             enterKeyHint="done"
             style={{ scrollMarginTop: 100 }}
