@@ -8,11 +8,19 @@ import { useRouter } from "next/navigation";
 
 export default function UserAccountPage() {
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [authCode, setAuthCode] = useState("");
-  const [focusId, setFocusId] = useState(false);
-  const [focusNickname, setFocusNickname] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
+
+  const [focusUserId, setFocusUserId] = useState(false);
   const [focusPassword, setFocusPassword] = useState(false);
+  const [focusNickname, setFocusNickname] = useState(false);
+
+  const getUnderlineClass = (isFocused: boolean, value: string) => {
+    return (isFocused || value !== "")
+      ? "border-[#2978EE]"
+      : "border-gray-300";
+  };
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -34,24 +42,24 @@ export default function UserAccountPage() {
           </p>
 
           <label
-            style={{ color: focusId ? "#2978EE" : "#848A92" }}
+            style={{ color: (focusUserId || userId !== "") ? "#2978EE" : "#848A92" }}
             className="block text-sm font-medium mt-10 mb-1"
-            htmlFor="phoneNumber"
+            htmlFor="userId"
           >
             아이디
           </label>
           <div className="relative flex flex-col gap-1">
             <Input
-              id="phoneNumber"
-              value={phoneNumber}
-              onChange={e => setPhoneNumber(e.target.value)}
-              onFocus={() => setFocusId(true)}
-              onBlur={() => setFocusId(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
-              inputMode="tel"
+              id="userId"
+              value={userId}
+              onChange={e => setUserId(e.target.value)}
+              onFocus={() => setFocusUserId(true)}
+              onBlur={() => setFocusUserId(false)}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusUserId, userId)}`}
+              inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
-              autoComplete="tel"
+              autoComplete="user-id"
             />
             <Button
               type="button"
@@ -70,44 +78,44 @@ export default function UserAccountPage() {
           </div>
 
           <label
-            style={{ color: focusPassword ? "#2978EE" : "#848A92" }}
+            style={{ color: (focusPassword || password !== "") ? "#2978EE" : "#848A92" }}
             className="block text-sm font-medium mt-10 mb-1"
-            htmlFor="authCode"
+            htmlFor="password"
           >
             비밀번호
           </label>
           <div className="relative flex flex-col gap-1">
             <Input
-              id="authCode"
-              value={authCode}
-              onChange={e => setAuthCode(e.target.value)}
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               onFocus={() => setFocusPassword(true)}
               onBlur={() => setFocusPassword(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
-              inputMode="numeric"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusPassword, password)}`}
+              inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
-              autoComplete="one-time-code"
+              autoComplete="password"
             />
           </div>
 
-
           <label
-            style={{ color: focusNickname ? "#2978EE" : "#848A92" }}
+            style={{ color: (focusNickname || nickname !== "") ? "#2978EE" : "#848A92" }}
             className="block text-sm font-medium mt-10 mb-1"
-            htmlFor="authCode"
+            htmlFor="nickname"
           >
             닉네임
           </label>
           <div className="relative flex flex-col gap-1">
             <Input
-              id="authCode"
-              value={authCode}
-              onChange={e => setAuthCode(e.target.value)}
+              id="nickname"
+              value={nickname}
+              onChange={e => setNickname(e.target.value)}
               onFocus={() => setFocusNickname(true)}
               onBlur={() => setFocusNickname(false)}
-              className="flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 border-gray-300 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-[#2978EE] focus-visible:ring-0 focus-visible:outline-none text-base"
-              inputMode="numeric"
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusNickname, nickname)}`}
+              inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="one-time-code"
