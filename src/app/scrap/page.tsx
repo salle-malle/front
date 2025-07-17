@@ -6,8 +6,8 @@ import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
-import { Bookmark, Folder, Plus, ChevronRight, Loader2 } from "lucide-react";
-import { ScrapGroup, ScrapGroupList } from "@/src/types/ScrapGroup";
+import { Folder, ChevronRight, Loader2 } from "lucide-react";
+import { ScrapGroup } from "@/src/types/ScrapGroup";
 import { ApiResponse } from "@/src/types/ApiResponse";
 
 const StockList = [
@@ -17,27 +17,12 @@ const StockList = [
   { id: 4, name: "구글", code: "GOOGL", cardCount: 6 },
 ];
 
-// const groupList = [
-//   {
-//     id: 1,
-//     name: "반도체 그룹",
-//     cardCount: 25,
-//     stocks: ["삼성전자", "SK하이닉스"],
-//   },
-//   { id: 2, name: "IT 그룹", cardCount: 18, stocks: ["NAVER", "카카오"] },
-//   { id: 3, name: "관심 종목", cardCount: 10, stocks: ["LG전자", "현대차"] },
-// ];
-
 export default function ScrapPage() {
   const [activeTab, setActiveTab] = useState<"stocks" | "groups">("stocks");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stockListLoading, setStockListLoading] = useState(false);
-  const [scrapGroupListLoading, setScrapGroupListLoading] = useState(false);
-  const [stockList, setStockList] = useState([]);
   const [scrapGroupList, setScrapGroupList] = useState<ScrapGroup[]>([]);
-  const API = process.env.BACK_API_URL;
 
   useEffect(() => {
     const fetchScrapGroups = async () => {
@@ -75,20 +60,18 @@ export default function ScrapPage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white relative">
       <TopNavigation />
 
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-bold flex items-center mb-4">
-          <Bookmark className="h-5 w-5 mr-2" />
-          스크랩
-        </h1>
+      {/* 떠다니는 스크랩 추가 버튼 제거됨 */}
 
-        <div className="flex bg-gray-100 rounded-lg p-1">
+      <div className="px-4 pt-3 pb-2 border-b bg-white">
+        <h1 className="text-lg font-bold flex items-center mb-3"></h1>
+        <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
           <Button
             variant={activeTab === "stocks" ? "default" : "ghost"}
             size="sm"
-            className="flex-1"
+            className="flex-1 rounded-md"
             onClick={() => setActiveTab("stocks")}
           >
             종목
@@ -96,7 +79,7 @@ export default function ScrapPage() {
           <Button
             variant={activeTab === "groups" ? "default" : "ghost"}
             size="sm"
-            className="flex-1"
+            className="flex-1 rounded-md"
             onClick={() => setActiveTab("groups")}
           >
             그룹
@@ -104,23 +87,23 @@ export default function ScrapPage() {
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-24 bg-gray-50">
         {activeTab === "stocks" ? (
-          <div className="p-4 space-y-3">
+          <div className="px-3 py-4 space-y-2">
             {StockList.map((stock) => (
               <Card
                 key={stock.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-md transition-shadow rounded-xl border border-gray-200"
                 onClick={() => router.push(`/scrap/stock/${stock.code}`)}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">{stock.name}</h3>
-                      <p className="text-sm text-gray-600">{stock.code}</p>
+                      <h3 className="font-medium text-base">{stock.name}</h3>
+                      <p className="text-xs text-gray-500">{stock.code}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs text-gray-500">
                         {stock.cardCount}개
                       </span>
                       <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -131,120 +114,50 @@ export default function ScrapPage() {
             ))}
           </div>
         ) : (
-          <div className="p-4 space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-center bg-transparent"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              그룹 추가
-            </Button>
-
+          <div className="px-3 py-4">
             {isLoading ? (
               <div className="flex justify-center items-center p-8">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-                <span className="ml-2">그룹 목록을 불러오는 중...</span>
+                <span className="ml-2 text-sm">그룹 목록을 불러오는 중...</span>
               </div>
             ) : error ? (
-              <div className="text-center text-red-500 p-8">
+              <div className="text-center text-red-500 p-8 text-sm">
                 오류가 발생했습니다: {error}
               </div>
             ) : (
-              scrapGroupList.map((group) => (
-                <Card
-                  key={String(group.id)}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => router.push(`/scrap/group/${group.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center mb-1">
+              <div className="flex flex-col gap-3">
+                {scrapGroupList.map((group) => (
+                  <Card
+                    key={String(group.id)}
+                    className="cursor-pointer hover:shadow-md transition-shadow rounded-xl border border-gray-200"
+                    onClick={() => router.push(`/scrap/group/${group.id}`)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
                           <Folder className="h-4 w-4 mr-2 text-blue-600" />
-                          <h3 className="font-medium">
+                          <h3 className="font-medium text-base">
                             {group.scrapGroupName}
                           </h3>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <ChevronRight className="h-4 w-4 text-gray-400" />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-            {isLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-                <span className="ml-2">그룹 목록을 불러오는 중...</span>
-              </div>
-            ) : error ? (
-              <div className="text-center text-red-500 p-8">
-                오류가 발생했습니다: {error}
-              </div>
-            ) : (
-              // ✅ 5. API로 받아온 scrapGroupList를 렌더링합니다.
-              scrapGroupList.map((group) => (
-                <Card
-                  key={String(group.id)}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => router.push(`/scrap/group/${group.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center mb-1">
-                          <Folder className="h-4 w-4 mr-2 text-blue-600" />
-                          {/* ✅ 6. API 데이터에 맞는 필드 이름을 사용합니다. */}
-                          <h3 className="font-medium">
-                            {group.scrapGroupName}
-                          </h3>
-                        </div>
-                        {/* API 응답에 주식 목록 정보가 없으므로 해당 부분은 제거하거나, 
-                            나중에 별도 API로 가져와 표시할 수 있습니다. */}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {/* API 응답에 카드 개수 정보가 없으므로 일단 제거합니다. */}
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                    </CardContent>
+                  </Card>
+                ))}
 
-            {/* {groupList.map((group) => (
-              <Card
-                key={group.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => router.push(`/scrap/group/${group.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center mb-1">
-                        <Folder className="h-4 w-4 mr-2 text-blue-600" />
-                        <h3 className="font-medium">{group.name}</h3>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {group.stocks.join(", ")}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {group.cardCount}개
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))} */}
+                {/* 그룹 추가 버튼을 리스트 바로 아래에 위치 */}
+                <Button
+                  onClick={() => router.push("/")} // 추후 그룹 추가 경로로 수정
+                  className="w-full h-[42px] bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm shadow-md mt-4 mb-6"
+                >
+                  그룹 추가
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </main>
-
       <BottomNavigation />
     </div>
   );
