@@ -14,19 +14,19 @@ import { useRouter } from "next/navigation";
 const newsItems = [
   {
     id: 1,
-    title: "삼성전자, 3분기 실적 발표 예정",
+    title: "애플, 3분기 실적 발표 예정",
     time: "2시간 전",
     category: "실적",
   },
   {
     id: 2,
-    title: "SK하이닉스 메모리 반도체 수요 증가",
+    title: "엔비디아 메모리 반도체 수요 증가",
     time: "4시간 전",
     category: "산업",
   },
   {
     id: 3,
-    title: "NAVER 클라우드 사업 확장",
+    title: "테슬라 클라우드 사업 확장",
     time: "6시간 전",
     category: "기업",
   },
@@ -35,7 +35,7 @@ const newsItems = [
 const stocks = [
   {
     id: 1,
-    name: "삼성전자",
+    name: "애플",
     code: "005930",
     price: 71500,
     change: 1200,

@@ -11,7 +11,7 @@ const cardData = {
   "2024-01-15": [
     {
       id: 1,
-      title: "삼성전자 3분기 실적 분석",
+      title: "애플 3분기 실적 분석",
       content: "매출 76조원으로 전년 동기 대비 12% 증가",
       image: "/placeholder.svg?height=200&width=300",
       tags: ["실적", "반도체"],
