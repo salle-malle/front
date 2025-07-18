@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import type React from "react";
 import useNotification from "@/src/hooks/useNotification";
 
-const NO_LAYOUT_ROUTES = ["/login", "/"];
+// const NO_LAYOUT_ROUTES = ["/login", "/"];
 
 export default function ConditionalLayout({
   children,
@@ -17,11 +17,11 @@ export default function ConditionalLayout({
   // 여기서 hook 호출 (항상)
   useNotification(memberId);
 
-  const shouldSkipLayout = NO_LAYOUT_ROUTES.includes(pathname);
+  // const shouldSkipLayout = NO_LAYOUT_ROUTES.includes(pathname);
 
-  if (shouldSkipLayout) {
-    return <>{children}</>;
-  }
+  // if (shouldSkipLayout) {
+  //   return <>{children}</>;
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center">
