@@ -2,8 +2,8 @@
 
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import { Card, CardContent } from "@/src/components/ui/card";
 import { Bell, TrendingUp, Calendar, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 const notifications = [
   {
@@ -42,61 +42,98 @@ const notifications = [
     time: "5시간 전",
     read: true,
   },
+  {
+    id: 4,
+    type: "price",
+    icon: TrendingUp,
+    title: "NAVER 주가 변동",
+    message: "NAVER가 -2% 하락했습니다.",
+    time: "5시간 전",
+    read: true,
+  },
+  {
+    id: 4,
+    type: "price",
+    icon: TrendingUp,
+    title: "NAVER 주가 변동",
+    message: "NAVER가 -2% 하락했습니다.",
+    time: "5시간 전",
+    read: true,
+  },
+  {
+    id: 4,
+    type: "price",
+    icon: TrendingUp,
+    title: "NAVER 주가 변동",
+    message: "NAVER가 -2% 하락했습니다.",
+    time: "5시간 전",
+    read: true,
+  },
+  {
+    id: 4,
+    type: "price",
+    icon: TrendingUp,
+    title: "NAVER 주가 변동",
+    message: "NAVER가 -2% 하락했습니다.",
+    time: "5시간 전",
+    read: true,
+  },
 ];
 
 export default function NotificationsPage() {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-[#f9fafb]">
       <TopNavigation />
 
-      <div className="p-4 border-b">
+      <div className="p-4 sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b">
         <h1 className="text-xl font-bold flex items-center">
-          <Bell className="h-5 w-5 mr-2" />
+          <Bell className="h-5 w-5 mr-2 text-blue-500" />
           알림
         </h1>
       </div>
 
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="space-y-2 p-4">
-          {notifications.map((notification) => {
+        <div className="space-y-3 p-4">
+          {notifications.map((notification, index) => {
             const IconComponent = notification.icon;
             return (
-              <Card
-                key={notification.id}
-                className={`${
-                  !notification.read ? "border-blue-200 bg-blue-50" : ""
-                }`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-3">
-                    <div
-                      className={`p-2 rounded-full ${
-                        !notification.read ? "bg-blue-100" : "bg-gray-100"
-                      }`}
-                    >
-                      <IconComponent
-                        className={`h-4 w-4 ${
-                          !notification.read ? "text-blue-600" : "text-gray-600"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">
-                        {notification.title}
-                      </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {notification.message}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        {notification.time}
-                      </div>
-                    </div>
-                    {!notification.read && (
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    )}
+              <motion.div
+                key={`${notification.id}-${index}`}
+                initial={{ opacity: 0, y: 24, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  delay: index * 0.06,
+                  duration: 0.4,
+                  ease: [0.25, 0.8, 0.25, 1],
+                }}
+                className={`p-4 rounded-2xl shadow-lg bg-white flex items-start gap-3 relative transition-all transform-gpu hover:scale-[1.01] hover:shadow-xl ${
+                  !notification.read ? "ring-2 ring-blue-100" : ""
+                }`}>
+                <div
+                  className={`p-2 rounded-full ${
+                    !notification.read ? "bg-blue-100" : "bg-gray-100"
+                  }`}>
+                  <IconComponent
+                    className={`h-5 w-5 ${
+                      !notification.read ? "text-blue-600" : "text-gray-600"
+                    }`}
+                  />
+                </div>
+
+                <div className="flex-1 text-sm">
+                  <div className="font-semibold">{notification.title}</div>
+                  <div className="text-gray-600 mt-1">
+                    {notification.message}
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-xs text-gray-400 mt-2">
+                    {notification.time}
+                  </div>
+                </div>
+
+                {!notification.read && (
+                  <div className="w-2 h-2 bg-blue-600 rounded-full absolute top-3 right-3 animate-pulse"></div>
+                )}
+              </motion.div>
             );
           })}
         </div>
