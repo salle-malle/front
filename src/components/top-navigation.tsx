@@ -15,7 +15,7 @@ interface TopNavigationProps {
 export function TopNavigation({
   showBackButton = false,
   showRightIcons = true,
-  title = "볼래말래",
+  title = "BLML",
   shadow = true,
   border = true,
 }: TopNavigationProps) {
@@ -29,7 +29,7 @@ export function TopNavigation({
 
   return (
     <nav
-      className={`flex justify-between items-center p-5 bg-white ${borderClass} ${shadowClass}`}>
+      className={`flex justify-between items-center p-4 bg-white ${borderClass} ${shadowClass}`}>
       <div className="flex items-center space-x-2">
         {showBackButton && (
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
