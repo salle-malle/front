@@ -1,46 +1,22 @@
 #!/bin/bash
-
-# 배포 스크립트 - EC2에서 실행
 set -e
 
 echo "🚀 프론트엔드 배포 시작..."
-
-# 프로젝트 디렉토리로 이동
 cd /var/www/salle-malle-front
 
-# 기존 프로세스 중지 (PM2 사용)
-if pm2 list | grep -q "salle-malle-front"; then
-    echo "기존 프로세스 중지 중..."
-    pm2 stop salle-malle-front
-    pm2 delete salle-malle-front
-fi
+echo "배포 파일 압축 해제 중..."
+tar -xzf deploy.tar.gz --overwrite
 
-# pnpm 설치 (없는 경우)
-if ! command -v pnpm &> /dev/null; then
-    echo "pnpm 설치 중..."
-    sudo npm install -g pnpm
-fi
+# 이름을 직접 쓰는 대신, 설정 파일을 통해 프로세스를 관리합니다.
+# startOrRestart는 프로세스가 없으면 시작, 있으면 재시작해주는 편리한 명령어입니다.
+# --update-env 플래그로 환경 변수 변경 사항도 안정적으로 적용됩니다.
+echo "프로세스 재시작 또는 시작 중..."
+pm2 startOrRestart ecosystem.config.js --update-env
 
-# 의존성 설치
-echo "의존성 설치 중..."
-pnpm install --prod
-
-# 환경 변수 설정
-if [ -f .env.production ]; then
-    echo "프로덕션 환경 변수 로드 중..."
-    export $(cat .env.production | xargs)
-fi
-
-# Next.js 애플리케이션 시작 (PM2 사용)
-echo "Next.js 애플리케이션 시작 중..."
-pm2 start npm --name "salle-malle-front" -- start
-
-# PM2 설정 저장
 pm2 save
 
-# PM2 프로세스 상태 확인
 echo "배포된 프로세스 상태:"
 pm2 list
 
 echo "✅ 프론트엔드 배포 완료!"
-echo "🌐 애플리케이션 URL: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000" 
+echo "🌐 애플리케이션 URL: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000"
