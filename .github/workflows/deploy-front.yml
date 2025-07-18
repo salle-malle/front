@@ -60,7 +60,7 @@ jobs:
           tar -czf deploy.tar.gz .next node_modules public package.json pnpm-lock.yaml next.config.mjs deploy.sh ecosystem.config.js
 
           # 2. 압축된 파일을 실제 배포 폴더로 바로 전송
-          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no deploy.tar.gz ubuntu@43.200.100.172:/var/www/salle-malle-front/
+          scp -o ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no deploy.tar.gz ubuntu@43.200.100.172:/var/www/salle-malle-front/
 
           # 3. 실제 배포 폴더로 바로 이동해서 deploy.sh 실행
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ubuntu@43.200.100.172 "cd /var/www/salle-malle-front && ./deploy.sh"
+          ssh -o ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ubuntu@43.200.100.172 "cd /var/www/salle-malle-front && ./deploy.sh"
