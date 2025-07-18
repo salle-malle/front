@@ -57,7 +57,7 @@ jobs:
         run: |
           # 1. 빌드 결과물을 하나의 파일로 압축
           # .next, node_modules, public, package.json 등 필요한 모든 것을 포함
-          tar -czf deploy.tar.gz .next node_modules public package.json pnpm-lock.yaml next.config.mjs deploy.sh ecosystem.config.js .env.production
+          tar -czf deploy.tar.gz .next node_modules public package.json pnpm-lock.yaml next.config.mjs deploy.sh ecosystem.config.js
 
           # 2. 압축된 파일을 실제 배포 폴더로 바로 전송
           scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no deploy.tar.gz ubuntu@43.200.100.172:/var/www/salle-malle-front/
