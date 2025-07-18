@@ -74,28 +74,36 @@ export default function InvestmentTypePage() {
             key={type}
             onClick={() => setSelected(type)}
             className={cn(
-              "border rounded-2xl p-5 flex flex-col items-center gap-3 transition bg-white",
+              "relative border rounded-2xl p-5 flex flex-col items-center gap-4 transition bg-white overflow-hidden text-center",
               selected === type
                 ? "border-blue-500 shadow-lg ring-2 ring-blue-300"
                 : "hover:shadow-md"
             )}>
-            <div className="w-[100px] h-[100px] relative transition-transform duration-200 hover:scale-105">
-              <Image src={img} alt={type} fill className="object-contain" />
+            {/* 캐릭터 이미지 상단 중앙 배치 */}
+            <div className="w-[72px] h-[72px] relative">
+              <Image
+                src={img}
+                alt={type}
+                fill
+                className="object-contain opacity-90"
+              />
             </div>
-            <h3 className="text-base font-medium">{type}</h3>
-            <p className="text-center text-gray-600 text-sm leading-snug">
-              {desc}
-            </p>
+
+            {/* 텍스트 영역 */}
+            <div className="px-2">
+              <h3 className="text-base font-medium mt-1">{type}</h3>
+              <p className="text-sm text-gray-600 leading-snug mt-1">{desc}</p>
+            </div>
 
             {/* Risk Level Bar */}
-            <div className="w-full mt-2">
+            <div className="w-full mt-4 z-10">
               <div className="flex justify-between text-xs text-gray-500 mb-1 px-1">
                 <span>낮음</span>
                 <span>높음</span>
               </div>
               <div className="relative h-2 bg-gray-200 rounded-full">
                 <div
-                  className="absolute h-2 bg-red-400 rounded-full transition-all duration-300"
+                  className="absolute h-2 bg-blue-300/60 rounded-full transition-all duration-300"
                   style={{ width: `${(risk / 4) * 100}%` }}
                 />
               </div>
