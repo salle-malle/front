@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/src/components/ui/button";
 import { Home, CreditCard, Bookmark, User } from "lucide-react";
 
 export function BottomNavigation() {
@@ -17,7 +16,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t">
-      <div className="flex justify-around py-2">
+      <div className="flex">
         {navItems.map((item) => {
           const IconComponent = item.icon;
           const isActive =
@@ -25,18 +24,15 @@ export function BottomNavigation() {
             (item.path !== "/" && pathname.startsWith(item.path));
 
           return (
-            <Button
+            <button
               key={item.path}
-              variant="ghost"
-              size="sm"
-              className={`flex flex-col items-center space-y-1 h-auto py-2 ${
-                isActive ? "text-blue-600" : "text-gray-600"
-              }`}
               onClick={() => router.push(item.path)}
-            >
-              <IconComponent className="h-5 w-5" />
+              className={`flex flex-1 flex-col items-center justify-center gap-1 h-16 transition-colors ${
+                isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+              }`}>
+              <IconComponent className="w-5 h-5" />
               <span className="text-xs">{item.label}</span>
-            </Button>
+            </button>
           );
         })}
       </div>
