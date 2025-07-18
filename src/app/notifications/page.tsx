@@ -85,13 +85,6 @@ export default function NotificationsPage() {
     <div className="flex flex-col h-screen bg-[#f9fafb]">
       <TopNavigation />
 
-      <div className="p-4 sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b">
-        <h1 className="text-xl font-bold flex items-center">
-          <Bell className="h-5 w-5 mr-2 text-blue-500" />
-          알림
-        </h1>
-      </div>
-
       <main className="flex-1 overflow-y-auto pb-20">
         <div className="space-y-3 p-4">
           {notifications.map((notification, index) => {
