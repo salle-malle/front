@@ -2,7 +2,7 @@
 
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import { Bell, TrendingUp, Calendar, AlertCircle } from "lucide-react";
+import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const notifications = [
