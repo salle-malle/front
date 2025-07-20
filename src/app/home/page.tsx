@@ -39,7 +39,6 @@ export async function fetchStockList(): Promise<StockListResponse> {
   const stocksRaw = jsonResponse.data?.stocks || jsonResponse.data?.stockList || jsonResponse.data || [];
   const companyLogos = jsonResponse.data?.companyLogos || {};
 
-  // summary가 있을 수도 있고 없을 수도 있으니 안전하게 처리
   const summary = jsonResponse.data?.summary || undefined;
 
   const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
