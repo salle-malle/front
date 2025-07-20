@@ -12,7 +12,7 @@ import AssetSummary from "@/src/components/ui/asset-summary";
 
 // 타입 정의 생략 없이 포함
 export type NewsItem = { id: number; title: string; time: string; };
-export type StockItem = { ticker: number; name: string; avgPrice: number; profit_loss_amount: number; profit_loss_rate: number; };
+export type StockItem = { ticker: number; name: string; avgPrice: number; profit_loss_amount: number; profit_loss_rate: number; quantity : number };
 export type AssetTrendPoint = number;
 export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
 export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
@@ -43,13 +43,13 @@ export async function fetchStockList(): Promise<StockListResponse> {
   const stocksRaw = jsonResponse.data?.stocks || jsonResponse.data?.stockList || jsonResponse.data || [];
   const companyLogos = jsonResponse.data?.companyLogos || {};
 
-  // 최대 6개까지만 자산(보유주식) 반환
   const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
     ticker: item.pdno,
     name: item.prdt_name,
-    avgPrice: item.avg_price,
-    profit_loss_amount: Number(item.profit_loss_amount?.toFixed?.(2) ?? item.profit_loss_amount),
-    profit_loss_rate: Number(item.profit_loss_rate?.toFixed?.(2) ?? item.profit_loss_rate),
+    quantity: item.quantity,
+    avgPrice: Math.round((Number(item.avg_price) + Number.EPSILON) * 100) / 100,
+    profit_loss_amount: Math.round((Number(item.profit_loss_amount) + Number.EPSILON) * 100) / 100,
+    profit_loss_rate: Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
   }));
 
   return {
