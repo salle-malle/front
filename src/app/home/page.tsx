@@ -10,7 +10,6 @@ import StockList from "@/src/components/ui/stock-list";
 import InfoTabs from "@/src/components/ui/info-tabs";
 import AssetSummary from "@/src/components/ui/asset-summary";
 
-// 타입 정의 생략 없이 포함
 export type NewsItem = { id: number; title: string; time: string; };
 export type StockItem = { ticker: number; name: string; avgPrice: number; profit_loss_amount: number; profit_loss_rate: number; quantity : number };
 export type AssetTrendPoint = number;
@@ -24,7 +23,6 @@ export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
 export type DisclosureListResponse = { data: DisclosureItem[]; };
 export type EarningCallListResponse = { earningCalls: EarningCallItem[]; };
 
-// API 호출 함수
 export async function fetchNewsList(): Promise<NewsListResponse> {
   const res = await fetch("/api/news");
   if (!res.ok) throw new Error("뉴스 데이터를 불러오지 못했습니다.");
@@ -104,6 +102,25 @@ const initialAssetTrend: AssetTrendData = {
 const initialDisclosures: DisclosureItem[] = [];
 const initialEarningCalls: EarningCallItem[] = [];
 
+function useStaggeredMount(count: number, delay: number = 60) {
+  const [mountedIndexes, setMountedIndexes] = useState<number[]>([]);
+  useEffect(() => {
+    setMountedIndexes([]);
+    let timeouts: NodeJS.Timeout[] = [];
+    for (let i = 0; i < count; i++) {
+      timeouts.push(
+        setTimeout(() => {
+          setMountedIndexes((prev) => [...prev, i]);
+        }, i * delay)
+      );
+    }
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
+  }, [count, delay]);
+  return mountedIndexes;
+}
+
 export default function HomePage() {
   const [newsItems, setNewsItems] = useState(initialNews);
   const [stocks, setStocks] = useState(initialStocks);
@@ -119,6 +136,9 @@ export default function HomePage() {
   const [tab, setTab] = useState<"공시" | "어닝콜">("공시");
 
   const hasFetched = useRef(false);
+
+  const sectionCount = 5;
+  const mountedIndexes = useStaggeredMount(sectionCount, 60);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -189,7 +209,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (newsItems.length === 0) return;
-    timeoutRef.current = setTimeout(() => handleSlide("up"), 2000);
+    timeoutRef.current = setTimeout(() => handleSlide("up"), 2200); // 2000ms -> 2200ms로 약간 여유를 줌
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
@@ -205,39 +225,58 @@ export default function HomePage() {
           ? prev === newsItems.length - 1 ? 0 : prev + 1
           : prev === 0 ? newsItems.length - 1 : prev - 1
       );
-    }, 300);
+    }, 450);
   };
+
+  const getSectionStyle = (idx: number) => ({
+    opacity: mountedIndexes.includes(idx) ? 1 : 0,
+    transform: mountedIndexes.includes(idx)
+      ? "translateY(0px)"
+      : "translateY(32px)", // 40px -> 32px로 줄여서 덜 튀게
+    transition: "all 0.7s cubic-bezier(0.19, 1, 0.22, 1)",
+    willChange: "opacity, transform",
+  });
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <TopNavigation showBackButton title="" />
       <main className="flex-1 overflow-y-auto p-4 pb-20">
-        <NewsSlider
-          newsItems={newsItems}
-          newsIndex={newsIndex}
-          isAnimating={isAnimating}
-          onClick={() => handleSlide("up")}
-        />
-        <AssetSummary />
-        <StockList stocks={stocks} companyLogos={logos} />
-        <AssetChart assetTrendData={assetTrendData} />
-        <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
-        <InfoTabs
-          tab={tab}
-          setTab={setTab}
-          disclosureData={disclosureData
-            .slice(0, 3)
-            .map((item) => {
-              return {
-                id: item.disclosureId,
-                title: item.disclosureTitle,
-                date: item.disclosureDate,
-              };
-            })
-          }
-          earningCallData={earningCallData.slice(0, 3)}
-        />
-        <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
+        <div style={getSectionStyle(0)}>
+          <NewsSlider
+            newsItems={newsItems}
+            newsIndex={newsIndex}
+            isAnimating={isAnimating}
+            onClick={() => handleSlide("up")}
+          />
+        </div>
+        <div style={getSectionStyle(1)}>
+          <AssetSummary />
+        </div>
+        <div style={getSectionStyle(2)}>
+          <StockList stocks={stocks} companyLogos={logos} />
+        </div>
+        <div style={getSectionStyle(3)}>
+          <AssetChart assetTrendData={assetTrendData} />
+          <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
+        </div>
+        <div style={getSectionStyle(4)}>
+          <InfoTabs
+            tab={tab}
+            setTab={setTab}
+            disclosureData={disclosureData
+              .slice(0, 3)
+              .map((item) => {
+                return {
+                  id: item.disclosureId,
+                  title: item.disclosureTitle,
+                  date: item.disclosureDate,
+                };
+              })
+            }
+            earningCallData={earningCallData.slice(0, 3)}
+          />
+          <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
+        </div>
       </main>
       <BottomNavigation />
     </div>
