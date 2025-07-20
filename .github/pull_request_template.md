@@ -1,12 +1,3 @@
----
-name: PR template
-about: Describe this PR template's purpose here.
-title: ''
-labels: ''
-assignees: ''
-
----
-
 ## 🔀 PR 개요
 - 어떤 작업을 했는지 한 문장으로 요약해주세요.
 
