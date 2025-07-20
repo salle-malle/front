@@ -18,7 +18,7 @@ export type DisclosureItem = { disclosureId: number; disclosureTitle: string; di
 export type EarningCallItem = { id: number; title: string; date: string; content: string; };
 
 export type NewsListResponse = { news: NewsItem[]; };
-export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; };
+export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
 export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
 export type DisclosureListResponse = { data: DisclosureItem[]; };
 export type EarningCallListResponse = { earningCalls: EarningCallItem[]; };
@@ -36,10 +36,11 @@ export async function fetchStockList(): Promise<StockListResponse> {
   });
   if (!res.ok) throw new Error("종목 데이터를 불러오지 못했습니다.");
   const jsonResponse = await res.json();
-  console.log(jsonResponse);
-
   const stocksRaw = jsonResponse.data?.stocks || jsonResponse.data?.stockList || jsonResponse.data || [];
   const companyLogos = jsonResponse.data?.companyLogos || {};
+
+  // summary가 있을 수도 있고 없을 수도 있으니 안전하게 처리
+  const summary = jsonResponse.data?.summary || undefined;
 
   const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
     ticker: item.pdno,
@@ -53,6 +54,7 @@ export async function fetchStockList(): Promise<StockListResponse> {
   return {
     stocks,
     companyLogos,
+    summary,
   };
 }
 
@@ -123,12 +125,12 @@ function useStaggeredMount(count: number, delay: number = 60) {
 
 export default function HomePage() {
   const [newsItems, setNewsItems] = useState(initialNews);
+  const [assetAmount, setAssetAmount] = useState(0);
   const [stocks, setStocks] = useState(initialStocks);
   const [logos, setLogos] = useState<Record<string, string>>({});
   const [assetTrendData, setAssetTrendData] = useState(initialAssetTrend);
   const [disclosureData, setDisclosureData] = useState(initialDisclosures);
   const [earningCallData, setEarningCallData] = useState(initialEarningCalls);
-
   const [newsIndex, setNewsIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -156,10 +158,16 @@ export default function HomePage() {
       .then((res) => {
         setStocks(res.stocks);
         setLogos(getCompanyLogosByTicker(res.stocks));
+        if (res.summary) {
+          setAssetAmount(res.summary.total_purchase_amount);
+        } else {
+          setAssetAmount(0);
+        }
       })
-      .catch(() => {
+      .catch((err) => {
         setStocks([]);
         setLogos({});
+        setAssetAmount(0);
       });
 
     fetchAssetTrend()
@@ -250,7 +258,7 @@ export default function HomePage() {
           />
         </div>
         <div style={getSectionStyle(1)}>
-          <AssetSummary />
+          <AssetSummary assetAmount={assetAmount} />
         </div>
         <div style={getSectionStyle(2)}>
           <StockList stocks={stocks} companyLogos={logos} />
