@@ -12,7 +12,7 @@ import AssetSummary from "@/src/components/ui/asset-summary";
 
 // 타입 정의 생략 없이 포함
 export type NewsItem = { id: number; title: string; time: string; };
-export type StockItem = { id: number; name: string; code: string; price: number; change: number; changePercent: number; };
+export type StockItem = { ticker: number; name: string; avgPrice: number; profit_loss_amount: number; profit_loss_rate: number; };
 export type AssetTrendPoint = number;
 export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
 export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
@@ -32,9 +32,30 @@ export async function fetchNewsList(): Promise<NewsListResponse> {
 }
 
 export async function fetchStockList(): Promise<StockListResponse> {
-  const res = await fetch("/api/stocks");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`, {
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("종목 데이터를 불러오지 못했습니다.");
-  return res.json();
+  const jsonResponse = await res.json();
+  console.log(jsonResponse);
+
+  const stocksRaw = jsonResponse.data?.stocks || jsonResponse.data?.stockList || jsonResponse.data || [];
+  const companyLogos = jsonResponse.data?.companyLogos || {};
+
+  // 최대 6개까지만 자산(보유주식) 반환
+  const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
+    ticker: item.pdno,
+    name: item.prdt_name,
+    avgPrice: item.avg_price,
+    profit_loss_amount: Number(item.profit_loss_amount?.toFixed?.(2) ?? item.profit_loss_amount),
+    profit_loss_rate: Number(item.profit_loss_rate?.toFixed?.(2) ?? item.profit_loss_rate),
+  }));
+
+  return {
+    stocks,
+    companyLogos,
+  };
 }
 
 export async function fetchAssetTrend(): Promise<AssetTrendResponse> {
@@ -66,13 +87,13 @@ const BLUE_GRADIENT_FROM = "#5B9DF9";
 const BLUE_GRADIENT_TO = "#B3D8FD";
 const BLUE_LINE = "#3B82F6";
 
-// 초기값
-const companyLogos: Record<string, string> = {
-  AAPL: "/ticker-icon/APPL.png",
-  META: "/ticker-icon/META.png",
-  TSLA: "/ticker-icon/TSLA.png",
-  WMT: "/ticker-icon/WMT.png",
-};
+function getCompanyLogosByTicker(stocks: StockItem[]): Record<string, string> {
+  const logos: Record<string, string> = {};
+  stocks.forEach((stock) => {
+    logos[stock.ticker.toString()] = `/ticker-icon/${stock.ticker}.png`;
+  });
+  return logos;
+}
 
 const initialNews: NewsItem[] = [];
 const initialStocks: StockItem[] = [];
@@ -86,7 +107,7 @@ const initialEarningCalls: EarningCallItem[] = [];
 export default function HomePage() {
   const [newsItems, setNewsItems] = useState(initialNews);
   const [stocks, setStocks] = useState(initialStocks);
-  const [logos, setLogos] = useState(companyLogos);
+  const [logos, setLogos] = useState<Record<string, string>>({});
   const [assetTrendData, setAssetTrendData] = useState(initialAssetTrend);
   const [disclosureData, setDisclosureData] = useState(initialDisclosures);
   const [earningCallData, setEarningCallData] = useState(initialEarningCalls);
@@ -114,16 +135,11 @@ export default function HomePage() {
     fetchStockList()
       .then((res) => {
         setStocks(res.stocks);
-        setLogos(res.companyLogos);
+        setLogos(getCompanyLogosByTicker(res.stocks));
       })
       .catch(() => {
-        setStocks([
-          { id: 1, name: "애플", code: "AAPL", price: 71500, change: 1200, changePercent: 1.71 },
-          { id: 2, name: "META", code: "META", price: 89400, change: -800, changePercent: -0.89 },
-          { id: 3, name: "TESLA", code: "TSLA", price: 185000, change: 2500, changePercent: 1.37 },
-          { id: 4, name: "WMT", code: "WMT", price: 185000, change: 2500, changePercent: 1.37 },
-        ]);
-        setLogos(companyLogos);
+        setStocks([]);
+        setLogos({});
       });
 
     fetchAssetTrend()

@@ -1,15 +1,6 @@
-
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/src/components/ui/card";
-
-type Stock = {
-  id: number;
-  code: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-};
+import { StockItem } from "@/src/app/home/page";
 
 type CompanyLogos = {
   [code: string]: string;
@@ -19,10 +10,11 @@ export default function StockList({
   stocks,
   companyLogos,
 }: {
-  stocks: Stock[];
+  stocks: StockItem[];
   companyLogos: CompanyLogos;
 }) {
   const router = useRouter();
+
   return (
     <Card
       className="mb-2 border-0 w-full"
@@ -37,11 +29,11 @@ export default function StockList({
         <div className="flex flex-col">
           {stocks.map((stock, idx) => (
             <div
-              key={stock.id}
+              key={stock.ticker}
               className={`flex justify-between items-center py-2 px-5 hover:bg-[#f2f4f6] cursor-pointer transition mb-1 h-9 w-full${
                 idx === 0 ? " mt-2" : ""
               }${idx === stocks.length - 1 ? " mb-3" : ""}`}
-              onClick={() => router.push(`/stock/${stock.code}`)}
+              onClick={() => router.push(`/stock/${stock.ticker}`)}
               style={{
                 minWidth: "100%",
                 ...(idx === 0 ? { marginTop: "10px" } : {}),
@@ -53,7 +45,7 @@ export default function StockList({
                 style={{ gap: "12px" }}
               >
                 <img
-                  src={companyLogos[stock.code] || ""}
+                  src={companyLogos[stock.ticker.toString()] || ""}
                   alt={`${stock.name} 로고`}
                   className="w-7 h-7 object-contain"
                   style={{ marginLeft: "-5px" }}
@@ -62,7 +54,17 @@ export default function StockList({
                     if (target) target.style.display = "none";
                   }}
                 />
-                <span className="text-[14px] text-[#222]">{stock.name}</span>
+                <span
+                  className="text-[#222] whitespace-nowrap overflow-hidden text-ellipsis"
+                  style={{
+                    fontSize: "14px",
+                    maxWidth: "140px",
+                    lineHeight: "1.2",
+                  }}
+                  title={stock.name}
+                >
+                  {stock.name}
+                </span>
               </div>
               <div
                 className="text-right ml-auto flex items-center bg-transparent "
@@ -74,18 +76,18 @@ export default function StockList({
               >
                 <span
                   className={`text-xs flex items-center font-medium ${
-                    stock.change >= 0 ? "text-[#3182f6]" : "text-[#f04452]"
+                    stock.profit_loss_amount >= 0 ? "text-[#f04452]" : "text-[#3182f6]"
                   }`}
                   style={{ background: "none", marginRight: "8px" }}
                 >
-                  {stock.changePercent > 0 ? "+" : ""}
-                  {stock.changePercent}%
+                  {stock.profit_loss_amount > 0 ? "+" : ""}
+                  {stock.profit_loss_rate}%
                 </span>
                 <span
                   className="font-medium text-[#222] bg-transparent"
                   style={{ background: "none" }}
                 >
-                  {stock.price.toLocaleString()}원
+                  {stock.avgPrice.toLocaleString()}$
                 </span>
               </div>
             </div>
