@@ -25,7 +25,15 @@ export function TopNavigation({
   const shadowClass = shadow ? "shadow-md" : "";
 
   return (
-    <nav className={`flex justify-between items-center p-5 bg-white ${borderClass} ${shadowClass}`}>
+    <nav
+      className={`flex justify-between items-center p-5 bg-white ${borderClass} ${shadowClass}`}
+      style={{
+        zIndex: 20,
+        boxShadow: shadow
+          ? "0 4px 12px 0 rgba(130,130,130,0.10), 0 1.5px 4px 0 rgba(130,130,130,0.10)"
+          : undefined,
+      }}
+    >
       <div className="flex items-center space-x-2">
         {showBackButton && (
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
