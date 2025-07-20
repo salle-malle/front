@@ -232,7 +232,7 @@ export default function HomePage() {
     opacity: mountedIndexes.includes(idx) ? 1 : 0,
     transform: mountedIndexes.includes(idx)
       ? "translateY(0px)"
-      : "translateY(32px)", // 40px -> 32px로 줄여서 덜 튀게
+      : "translateY(32px)",
     transition: "all 0.7s cubic-bezier(0.19, 1, 0.22, 1)",
     willChange: "opacity, transform",
   });
