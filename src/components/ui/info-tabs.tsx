@@ -7,7 +7,6 @@ type InfoItem = {
   id: number;
   title: string;
   date: string;
-  content: string;
 };
 
 interface InfoTabsProps {

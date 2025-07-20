@@ -1,6 +1,4 @@
 
-
-
 export default function TabSelector({
     tab,
     setTab,
@@ -13,8 +11,8 @@ export default function TabSelector({
         <div className="flex w-full max-w-xs">
           <button
             className={`flex-1 text-[11px] px-2 py-1 rounded-none ${
-              tab === "공시" ? "text-gray-600 font-bold bg-gray-200" : "text-gray-500"
-            } hover:text-black hover:bg-gray-200 focus:bg-gray-200 transition-colors border-r border-gray-200 first:border-l-0`}
+              tab === "공시" ? "text-gray-600 font-bold bg-gray-200 rounded-sm" : "text-gray-500"
+            } hover:text-black hover:bg-gray-200 hover:rounded-sm focus:bg-gray-200 transition-colors border-r border-gray-200 first:border-l-0`}
             onClick={() => setTab("공시")}
             type="button"
           >
@@ -22,8 +20,8 @@ export default function TabSelector({
           </button>
           <button
             className={`flex-1 text-[11px] px-2 py-1 rounded-none ${
-              tab === "어닝콜" ? "text-gray-600 font-bold bg-gray-200" : "text-gray-500"
-            } hover:text-black hover:bg-gray-200 focus:bg-gray-200 transition-colors border-gray-200`}
+              tab === "어닝콜" ? "text-gray-600 font-bold bg-gray-200 rounded-sm" : "text-gray-500"
+            } hover:text-black hover:bg-gray-200 hover:rounded-sm focus:bg-gray-200 transition-colors border-gray-200`}
             onClick={() => setTab("어닝콜")}
             type="button"
           >
@@ -33,4 +31,3 @@ export default function TabSelector({
       </div>
     );
   }
-  
