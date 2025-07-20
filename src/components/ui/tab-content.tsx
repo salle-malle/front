@@ -2,7 +2,7 @@ export default function TabContent({
     data,
     emptyMsg,
   }: {
-    data: { id: number; title: string; date: string; content: string }[];
+    data: { id: number; title: string; date: string; }[];
     emptyMsg: string;
   }) {
     if (!data || data.length === 0) {
@@ -19,7 +19,6 @@ export default function TabContent({
             <div className="flex flex-col">
               <span className="text-[13px] font-semibold text-gray-800 truncate">{item.title}</span>
               <span className="text-[11px] text-gray-400">{item.date}</span>
-              <span className="text-[12px] text-gray-500 truncate">{item.content}</span>
             </div>
           </li>
         ))}
