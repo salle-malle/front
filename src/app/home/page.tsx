@@ -28,17 +28,22 @@ export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
 export type DisclosureListResponse = { data: DisclosureItem[]; };
 export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
 
-// 날짜를 기준으로 "n일 전", "몇 시간 전" 등으로 변환하는 함수
 function getRelativeTime(dateString: string) {
-  // dateString이 ISO 형식이거나, "YYYY-MM-DD" 등으로 들어온다고 가정
-  // 만약 dateString이 "2024-06-01 12:00:00"처럼 들어오면, dayjs에서 파싱 가능
   return dayjs(dateString).fromNow();
 }
 
 export async function fetchNewsList(): Promise<NewsListResponse> {
-  const res = await fetch("/api/news");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`);
+  
   if (!res.ok) throw new Error("뉴스 데이터를 불러오지 못했습니다.");
-  return res.json();
+
+  const jsonResponse = await res.json();
+  const news : NewsItem[] = jsonResponse.data.map((item: any) => ({
+    id: item.id,
+    title: item.newsTitle,
+    time: getRelativeTime(item.newsDate),
+  }));
+  return { news };
 }
 
 export async function fetchStockList(): Promise<StockListResponse> {
@@ -176,11 +181,7 @@ export default function HomePage() {
 
     fetchNewsList()
       .then((res) => setNewsItems(Array.isArray(res.news) ? res.news : []))
-      .catch(() => setNewsItems([
-        { id: 1, title: "애플, 3분기 실적 발표 예정", time: "2시간 전" },
-        { id: 2, title: "엔비디아 메모리 반도체 수요 증가", time: "4시간 전" },
-        { id: 3, title: "메타 클라우드 사업 확장", time: "6시간 전" },
-      ]));
+      .catch(() => setNewsItems([]));
 
     fetchStockList()
       .then((res) => {
