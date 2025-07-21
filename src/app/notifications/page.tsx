@@ -1,97 +1,60 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-const notifications = [
-  {
-    id: 1,
-    type: "price",
-    icon: TrendingUp,
-    title: "삼성전자 주가 상승",
-    message: "삼성전자가 목표가에 도달했습니다.",
-    time: "5분 전",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "event",
-    icon: Calendar,
-    title: "SK하이닉스 실적 발표",
-    message: "내일 3분기 실적이 발표됩니다.",
-    time: "1시간 전",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "alert",
-    icon: AlertCircle,
-    title: "포트폴리오 리밸런싱",
-    message: "포트폴리오 비중 조정을 고려해보세요.",
-    time: "3시간 전",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "price",
-    icon: TrendingUp,
-    title: "NAVER 주가 변동",
-    message: "NAVER가 -2% 하락했습니다.",
-    time: "5시간 전",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "price",
-    icon: TrendingUp,
-    title: "NAVER 주가 변동",
-    message: "NAVER가 -2% 하락했습니다.",
-    time: "5시간 전",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "price",
-    icon: TrendingUp,
-    title: "NAVER 주가 변동",
-    message: "NAVER가 -2% 하락했습니다.",
-    time: "5시간 전",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "price",
-    icon: TrendingUp,
-    title: "NAVER 주가 변동",
-    message: "NAVER가 -2% 하락했습니다.",
-    time: "5시간 전",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "price",
-    icon: TrendingUp,
-    title: "NAVER 주가 변동",
-    message: "NAVER가 -2% 하락했습니다.",
-    time: "5시간 전",
-    read: true,
-  },
-];
+const iconMap: Record<string, any> = {
+  price: TrendingUp,
+  event: Calendar,
+  alert: AlertCircle,
+};
+
+type Notification = {
+  id: number;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  type?: string;
+};
 
 export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/notifications`,
+          {
+            credentials: "include", // 쿠키 전송 필요
+          }
+        );
+        const data = await res.json();
+        if (data.status) {
+          setNotifications(data.data);
+        }
+      } catch (err) {
+        console.error("알림 조회 실패", err);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-[#f9fafb]">
       <TopNavigation />
-
       <main className="flex-1 overflow-y-auto pb-20">
         <div className="space-y-3 p-4">
           {notifications.map((notification, index) => {
-            const IconComponent = notification.icon;
+            const IconComponent = iconMap[notification.type ?? "alert"];
             return (
               <motion.div
-                key={`${notification.id}-${index}`}
+                key={notification.id}
                 initial={{ opacity: 0, y: 24, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{
@@ -119,7 +82,9 @@ export default function NotificationsPage() {
                     {notification.message}
                   </div>
                   <div className="text-xs text-gray-400 mt-2">
-                    {notification.time}
+                    {new Date(notification.time).toLocaleString("ko-KR", {
+                      hour12: false,
+                    })}
                   </div>
                 </div>
 
@@ -131,7 +96,6 @@ export default function NotificationsPage() {
           })}
         </div>
       </main>
-
       <BottomNavigation />
     </div>
   );

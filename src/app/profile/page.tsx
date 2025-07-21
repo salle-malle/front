@@ -11,21 +11,63 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { motion } from "framer-motion";
 import { LogOut, Pencil, RefreshCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemberStore } from "@/src/stores/memberStore";
+import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
+  const [nickname, setNickname] = useState("");
+  const [investmentType, setInvestmentType] = useState("");
+  const { clearMember } = useMemberStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/mypage`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        if (!res.ok) throw new Error("마이페이지 조회 실패");
+
+        const json = await res.json();
+        setNickname(json.data.nickname);
+        setInvestmentType(json.data.investmentType);
+      } catch (err) {
+        console.error(err);
+        alert("사용자 정보를 불러오지 못했습니다.");
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   const handleEditNickname = () => {
-    // TODO: 닉네임 수정 모달 또는 라우팅
-    alert("닉네임 수정 기능");
+    router.push("/profile/edit-nickname");
   };
 
-  const handleLogout = () => {
-    // TODO: 로그아웃 처리
-    alert("로그아웃");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      clearMember();
+
+      router.replace("/login");
+    } catch (err) {
+      console.error("로그아웃 실패:", err);
+      alert("로그아웃 중 오류가 발생했습니다.");
+    }
   };
 
   const handleChangeType = () => {
-    // TODO: 투자 성향 재선택 페이지로 이동
-    alert("투자 성향 재선택");
+    router.push("/profile/edit-investment");
   };
 
   return (
@@ -53,8 +95,10 @@ export default function ProfilePage() {
 
         {/* 유저 정보 */}
         <div className="text-center mb-6">
-          <h2 className="text-xl font-semibold">유진</h2>
-          <p className="text-gray-500 text-sm">안정형 투자자</p>
+          <h2 className="text-xl font-semibold">{nickname || "로딩 중..."}</h2>
+          <p className="text-gray-500 text-sm">
+            {investmentType ? `${investmentType} 투자자` : " "}
+          </p>
         </div>
 
         {/* 기능 카드 */}
