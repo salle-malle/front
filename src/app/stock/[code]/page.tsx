@@ -1,144 +1,111 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
-import { ArrowLeft, TrendingUp, Calendar, BarChart3 } from "lucide-react";
+import { StockHeader } from "@/src/components/stock-header";
 
-export default function StockDetailPage() {
+import { KeyStats } from "@/src/components/key-stats";
+
+import { NewsSection } from "@/src/components/news-section";
+import type {
+  OverseasStockDetail,
+  OverseasStockDetailResponse,
+} from "@/src/types/ApiResponse";
+
+export default function EnhancedStockDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const stockCode = params.code as string;
 
-  // 임시 데이터
-  const stockData = {
-    name: "삼성전자",
-    code: stockCode,
-    price: 71500,
-    change: 1200,
-    changePercent: 1.71,
-  };
+  const [stockData, setStockData] = useState<OverseasStockDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const events = [
-    { date: "2024-01-15", event: "3분기 실적 발표" },
-    { date: "2024-01-20", event: "주주총회" },
-    { date: "2024-01-25", event: "배당금 지급" },
-  ];
+  useEffect(() => {
+    const fetchStockDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/stock-detail`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ stockCode }),
+          }
+        );
 
-  const indicators = [
-    { name: "PER", value: "12.5" },
-    { name: "PBR", value: "1.2" },
-    { name: "ROE", value: "8.5%" },
-    { name: "배당수익률", value: "2.1%" },
-  ];
+        if (response.ok) {
+          const data: OverseasStockDetailResponse = await response.json();
+          if (data.status && data.data.output) {
+            setStockData(data.data.output);
+          } else {
+            setError("주식 데이터를 불러올 수 없습니다.");
+          }
+        } else {
+          setError("API 요청에 실패했습니다.");
+        }
+      } catch (error) {
+        console.error("주식 상세 정보 가져오기 실패:", error);
+        setError("네트워크 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (stockCode) {
+      fetchStockDetail();
+    }
+  }, [stockCode]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50">
+        <TopNavigation showBackButton={true} title="주식 상세" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse text-gray-500">
+            데이터를 불러오는 중...
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  if (error || !stockData) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50">
+        <TopNavigation showBackButton={true} title="주식 상세" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-red-500 text-center p-4">
+            {error || "데이터를 불러올 수 없습니다."}
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-screen">
-      <TopNavigation />
+    <div className="flex flex-col h-screen bg-gray-50">
+      <TopNavigation
+        showBackButton={true}
+        title={stockData.etyp_nm || stockCode}
+      />
 
-      <div className="flex items-center p-4 border-b">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="ml-2">
-          <h1 className="font-bold">{stockData.name}</h1>
-          <p className="text-sm text-gray-600">{stockData.code}</p>
-        </div>
-      </div>
+      <main className="flex-1 overflow-y-auto pb-20">
+        {/* Stock Header - 종목명, 현재가, 등락률 */}
+        <StockHeader stockData={stockData} stockCode={stockCode} />
 
-      <main className="flex-1 overflow-y-auto p-4 pb-20">
-        {/* 현재 주가 */}
-        <Card className="mb-4">
-          <CardContent className="pt-6">
-            <div className="text-3xl font-bold">
-              ₩{stockData.price.toLocaleString()}
-            </div>
-            <div
-              className={`flex items-center text-lg ${
-                stockData.change >= 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              <TrendingUp className="h-5 w-5 mr-1" />+{stockData.changePercent}%
-              (+₩{stockData.change.toLocaleString()})
-            </div>
-          </CardContent>
-        </Card>
+        {/* Key Statistics - 핵심 투자 지표 요약 */}
+        <KeyStats stockData={stockData} />
 
-        {/* 보유손익 */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-lg">보유손익</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-600">보유수량</div>
-                <div className="text-lg font-bold">10주</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">평가손익</div>
-                <div className="text-lg font-bold text-green-600">+₩12,000</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 주가 차트 */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              주가 차트
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
-              <p className="text-gray-500">차트 영역</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 다가올 주요 이벤트 */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              다가올 주요 이벤트
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {events.map((event, index) => (
-              <div key={index} className="flex justify-between items-center">
-                <div className="font-medium">{event.event}</div>
-                <div className="text-sm text-gray-600">{event.date}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* 주요 지표 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">주요 지표</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {indicators.map((indicator, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-sm text-gray-600">{indicator.name}</div>
-                  <div className="text-lg font-bold">{indicator.value}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* News Section - 관련 뉴스 */}
+        <NewsSection stockCode={stockCode} companyName={stockData.etyp_nm} />
       </main>
 
       <BottomNavigation />
