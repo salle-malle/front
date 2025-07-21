@@ -67,8 +67,7 @@ export default function ProfilePage() {
   };
 
   const handleChangeType = () => {
-    // TODO: 투자 성향 재선택 페이지로 이동
-    alert("투자 성향 재선택");
+    router.push("/profile/edit-investment");
   };
 
   return (
