@@ -29,7 +29,7 @@ export default function AssetSummary({assetAmount}: {assetAmount: number}) {
               }}
             >
               <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <text x="11" y="16" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#3182f6" fontFamily="arial">₩</text>
+                <text x="11" y="16" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#3182f6" fontFamily="arial">$</text>
               </svg>
             </div>
             <div className="flex flex-col justify-center h-full" style={{ height: "100%" }}>

@@ -1,13 +1,23 @@
 import type { NewsItem as NewsItemType } from "@/src/app/home/page";
-
-export default function NewsItem(props: { item?: NewsItemType; showArrow?: boolean }) {
-  const { item, showArrow } = props;
+export default function NewsItem({ item }: { item?: NewsItemType }) {
 
   if (!item || typeof item.title !== "string") {
     return (
       <div className="flex items-center w-full" style={{ height: 30 }}>
-        <span className="font-semibold text-xs text-[#222] truncate" style={{ maxWidth: "70%" }}>
-          (뉴스 정보 없음)
+        <span className="font-medium text-xs text-[#9e9e9e] truncate" style={{ maxWidth: "70%" }}>
+          뉴스 정보 없음
+        </span>
+        <span className="ml-auto flex items-center">
+          <svg
+            className="w-4 h-4 text-[#b0b8c1]"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
         </span>
       </div>
     );
@@ -27,23 +37,21 @@ export default function NewsItem(props: { item?: NewsItemType; showArrow?: boole
       >
         {item.title}
       </span>
-      <span className="ml-2 text-[11px] text-[#6b7684] whitespace-nowrap">
+      <span className="ml-auto text-[11px] text-[#6b7684] whitespace-nowrap">
         {item.time ?? ""}
       </span>
-      {showArrow && (
-        <span className="ml-auto flex items-center">
-          <svg
-            className="w-4 h-4 text-[#b0b8c1]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </span>
-      )}
+      <span className="ml-auto flex items-center">
+        <svg
+          className="w-4 h-4 text-[#b0b8c1]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </span>
     </div>
   );
 }

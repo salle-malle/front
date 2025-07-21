@@ -40,7 +40,7 @@ export default function NewsSlider({
               transform: isAnimating ? "translateY(-30px)" : "translateY(0px)",
             }}
           >
-            <NewsItem item={newsItems[newsIndex]} showArrow />
+            <NewsItem item={newsItems[newsIndex]} />
             <NewsItem item={newsItems[(newsIndex + 1) % newsItems.length]} />
           </div>
         </div>

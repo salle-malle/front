@@ -12,7 +12,7 @@ export default function TabSelector({
           <button
             className={`flex-1 text-[11px] px-2 py-1 rounded-none ${
               tab === "공시" ? "text-gray-600 font-bold bg-gray-200 rounded-sm" : "text-gray-500"
-            } hover:text-black hover:bg-gray-200 hover:rounded-sm focus:bg-gray-200 transition-colors border-r border-gray-200 first:border-l-0`}
+            } hover:text-black hover:bg-gray-100 hover:rounded-sm focus:bg-gray-200 transition-colors border-r border-gray-200 first:border-l-0`}
             onClick={() => setTab("공시")}
             type="button"
           >

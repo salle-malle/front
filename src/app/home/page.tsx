@@ -9,6 +9,11 @@ import NewsSlider from "@/src/components/ui/news-slider";
 import StockList from "@/src/components/ui/stock-list";
 import InfoTabs from "@/src/components/ui/info-tabs";
 import AssetSummary from "@/src/components/ui/asset-summary";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/ko";
+dayjs.extend(relativeTime);
+dayjs.locale("ko");
 
 export type NewsItem = { id: number; title: string; time: string };
 export type StockItem = {
@@ -20,36 +25,33 @@ export type StockItem = {
   quantity: number;
 };
 export type AssetTrendPoint = number;
-export type AssetTrendData = {
-  series: { name: string; data: AssetTrendPoint[] }[];
-  options: any;
-};
-export type DisclosureItem = {
-  disclosureId: number;
-  disclosureTitle: string;
-  disclosureDate: string;
-};
-export type EarningCallItem = {
-  id: number;
-  title: string;
-  date: string;
-  content: string;
-};
 
-export type NewsListResponse = { news: NewsItem[] };
-export type StockListResponse = {
-  stocks: StockItem[];
-  companyLogos: Record<string, string>;
-  summary?: { total_purchase_amount: number };
-};
-export type AssetTrendResponse = { assetTrendData: AssetTrendData };
-export type DisclosureListResponse = { data: DisclosureItem[] };
-export type EarningCallListResponse = { earningCalls: EarningCallItem[] };
+export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
+export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
+export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
+
+export type NewsListResponse = { news: NewsItem[]; };
+export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
+export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
+export type DisclosureListResponse = { data: DisclosureItem[]; };
+export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
+
+function getRelativeTime(dateString: string) {
+  return dayjs(dateString).fromNow();
+}
 
 export async function fetchNewsList(): Promise<NewsListResponse> {
-  const res = await fetch("/api/news");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`);
+  
   if (!res.ok) throw new Error("뉴스 데이터를 불러오지 못했습니다.");
-  return res.json();
+
+  const jsonResponse = await res.json();
+  const news : NewsItem[] = jsonResponse.data.map((item: any) => ({
+    id: item.id,
+    title: item.newsTitle,
+    time: getRelativeTime(item.newsDate),
+  }));
+  return { news };
 }
 
 export async function fetchStockList(): Promise<StockListResponse> {
@@ -69,7 +71,6 @@ export async function fetchStockList(): Promise<StockListResponse> {
     [];
   const companyLogos = jsonResponse.data?.companyLogos || {};
 
-  // summary가 있을 수도 있고 없을 수도 있으니 안전하게 처리
   const summary = jsonResponse.data?.summary || undefined;
 
   const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
@@ -113,9 +114,26 @@ const fetchDisclosureList = async (): Promise<DisclosureListResponse> => {
 };
 
 export async function fetchEarningCallList(): Promise<EarningCallListResponse> {
-  const res = await fetch("/api/earning-calls");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`, {
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
-  return res.json();
+  const jsonResponse = await res.json();
+  if (jsonResponse.code !== "EARNING-014") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
+
+  const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
+    earningCallId: item.id,
+    ticker: item.stockId,
+    date: item.earningCallDate,
+    name: item.stockName
+  }));
+
+  return {
+    data: {
+      earningCalls: mappedData
+    }
+  };
 }
 
 // 색상 상수
@@ -185,17 +203,8 @@ export default function HomePage() {
 
     fetchNewsList()
       .then((res) => setNewsItems(Array.isArray(res.news) ? res.news : []))
-      .catch(() =>
-        setNewsItems([
-          { id: 1, title: "애플, 3분기 실적 발표 예정", time: "2시간 전" },
-          {
-            id: 2,
-            title: "엔비디아 메모리 반도체 수요 증가",
-            time: "4시간 전",
-          },
-          { id: 3, title: "메타 클라우드 사업 확장", time: "6시간 전" },
-        ])
-      );
+      .catch(() => setNewsItems([]));
+
 
     fetchStockList()
       .then((res) => {
@@ -263,8 +272,12 @@ export default function HomePage() {
       .catch(() => setDisclosureData([]));
 
     fetchEarningCallList()
-      .then((res) => setEarningCallData(res.earningCalls))
-      .catch(() => setEarningCallData([]));
+      .then((res) => {
+        setEarningCallData(Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []);
+      })
+      .catch((err) => {
+        setEarningCallData([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -330,18 +343,25 @@ export default function HomePage() {
           <InfoTabs
             tab={tab}
             setTab={setTab}
-            disclosureData={disclosureData.slice(0, 3).map((item) => {
-              return {
-                id: item.disclosureId,
-                title: item.disclosureTitle,
-                date: item.disclosureDate,
-              };
-            })}
-            earningCallData={(earningCallData ?? []).slice(0, 3)}
-          />
-          <Card
-            className="mb-2 rounded-xl border-0 w-full"
-            style={{ maxWidth: "800px", margin: "0 auto" }}
+
+            disclosureData={disclosureData
+              .slice(0, 3)
+              .map((item) => {
+                return {
+                  id: item.disclosureId,
+                  title: item.disclosureTitle,
+                  date: getRelativeTime(item.disclosureDate),
+                };
+              })
+            }
+            earningCallData={earningCallData
+              .slice(0, 3)
+              .map((item) => ({
+                id: item.earningCallId,
+                title: item.name,
+                date: getRelativeTime(item.date),
+              }))
+            }
           />
         </div>
       </main>
