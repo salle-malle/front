@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/src/components/ui/button";
-import {ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { HiBell } from "react-icons/hi";
 import { FaCalendar } from "react-icons/fa6";
 
@@ -24,7 +24,7 @@ export function TopNavigation({
   const router = useRouter();
   const pathname = usePathname();
 
-  const borderClass = border ? "border-b border-gray-200" : "";
+  const borderClass = border ? "border-b border-gray-stroke-100" : "";
   const shadowClass = shadow ? "shadow-md" : "";
 
   const isNotificationPage = pathname === "/notifications";
@@ -32,7 +32,7 @@ export function TopNavigation({
 
   return (
     <nav
-      className={`flex justify-between items-center p-4 bg-gray-50 ${borderClass} ${shadowClass}`}
+      className={`flex justify-between items-center p-4 bg-white ${borderClass} ${shadowClass}`}
       style={{ minHeight: 56 }}
     >
       <div className="flex items-center space-x-2">
@@ -45,15 +45,15 @@ export function TopNavigation({
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
             tabIndex={0}
           >
-            <ArrowLeft width={28} height={28} className="text-gray-700" />
+            <ArrowLeft width={24} height={24} className="text-gray-600" />
           </Button>
         )}
-        <div className="text-xl font-bold text-blue-600">
-          {title}
-        </div>
+        <div className="text-xl font-bold text-blue-600">{title}</div>
       </div>
+
       {showRightIcons && (
         <div className="flex space-x-2 items-center" style={{ marginRight: 12 }}>
+          {/* 캘린더 버튼 */}
           <Button
             variant="ghost"
             size="sm"
@@ -63,15 +63,10 @@ export function TopNavigation({
             tabIndex={0}
           >
             <FaCalendar
-              width={26}
-              height={26}
-              fill={isCalendarPage ? "#374151" : "#D1D5DB"}
-              stroke={isCalendarPage ? "#374151" : "#6B7280"}
-              className={`${
-                isCalendarPage
-                  ? "text-gray-700"
-                  : "text-gray-300"
-              }`}
+              width={24}
+              height={24}
+              color={isCalendarPage ? "#4B5563" : "#D1D5DB"}
+              className={isCalendarPage ? "text-gray-600" : "text-gray-300"}
               style={{
                 minWidth: 20,
                 minHeight: 20,
@@ -94,13 +89,8 @@ export function TopNavigation({
             <HiBell
               width={26}
               height={26}
-              fill={isNotificationPage ? "#374151" : "#D1D5DB"}
-              stroke={isNotificationPage ? "#374151" : "#6B7280"}
-              className={`${
-                isNotificationPage
-                  ? "text-gray-700"
-                  : "text-gray-300"
-              }`}
+              color={isNotificationPage ? "#4B5563" : "#D1D5DB"}
+              className={isNotificationPage ? "text-gray-600" : "text-gray-300"}
               style={{
                 minWidth: 26,
                 minHeight: 26,
