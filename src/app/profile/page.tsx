@@ -47,8 +47,7 @@ export default function ProfilePage() {
   }, []);
 
   const handleEditNickname = () => {
-    // TODO: 닉네임 수정 모달 또는 라우팅
-    alert("닉네임 수정 기능");
+    router.push("/profile/edit-nickname");
   };
 
   const handleLogout = async () => {
