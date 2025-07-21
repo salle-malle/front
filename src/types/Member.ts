@@ -1,3 +1,3 @@
 export interface Member {
-  userIsLogin: Boolean;
+  userIsLogin: boolean;
 }
