@@ -82,7 +82,7 @@ export default function StockDetailPage() {
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
     if (isNaN(num)) return "$0";
-    return `$${num.toLocaleString()}`;
+    return `$${num.toFixed(3)}`;
   };
 
   const getPriceChangeColor = (change: string) => {
@@ -157,7 +157,7 @@ export default function StockDetailPage() {
                 <div>
                   <p className="text-sm text-gray-600">현재가</p>
                   <p className="text-2xl font-bold">
-                    {formatCurrency(stockData.txprc)}
+                    {formatCurrency(stockData.base || stockData.txprc)}
                   </p>
                 </div>
                 <div
@@ -180,7 +180,16 @@ export default function StockDetailPage() {
                     stockData.txdif
                   )}`}
                 >
-                  {formatCurrency(stockData.txdif)}
+                  {(() => {
+                    const currentPrice = parseFloat(
+                      stockData.base || stockData.txprc
+                    );
+                    const prevPrice = parseFloat(
+                      stockData.last || stockData.pxprc
+                    );
+                    const change = currentPrice - prevPrice;
+                    return formatCurrency(change.toString());
+                  })()}
                 </span>
               </div>
 
@@ -226,7 +235,7 @@ export default function StockDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">전일종가</p>
                 <p className="font-semibold">
-                  {formatCurrency(stockData.pxprc)}
+                  {formatCurrency(stockData.last || stockData.pxprc)}
                 </p>
               </div>
             </div>
