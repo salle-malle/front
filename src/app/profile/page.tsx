@@ -11,16 +11,32 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { motion } from "framer-motion";
 import { LogOut, Pencil, RefreshCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemberStore } from "@/src/stores/memberStore";
 
 export default function ProfilePage() {
+  const { clearMember } = useMemberStore();
+  const router = useRouter();
+
   const handleEditNickname = () => {
     // TODO: 닉네임 수정 모달 또는 라우팅
     alert("닉네임 수정 기능");
   };
 
-  const handleLogout = () => {
-    // TODO: 로그아웃 처리
-    alert("로그아웃");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      clearMember();
+
+      router.replace("/login");
+    } catch (err) {
+      console.error("로그아웃 실패:", err);
+      alert("로그아웃 중 오류가 발생했습니다.");
+    }
   };
 
   const handleChangeType = () => {
