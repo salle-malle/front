@@ -35,10 +35,8 @@ export default function LoginPage() {
       const responseBody = await res.json();
 
       const userStatus = responseBody.status;
-      const memberIdFromResponse = responseBody.data.memberId;
 
       setMember({
-        id: memberIdFromResponse,
         userIsLogin: userStatus,
       });
       console.log("로그인 성공", userStatus);

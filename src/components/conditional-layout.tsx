@@ -13,7 +13,7 @@ export default function ConditionalLayout({
 }) {
   const { member } = useMemberStore();
 
-  useNotification(member?.userIsLogin ? member.id : 0);
+  useNotification(member?.userIsLogin ?? false);
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center">
