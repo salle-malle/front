@@ -1,37 +1,47 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Home, CreditCard, Bookmark, User } from "lucide-react";
+import { GoHomeFill } from "react-icons/go";
+import { PiCardsThreeFill } from "react-icons/pi";
+import { FaUser, FaHeartCirclePlus } from "react-icons/fa6";
+
+const NAV_ITEMS = [
+  { icon: GoHomeFill, label: "홈", path: "/home" },
+  { icon: PiCardsThreeFill, label: "카드", path: "/cards" },
+  { icon: FaHeartCirclePlus, label: "스크랩", path: "/scrap" },
+  { icon: FaUser, label: "MY", path: "/profile" },
+];
 
 export function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const navItems = [
-    { icon: Home, label: "홈", path: "/home" },
-    { icon: CreditCard, label: "카드", path: "/cards" },
-    { icon: Bookmark, label: "스크랩", path: "/scrap" },
-    { icon: User, label: "마이페이지", path: "/profile" },
-  ];
-
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t rounded-t-lg border-gray-stroke-100">
       <div className="flex">
-        {navItems.map((item) => {
-          const IconComponent = item.icon;
+        {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
           const isActive =
-            pathname === item.path ||
-            (item.path !== "/" && pathname.startsWith(item.path));
+            pathname === path ||
+            (path !== "/" && pathname.startsWith(path));
 
           return (
             <button
-              key={item.path}
-              onClick={() => router.push(item.path)}
+              key={path}
+              onClick={() => router.push(path)}
               className={`flex flex-1 flex-col items-center justify-center gap-1 h-16 transition-colors ${
-                isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
-              }`}>
-              <IconComponent className="w-5 h-5" />
-              <span className="text-xs">{item.label}</span>
+                isActive ? "text-gray-600" : "text-gray-300 hover:text-gray-600"
+              }`}
+            >
+              <Icon
+                style={{
+                  minWidth: 24,
+                  minHeight: 24,
+                  width: 24,
+                  height: 24,
+                  display: "block",
+                }}
+              />
+              <span className="text-[10px]">{label}</span>
             </button>
           );
         })}
