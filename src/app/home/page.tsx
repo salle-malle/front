@@ -10,18 +10,41 @@ import StockList from "@/src/components/ui/stock-list";
 import InfoTabs from "@/src/components/ui/info-tabs";
 import AssetSummary from "@/src/components/ui/asset-summary";
 
-export type NewsItem = { id: number; title: string; time: string; };
-export type StockItem = { ticker: number; name: string; avgPrice: number; profit_loss_amount: number; profit_loss_rate: number; quantity : number };
+export type NewsItem = { id: number; title: string; time: string };
+export type StockItem = {
+  ticker: number;
+  name: string;
+  avgPrice: number;
+  profit_loss_amount: number;
+  profit_loss_rate: number;
+  quantity: number;
+};
 export type AssetTrendPoint = number;
-export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
-export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
-export type EarningCallItem = { id: number; title: string; date: string; content: string; };
+export type AssetTrendData = {
+  series: { name: string; data: AssetTrendPoint[] }[];
+  options: any;
+};
+export type DisclosureItem = {
+  disclosureId: number;
+  disclosureTitle: string;
+  disclosureDate: string;
+};
+export type EarningCallItem = {
+  id: number;
+  title: string;
+  date: string;
+  content: string;
+};
 
-export type NewsListResponse = { news: NewsItem[]; };
-export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
-export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
-export type DisclosureListResponse = { data: DisclosureItem[]; };
-export type EarningCallListResponse = { earningCalls: EarningCallItem[]; };
+export type NewsListResponse = { news: NewsItem[] };
+export type StockListResponse = {
+  stocks: StockItem[];
+  companyLogos: Record<string, string>;
+  summary?: { total_purchase_amount: number };
+};
+export type AssetTrendResponse = { assetTrendData: AssetTrendData };
+export type DisclosureListResponse = { data: DisclosureItem[] };
+export type EarningCallListResponse = { earningCalls: EarningCallItem[] };
 
 export async function fetchNewsList(): Promise<NewsListResponse> {
   const res = await fetch("/api/news");
@@ -30,13 +53,20 @@ export async function fetchNewsList(): Promise<NewsListResponse> {
 }
 
 export async function fetchStockList(): Promise<StockListResponse> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
+    {
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    }
+  );
   if (!res.ok) throw new Error("종목 데이터를 불러오지 못했습니다.");
   const jsonResponse = await res.json();
-  const stocksRaw = jsonResponse.data?.stocks || jsonResponse.data?.stockList || jsonResponse.data || [];
+  const stocksRaw =
+    jsonResponse.data?.stocks ||
+    jsonResponse.data?.stockList ||
+    jsonResponse.data ||
+    [];
   const companyLogos = jsonResponse.data?.companyLogos || {};
 
   // summary가 있을 수도 있고 없을 수도 있으니 안전하게 처리
@@ -47,8 +77,11 @@ export async function fetchStockList(): Promise<StockListResponse> {
     name: item.prdt_name,
     quantity: item.quantity,
     avgPrice: Math.round((Number(item.avg_price) + Number.EPSILON) * 100) / 100,
-    profit_loss_amount: Math.round((Number(item.profit_loss_amount) + Number.EPSILON) * 100) / 100,
-    profit_loss_rate: Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
+    profit_loss_amount:
+      Math.round((Number(item.profit_loss_amount) + Number.EPSILON) * 100) /
+      100,
+    profit_loss_rate:
+      Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
   }));
 
   return {
@@ -65,15 +98,19 @@ export async function fetchAssetTrend(): Promise<AssetTrendResponse> {
 }
 
 const fetchDisclosureList = async (): Promise<DisclosureListResponse> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/disclosure/my-current-disclosure`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BACK_API_URL}/disclosure/my-current-disclosure`,
+    {
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    }
+  );
   if (!res.ok) throw new Error("공시 데이터를 불러오지 못했습니다.");
   const jsonResponse = await res.json();
-  if (jsonResponse.code !== "DISCLOSURE-001") throw new Error("공시 데이터를 불러오지 못했습니다.");
+  if (jsonResponse.code !== "DISCLOSURE-001")
+    throw new Error("공시 데이터를 불러오지 못했습니다.");
   return jsonResponse;
-}
+};
 
 export async function fetchEarningCallList(): Promise<EarningCallListResponse> {
   const res = await fetch("/api/earning-calls");
@@ -148,11 +185,17 @@ export default function HomePage() {
 
     fetchNewsList()
       .then((res) => setNewsItems(Array.isArray(res.news) ? res.news : []))
-      .catch(() => setNewsItems([
-        { id: 1, title: "애플, 3분기 실적 발표 예정", time: "2시간 전" },
-        { id: 2, title: "엔비디아 메모리 반도체 수요 증가", time: "4시간 전" },
-        { id: 3, title: "메타 클라우드 사업 확장", time: "6시간 전" },
-      ]));
+      .catch(() =>
+        setNewsItems([
+          { id: 1, title: "애플, 3분기 실적 발표 예정", time: "2시간 전" },
+          {
+            id: 2,
+            title: "엔비디아 메모리 반도체 수요 증가",
+            time: "4시간 전",
+          },
+          { id: 3, title: "메타 클라우드 사업 확장", time: "6시간 전" },
+        ])
+      );
 
     fetchStockList()
       .then((res) => {
@@ -172,39 +215,48 @@ export default function HomePage() {
 
     fetchAssetTrend()
       .then((res) => setAssetTrendData(res.assetTrendData))
-      .catch(() => setAssetTrendData({
-        series: [{ name: "자산", data: [1000, 1200, 1300, 1250, 1400, 1500, 1600] }],
-        options: {
-          chart: { type: "line", height: 120, toolbar: { show: false }, sparkline: { enabled: true } },
-          stroke: { curve: "smooth", width: 3, colors: [BLUE_LINE] },
-          xaxis: {
-            categories: ["월", "화", "수", "목", "금", "토", "일"],
-            labels: { show: false },
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-          },
-          yaxis: { show: false },
-          grid: { show: false },
-          dataLabels: { enabled: false },
-          tooltip: { enabled: false },
-          fill: {
-            type: "gradient",
-            gradient: {
-              shadeIntensity: 1,
-              opacityFrom: 0.3,
-              opacityTo: 0.07,
-              stops: [0, 100],
-              colorStops: [
-                [
-                  { offset: 0, color: BLUE_GRADIENT_FROM, opacity: 0.3 },
-                  { offset: 100, color: BLUE_GRADIENT_TO, opacity: 0.07 },
-                ],
-              ],
+      .catch(() =>
+        setAssetTrendData({
+          series: [
+            { name: "자산", data: [1000, 1200, 1300, 1250, 1400, 1500, 1600] },
+          ],
+          options: {
+            chart: {
+              type: "line",
+              height: 120,
+              toolbar: { show: false },
+              sparkline: { enabled: true },
             },
+            stroke: { curve: "smooth", width: 3, colors: [BLUE_LINE] },
+            xaxis: {
+              categories: ["월", "화", "수", "목", "금", "토", "일"],
+              labels: { show: false },
+              axisBorder: { show: false },
+              axisTicks: { show: false },
+            },
+            yaxis: { show: false },
+            grid: { show: false },
+            dataLabels: { enabled: false },
+            tooltip: { enabled: false },
+            fill: {
+              type: "gradient",
+              gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.3,
+                opacityTo: 0.07,
+                stops: [0, 100],
+                colorStops: [
+                  [
+                    { offset: 0, color: BLUE_GRADIENT_FROM, opacity: 0.3 },
+                    { offset: 100, color: BLUE_GRADIENT_TO, opacity: 0.07 },
+                  ],
+                ],
+              },
+            },
+            colors: [BLUE_MAIN],
           },
-          colors: [BLUE_MAIN],
-        },
-      }));
+        })
+      );
 
     fetchDisclosureList()
       .then((res) => setDisclosureData(Array.isArray(res.data) ? res.data : []))
@@ -230,8 +282,12 @@ export default function HomePage() {
       setIsAnimating(false);
       setNewsIndex((prev) =>
         dir === "up" || dir === "right"
-          ? prev === newsItems.length - 1 ? 0 : prev + 1
-          : prev === 0 ? newsItems.length - 1 : prev - 1
+          ? prev === newsItems.length - 1
+            ? 0
+            : prev + 1
+          : prev === 0
+          ? newsItems.length - 1
+          : prev - 1
       );
     }, 450);
   };
@@ -265,25 +321,28 @@ export default function HomePage() {
         </div>
         <div style={getSectionStyle(3)}>
           <AssetChart assetTrendData={assetTrendData} />
-          <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
+          <Card
+            className="mb-2 rounded-xl border-0 w-full"
+            style={{ maxWidth: "800px", margin: "0 auto" }}
+          />
         </div>
         <div style={getSectionStyle(4)}>
           <InfoTabs
             tab={tab}
             setTab={setTab}
-            disclosureData={disclosureData
-              .slice(0, 3)
-              .map((item) => {
-                return {
-                  id: item.disclosureId,
-                  title: item.disclosureTitle,
-                  date: item.disclosureDate,
-                };
-              })
-            }
-            earningCallData={earningCallData.slice(0, 3)}
+            disclosureData={disclosureData.slice(0, 3).map((item) => {
+              return {
+                id: item.disclosureId,
+                title: item.disclosureTitle,
+                date: item.disclosureDate,
+              };
+            })}
+            earningCallData={(earningCallData ?? []).slice(0, 3)}
           />
-          <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
+          <Card
+            className="mb-2 rounded-xl border-0 w-full"
+            style={{ maxWidth: "800px", margin: "0 auto" }}
+          />
         </div>
       </main>
       <BottomNavigation />
