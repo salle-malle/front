@@ -2,7 +2,9 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/src/components/ui/button";
-import { Calendar, Bell, ArrowLeft } from "lucide-react";
+import {ArrowLeft } from "lucide-react";
+import { HiBell } from "react-icons/hi";
+import { FaCalendar } from "react-icons/fa6";
 
 interface TopNavigationProps {
   showBackButton?: boolean;
@@ -30,40 +32,82 @@ export function TopNavigation({
 
   return (
     <nav
-      className={`flex justify-between items-center p-4 bg-white ${borderClass} ${shadowClass}`}
+      className={`flex justify-between items-center p-4 bg-gray-50 ${borderClass} ${shadowClass}`}
+      style={{ minHeight: 56 }}
     >
       <div className="flex items-center space-x-2">
         {showBackButton && (
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
+            style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
+            tabIndex={0}
+          >
+            <ArrowLeft width={28} height={28} className="text-gray-700" />
           </Button>
         )}
-        <div className="text-xl font-bold text-blue-600">{title}</div>
+        <div className="text-xl font-bold text-blue-600">
+          {title}
+        </div>
       </div>
       {showRightIcons && (
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 items-center" style={{ marginRight: 12 }}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/calendar")}
+            className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
+            style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
+            tabIndex={0}
           >
-            <Calendar
-              className={`h-5 w-5 transition-colors ${
-                isCalendarPage ? "text-blue-500 fill-blue-500" : "text-gray-600"
+            <FaCalendar
+              width={26}
+              height={26}
+              fill={isCalendarPage ? "#374151" : "#D1D5DB"}
+              stroke={isCalendarPage ? "#374151" : "#6B7280"}
+              className={`${
+                isCalendarPage
+                  ? "text-gray-700"
+                  : "text-gray-300"
               }`}
+              style={{
+                minWidth: 20,
+                minHeight: 20,
+                width: 20,
+                height: 20,
+                display: "block",
+                marginRight: 8,
+                marginTop: -2.5,
+              }}
             />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/notifications")}
+            className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
+            style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
+            tabIndex={0}
           >
-            <Bell
-              className={`h-5 w-5 transition-colors ${
+            <HiBell
+              width={26}
+              height={26}
+              fill={isNotificationPage ? "#374151" : "#D1D5DB"}
+              stroke={isNotificationPage ? "#374151" : "#6B7280"}
+              className={`${
                 isNotificationPage
-                  ? "text-blue-500 fill-blue-500"
-                  : "text-gray-600"
+                  ? "text-gray-700"
+                  : "text-gray-300"
               }`}
+              style={{
+                minWidth: 26,
+                minHeight: 26,
+                width: 26,
+                height: 26,
+                display: "block",
+              }}
             />
           </Button>
         </div>

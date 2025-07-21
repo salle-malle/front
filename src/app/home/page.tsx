@@ -280,7 +280,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation showBackButton title="" />
+      <TopNavigation title="" />
       <main className="flex-1 overflow-y-auto p-4 pb-20">
         <div style={getSectionStyle(0)}>
           <NewsSlider
