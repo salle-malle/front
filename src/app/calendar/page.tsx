@@ -13,9 +13,9 @@ import { Button } from "@/src/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 const scheduleData = {
-  "2024-01-15": [
-    { time: "09:00", event: "삼성전자 3분기 실적 발표" },
-    { time: "14:00", event: "SK하이닉스 컨퍼런스 콜" },
+  "2025-07-17": [
+    { time: "09:00", event: "애플 3분기 실적 발표" },
+    { time: "14:00", event: "엔비디아 컨퍼런스 콜" },
   ],
   "2024-01-20": [{ time: "10:00", event: "NAVER 주주총회" }],
   "2024-01-25": [{ time: "전일", event: "배당금 지급일" }],
