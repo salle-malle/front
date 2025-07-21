@@ -9,6 +9,11 @@ import NewsSlider from "@/src/components/ui/news-slider";
 import StockList from "@/src/components/ui/stock-list";
 import InfoTabs from "@/src/components/ui/info-tabs";
 import AssetSummary from "@/src/components/ui/asset-summary";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/ko";
+dayjs.extend(relativeTime);
+dayjs.locale("ko");
 
 export type NewsItem = { id: number; title: string; time: string; };
 export type StockItem = { ticker: number; name: string; avgPrice: number; profit_loss_amount: number; profit_loss_rate: number; quantity : number };
@@ -22,6 +27,13 @@ export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<stri
 export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
 export type DisclosureListResponse = { data: DisclosureItem[]; };
 export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
+
+// 날짜를 기준으로 "n일 전", "몇 시간 전" 등으로 변환하는 함수
+function getRelativeTime(dateString: string) {
+  // dateString이 ISO 형식이거나, "YYYY-MM-DD" 등으로 들어온다고 가정
+  // 만약 dateString이 "2024-06-01 12:00:00"처럼 들어오면, dayjs에서 파싱 가능
+  return dayjs(dateString).fromNow();
+}
 
 export async function fetchNewsList(): Promise<NewsListResponse> {
   const res = await fetch("/api/news");
@@ -297,7 +309,7 @@ export default function HomePage() {
                 return {
                   id: item.disclosureId,
                   title: item.disclosureTitle,
-                  date: item.disclosureDate,
+                  date: getRelativeTime(item.disclosureDate),
                 };
               })
             }
@@ -306,7 +318,7 @@ export default function HomePage() {
               .map((item) => ({
                 id: item.earningCallId,
                 title: item.name,
-                date: item.date,
+                date: getRelativeTime(item.date),
               }))
             }
           />
