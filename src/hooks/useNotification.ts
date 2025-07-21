@@ -3,7 +3,7 @@ import { toast } from "@/src/hooks/use-toast"; // 이미 작성된 커스텀 toa
 
 export default function useNotification(memberId: number) {
   useEffect(() => {
-    if (!memberId) return;
+    if (!memberId || memberId <= 0) return;
 
     const eventSource = new EventSource(
       `http://localhost:8080/api/v1/notifications/stream?memberId=${memberId}`
