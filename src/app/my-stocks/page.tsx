@@ -26,34 +26,6 @@ const getCompanyLogosByTicker = (stocks: StockItem[]): Record<string, string> =>
   return logos;
 };
 
-// SSR에서만 사용되는 함수, 클라이언트에서는 사용하지 않음
-async function fetchStockListSSR(): Promise<{ stocks: StockItem[]; companyLogos: CompanyLogos }> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
-    {
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-    }
-  );
-  if (!res.ok) {
-    return { stocks: [], companyLogos: {} };
-  }
-  const json = await res.json();
-  const stocksRaw = json.data?.stocks || json.data?.stockList || json.data || [];
-  const companyLogos = json.data?.companyLogos || {};
-
-  const stocks: StockItem[] = stocksRaw.map((item: any) => ({
-    ticker: item.pdno,
-    name: item.prdt_name,
-    quantity: item.quantity,
-    avgPrice: Math.round((Number(item.avg_price) + Number.EPSILON) * 100) / 100,
-    profit_loss_amount: Math.round((Number(item.profit_loss_amount) + Number.EPSILON) * 100) / 100,
-    profit_loss_rate: Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
-  }));
-  return { stocks, companyLogos };
-}
-
-// 클라이언트에서 사용할 fetch 함수
 async function fetchStockList(): Promise<{ stocks: StockItem[]; companyLogos: CompanyLogos }> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
@@ -152,7 +124,7 @@ export default function MyStocksPage() {
                 >
                   <div
                     className="flex items-center"
-                    style={{ gap: "12px", minWidth: "0", width: "160px" }}
+                    style={{ gap: "12px", minWidth: "0", width: "300px" }}
                   >
                     <img
                       src={companyLogos[stock.ticker.toString()] || ""}
@@ -169,7 +141,7 @@ export default function MyStocksPage() {
                         className="text-[#222] whitespace-nowrap overflow-hidden text-ellipsis"
                         style={{
                           fontSize: "14px",
-                          maxWidth: "120px",
+                          maxWidth: "240px",
                           lineHeight: "1.2",
                         }}
                         title={stock.name}

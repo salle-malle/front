@@ -15,13 +15,13 @@ export type StockItem = { ticker: number; name: string; avgPrice: number; profit
 export type AssetTrendPoint = number;
 export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
 export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
-export type EarningCallItem = { id: number; title: string; date: string; content: string; };
+export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
 
 export type NewsListResponse = { news: NewsItem[]; };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
 export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
 export type DisclosureListResponse = { data: DisclosureItem[]; };
-export type EarningCallListResponse = { earningCalls: EarningCallItem[]; };
+export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
 
 export async function fetchNewsList(): Promise<NewsListResponse> {
   const res = await fetch("/api/news");
@@ -75,9 +75,26 @@ const fetchDisclosureList = async (): Promise<DisclosureListResponse> => {
 }
 
 export async function fetchEarningCallList(): Promise<EarningCallListResponse> {
-  const res = await fetch("/api/earning-calls");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`, {
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
-  return res.json();
+  const jsonResponse = await res.json();
+  if (jsonResponse.code !== "EARNING-014") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
+
+  const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
+    earningCallId: item.id,
+    ticker: item.stockId,
+    date: item.earningCallDate,
+    name: item.stockName
+  }));
+
+  return {
+    data: {
+      earningCalls: mappedData
+    }
+  };
 }
 
 // 색상 상수
@@ -210,8 +227,12 @@ export default function HomePage() {
       .catch(() => setDisclosureData([]));
 
     fetchEarningCallList()
-      .then((res) => setEarningCallData(res.earningCalls))
-      .catch(() => setEarningCallData([]));
+      .then((res) => {
+        setEarningCallData(Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []);
+      })
+      .catch((err) => {
+        setEarningCallData([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -280,7 +301,14 @@ export default function HomePage() {
                 };
               })
             }
-            earningCallData={earningCallData.slice(0, 3)}
+            earningCallData={earningCallData
+              .slice(0, 3)
+              .map((item) => ({
+                id: item.earningCallId,
+                title: item.name,
+                date: item.date,
+              }))
+            }
           />
           <Card className="mb-2 rounded-xl border-0 w-full" style={{ maxWidth: "800px", margin: "0 auto" }} />
         </div>
