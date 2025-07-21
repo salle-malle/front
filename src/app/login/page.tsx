@@ -35,8 +35,10 @@ export default function LoginPage() {
       const responseBody = await res.json();
 
       const userStatus = responseBody.status;
+      const memberIdFromResponse = responseBody.data.memberId;
 
       setMember({
+        id: memberIdFromResponse,
         userIsLogin: userStatus,
       });
       console.log("로그인 성공", userStatus);
@@ -53,14 +55,12 @@ export default function LoginPage() {
         <div className="w-full max-w-xs flex flex-col gap-7">
           <form
             onSubmit={handleLogin}
-            className="w-full max-w-xs flex flex-col gap-7"
-          >
+            className="w-full max-w-xs flex flex-col gap-7">
             <div className="flex flex-row items-center">
               <Image src="/logo.png" alt="logo" width={50} height={50} />
               <span
                 className="text-2xl font-bold mt-2"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
+                style={{ fontFamily: "'Poppins', sans-serif" }}>
                 Bolle<span className="font-normal">malle</span>
               </span>
             </div>
@@ -86,8 +86,7 @@ export default function LoginPage() {
                 </Button>
                 <Button
                   className="bg-[#bad6ff5a] text-[#0064FF] w-full transition-colors duration-150 hover:bg-[#a0c6ff2d]"
-                  onClick={() => router.push("/signup")}
-                >
+                  onClick={() => router.push("/signup")}>
                   회원가입
                 </Button>
               </div>

@@ -1,3 +1,4 @@
 export interface Member {
-  userIsLogin: Boolean;
+  id: number;
+  userIsLogin: boolean;
 }
