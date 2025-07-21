@@ -58,7 +58,7 @@ export default function CalendarPage() {
             }
             newScheduleData[dateKey].push({
               time: "어닝콜",
-              event: `${call.stockName} (${call.stockId}) 실적 발표`,
+              event: `${call.ovrsItemName} (${call.stockId}) 실적 발표`,
             });
           });
           setScheduleData(newScheduleData);

@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import {
@@ -10,135 +11,295 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
-import { ArrowLeft, TrendingUp, Calendar, BarChart3 } from "lucide-react";
+import { Badge } from "@/src/components/ui/badge";
+import {
+  TrendingUp,
+  TrendingDown,
+  ArrowLeft,
+  BarChart3,
+  DollarSign,
+  Activity,
+} from "lucide-react";
+import {
+  OverseasStockDetail,
+  OverseasStockDetailResponse,
+} from "@/src/types/ApiResponse";
 
 export default function StockDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const stockCode = params.code as string;
 
-  // 임시 데이터
-  const stockData = {
-    name: "삼성전자",
-    code: stockCode,
-    price: 71500,
-    change: 1200,
-    changePercent: 1.71,
+  const [stockData, setStockData] = useState<OverseasStockDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStockDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/stock-detail`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ stockCode }),
+          }
+        );
+
+        if (response.ok) {
+          const data: OverseasStockDetailResponse = await response.json();
+          if (data.status && data.data.output) {
+            setStockData(data.data.output);
+          } else {
+            setError("주식 데이터를 불러올 수 없습니다.");
+          }
+        } else {
+          setError("API 요청에 실패했습니다.");
+        }
+      } catch (error) {
+        console.error("주식 상세 정보 가져오기 실패:", error);
+        setError("네트워크 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (stockCode) {
+      fetchStockDetail();
+    }
+  }, [stockCode]);
+
+  const formatNumber = (value: string) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "0";
+    return num.toLocaleString();
   };
 
-  const events = [
-    { date: "2024-01-15", event: "3분기 실적 발표" },
-    { date: "2024-01-20", event: "주주총회" },
-    { date: "2024-01-25", event: "배당금 지급" },
-  ];
+  const formatCurrency = (value: string) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "$0";
+    return `$${num.toLocaleString()}`;
+  };
 
-  const indicators = [
-    { name: "PER", value: "12.5" },
-    { name: "PBR", value: "1.2" },
-    { name: "ROE", value: "8.5%" },
-    { name: "배당수익률", value: "2.1%" },
-  ];
+  const getPriceChangeColor = (change: string) => {
+    const num = parseFloat(change);
+    if (isNaN(num)) return "text-gray-600";
+    return num >= 0 ? "text-red-500" : "text-blue-500";
+  };
+
+  const getPriceChangeIcon = (change: string) => {
+    const num = parseFloat(change);
+    if (isNaN(num)) return null;
+    return num >= 0 ? (
+      <TrendingUp className="h-4 w-4" />
+    ) : (
+      <TrendingDown className="h-4 w-4" />
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen">
+        <TopNavigation showBackButton={true} title="주식 상세" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">데이터를 불러오는 중...</div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  if (error || !stockData) {
+    return (
+      <div className="flex flex-col h-screen">
+        <TopNavigation showBackButton={true} title="주식 상세" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-red-500">
+            {error || "데이터를 불러올 수 없습니다."}
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-screen">
-      <TopNavigation />
+    <div className="flex flex-col h-screen bg-gray-50">
+      <TopNavigation
+        showBackButton={true}
+        title={stockData.etyp_nm || stockCode}
+      />
 
-      <div className="flex items-center p-4 border-b">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="ml-2">
-          <h1 className="font-bold">{stockData.name}</h1>
-          <p className="text-sm text-gray-600">{stockData.code}</p>
-        </div>
-      </div>
-
-      <main className="flex-1 overflow-y-auto p-4 pb-20">
-        {/* 현재 주가 */}
-        <Card className="mb-4">
-          <CardContent className="pt-6">
-            <div className="text-3xl font-bold">
-              ₩{stockData.price.toLocaleString()}
+      <main className="flex-1 overflow-y-auto pb-20">
+        {/* 주가 정보 카드 */}
+        <Card className="m-4">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  {stockData.etyp_nm || stockCode}
+                </h2>
+                <p className="text-sm text-gray-600">{stockCode}</p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {stockData.eicod || "해외주식"}
+              </Badge>
             </div>
-            <div
-              className={`flex items-center text-lg ${
-                stockData.change >= 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              <TrendingUp className="h-5 w-5 mr-1" />+{stockData.changePercent}%
-              (+₩{stockData.change.toLocaleString()})
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* 현재가 */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">현재가</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(stockData.txprc)}
+                  </p>
+                </div>
+                <div
+                  className={`flex items-center space-x-1 ${getPriceChangeColor(
+                    stockData.txrat
+                  )}`}
+                >
+                  {getPriceChangeIcon(stockData.txrat)}
+                  <span className="text-lg font-semibold">
+                    {stockData.txrat}%
+                  </span>
+                </div>
+              </div>
+
+              {/* 등락폭 */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">등락폭</span>
+                <span
+                  className={`font-semibold ${getPriceChangeColor(
+                    stockData.txdif
+                  )}`}
+                >
+                  {formatCurrency(stockData.txdif)}
+                </span>
+              </div>
+
+              {/* 거래량 */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">거래량</span>
+                <span className="font-semibold">
+                  {formatNumber(stockData.pvol)}
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* 보유손익 */}
-        <Card className="mb-4">
+        {/* 가격 정보 카드 */}
+        <Card className="m-4">
           <CardHeader>
-            <CardTitle className="text-lg">보유손익</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              <DollarSign className="h-5 w-5 mr-2" />
+              가격 정보
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-600">보유수량</div>
-                <div className="text-lg font-bold">10주</div>
+                <p className="text-sm text-gray-600">시가</p>
+                <p className="font-semibold">
+                  {formatCurrency(stockData.open)}
+                </p>
               </div>
               <div>
-                <div className="text-sm text-gray-600">평가손익</div>
-                <div className="text-lg font-bold text-green-600">+₩12,000</div>
+                <p className="text-sm text-gray-600">고가</p>
+                <p className="font-semibold text-red-500">
+                  {formatCurrency(stockData.high)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">저가</p>
+                <p className="font-semibold text-blue-500">
+                  {formatCurrency(stockData.low)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">전일종가</p>
+                <p className="font-semibold">
+                  {formatCurrency(stockData.pxprc)}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* 주가 차트 */}
-        <Card className="mb-4">
+        {/* 투자 지표 카드 */}
+        <Card className="m-4">
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
               <BarChart3 className="h-5 w-5 mr-2" />
-              주가 차트
+              투자 지표
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
-              <p className="text-gray-500">차트 영역</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 다가올 주요 이벤트 */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              다가올 주요 이벤트
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {events.map((event, index) => (
-              <div key={index} className="flex justify-between items-center">
-                <div className="font-medium">{event.event}</div>
-                <div className="text-sm text-gray-600">{event.date}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* 주요 지표 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">주요 지표</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {indicators.map((indicator, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-sm text-gray-600">{indicator.name}</div>
-                  <div className="text-lg font-bold">{indicator.value}</div>
-                </div>
-              ))}
+              <div>
+                <p className="text-sm text-gray-600">PER</p>
+                <p className="font-semibold">{stockData.perx || "-"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">PBR</p>
+                <p className="font-semibold">{stockData.pbrx || "-"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">EPS</p>
+                <p className="font-semibold">{stockData.epsx || "-"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">BPS</p>
+                <p className="font-semibold">{stockData.bpsx || "-"}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* 52주 정보 카드 */}
+        <Card className="m-4">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Activity className="h-5 w-5 mr-2" />
+              52주 정보
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">52주 최고가</span>
+                <span className="font-semibold text-red-500">
+                  {formatCurrency(stockData.h52p)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">52주 최저가</span>
+                <span className="font-semibold text-blue-500">
+                  {formatCurrency(stockData.l52p)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">시가총액</span>
+                <span className="font-semibold">
+                  {formatNumber(stockData.mcap)}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 매매 버튼 */}
+        <div className="m-4 space-y-3">
+          <Button className="w-full bg-red-500 hover:bg-red-600">매수</Button>
+          <Button className="w-full bg-blue-500 hover:bg-blue-600">매도</Button>
+        </div>
       </main>
 
       <BottomNavigation />
