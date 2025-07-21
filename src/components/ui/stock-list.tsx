@@ -15,25 +15,19 @@ export default function StockList({
 }) {
   const router = useRouter();
 
-  // 수익금액 표시를 위한 함수
   const getProfitLossAmountString = (amount: number) => {
     if (amount > 0) return `+${amount.toLocaleString()}`;
     if (amount < 0) return `-${Math.abs(amount).toLocaleString()}`;
-    // 0일 때는 부호 없이 0만 표시
     return "0";
   };
 
-  // 수익률 표시를 위한 함수
   const getProfitLossRateString = (rate: number) => {
     if (rate > 0) return `+${rate}%`;
     if (rate < 0) return `-${Math.abs(rate)}%`;
-    // 0일 때는 부호 없이 0%만 표시
     return "0%";
   };
 
-  // 수익금액/수익률 색상: -인 경우 파랑, +/0인 경우 빨강 (둘이 항상 동일)
   const getProfitLossColorClass = (amount: number, rate: number) => {
-    // 음수면 파랑, 아니면 빨강
     if (amount < 0 || rate < 0) {
       return "text-[#3182f6]";
     }
@@ -70,7 +64,6 @@ export default function StockList({
                   ...(idx === stocks.length - 1 ? { marginBottom: "12px" } : {}),
                 }}
               >
-                {/* 왼쪽: 로고 + 주식명 + 수량 */}
                 <div
                   className="flex items-center"
                   style={{ gap: "12px", minWidth: "0", width: "160px" }}
@@ -109,7 +102,6 @@ export default function StockList({
                     </span>
                   </div>
                 </div>
-                {/* 가운데: 빈 영역 */}
                 <div
                   className="flex items-center justify-center"
                   style={{
@@ -118,9 +110,7 @@ export default function StockList({
                     textAlign: "right",
                   }}
                 >
-                  {/* 빈 영역 */}
                 </div>
-                {/* 오른쪽: 평단가 + 수익금액/수익률 */}
                 <div
                   className="flex flex-col items-end justify-end"
                   style={{
@@ -139,7 +129,6 @@ export default function StockList({
                     className={`text-[11px] flex items-center font-medium mt-0.5 ${profitLossColor}`}
                     style={{ background: "none" }}
                   >
-                    {/* 수익금액 + (수익률) */}
                     {getProfitLossAmountString(stock.profit_loss_amount)}&nbsp;(
                     {getProfitLossRateString(stock.profit_loss_rate)})
                   </span>
@@ -155,8 +144,9 @@ export default function StockList({
               보유 주식
             </span>
             <span
-              className="text-[11px] text-gray-500 flex items-center ml-auto"
+              className="text-[11px] text-gray-500 flex items-center ml-auto hover:cursor-pointer hover:bg-gray-200 rounded-sm"
               style={{ marginRight: "-17px" }}
+              onClick={() => router.push(`/my-stocks`)}
             >
               더보기
               <svg

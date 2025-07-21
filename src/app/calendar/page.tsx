@@ -15,7 +15,7 @@ import { EarningCall, EarningCallResponse } from "@/src/types/ApiResponse";
 
 export default function CalendarPage() {
   const today = new Date();
-  const todayString = today.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+  const todayString = today.toISOString().split("T")[0];
 
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [currentMonth, setCurrentMonth] = useState(
