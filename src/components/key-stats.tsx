@@ -6,7 +6,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { BarChart3, DollarSign, Activity, TrendingUp } from "lucide-react";
+import {
+  BarChart3,
+  DollarSign,
+  Activity,
+  TrendingUp,
+  Percent,
+  Target,
+} from "lucide-react";
 import type { OverseasStockDetail } from "@/src/types/ApiResponse";
 
 interface KeyStatsProps {
@@ -36,7 +43,20 @@ export function KeyStats({ stockData }: KeyStatsProps) {
     return `$${num.toLocaleString()}`;
   };
 
-  const stats = [
+  const formatRatio = (value: string) => {
+    const num = Number.parseFloat(value);
+    if (isNaN(num)) return "-";
+    return num.toFixed(2);
+  };
+
+  const formatPercent = (value: string) => {
+    const num = Number.parseFloat(value);
+    if (isNaN(num)) return "0.00%";
+    return `${num.toFixed(2)}%`;
+  };
+
+  // 주요 지표
+  const keyMetrics = [
     {
       icon: <DollarSign className="h-5 w-5" />,
       title: "시가총액",
@@ -45,9 +65,9 @@ export function KeyStats({ stockData }: KeyStatsProps) {
     },
     {
       icon: <Activity className="h-5 w-5" />,
-      title: "거래량",
-      value: formatNumber(stockData.pvol),
-      subtitle: "Volume",
+      title: "자본금",
+      value: formatLargeNumber(stockData.mcap),
+      subtitle: "Capital",
     },
     {
       icon: <TrendingUp className="h-5 w-5 text-red-500" />,
@@ -65,90 +85,69 @@ export function KeyStats({ stockData }: KeyStatsProps) {
     },
   ];
 
-  const ratios = [
-    { label: "PER", value: stockData.perx || "-", description: "주가수익비율" },
+  // 투자 비율
+  const investmentRatios = [
+    {
+      label: "P/E Ratio",
+      value: formatRatio(stockData.perx),
+      description: "주가수익비율",
+      icon: <Target className="h-4 w-4" />,
+    },
+    {
+      label: "EPS",
+      value: formatCurrency(stockData.epsx),
+      description: "주당순이익",
+      icon: <DollarSign className="h-4 w-4" />,
+    },
+    {
+      label: "Dividend Yield",
+      value: formatPercent("2.5"), // 임시 데이터
+      description: "배당수익률",
+      icon: <Percent className="h-4 w-4" />,
+    },
     {
       label: "PBR",
-      value: stockData.pbrx || "-",
+      value: formatRatio(stockData.pbrx),
       description: "주가순자산비율",
+      icon: <BarChart3 className="h-4 w-4" />,
     },
-    { label: "EPS", value: stockData.epsx || "-", description: "주당순이익" },
-    { label: "BPS", value: stockData.bpsx || "-", description: "주당순자산" },
   ];
 
-  const priceData = [
-    {
-      label: "시가",
-      value: formatCurrency(stockData.base),
-      color: "text-gray-900",
-    },
-    {
-      label: "고가",
-      value: formatCurrency(stockData.high),
-      color: "text-red-500",
-    },
-    {
-      label: "저가",
-      value: formatCurrency(stockData.low),
-      color: "text-blue-500",
-    },
-    {
-      label: "전일종가",
-      value: formatCurrency(stockData.last || stockData.pxprc),
-      color: "text-gray-900",
-    },
-  ];
+  // 52주 범위
+  const weekRange = {
+    high: formatCurrency(stockData.h52p),
+    low: formatCurrency(stockData.l52p),
+    current: formatCurrency(stockData.base || stockData.txprc),
+  };
 
   return (
     <div className="mx-4 mt-4 space-y-4">
-      {/* 핵심 통계 */}
+      {/* 주요 지표 */}
       <Card className="shadow-sm border-0 bg-white">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center text-gray-900">
             <BarChart3 className="h-5 w-5 mr-2" />
-            핵심 지표
+            주요 지표
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
-            {stats.map((stat, index) => (
+            {keyMetrics.map((metric, index) => (
               <div key={index} className="flex items-start space-x-3">
-                <div className="p-2 bg-gray-50 rounded-lg">{stat.icon}</div>
+                <div className="p-2 bg-gray-50 rounded-lg">{metric.icon}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {stat.title}
+                    {metric.title}
                   </p>
                   <p
                     className={`text-lg font-bold ${
-                      stat.valueColor || "text-gray-900"
+                      metric.valueColor || "text-gray-900"
                     }`}
                   >
-                    {stat.value}
+                    {metric.value}
                   </p>
-                  <p className="text-xs text-gray-500">{stat.subtitle}</p>
+                  <p className="text-xs text-gray-500">{metric.subtitle}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 가격 정보 */}
-      <Card className="shadow-sm border-0 bg-white">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center text-gray-900">
-            <DollarSign className="h-5 w-5 mr-2" />
-            가격 정보
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            {priceData.map((item, index) => (
-              <div key={index} className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">{item.label}</span>
-                <span className={`font-semibold ${item.color}`}>
-                  {item.value}
-                </span>
               </div>
             ))}
           </div>
@@ -165,11 +164,14 @@ export function KeyStats({ stockData }: KeyStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
-            {ratios.map((ratio, index) => (
+            {investmentRatios.map((ratio, index) => (
               <div
                 key={index}
                 className="text-center p-3 bg-gray-50 rounded-lg"
               >
+                <div className="flex items-center justify-center mb-2 text-gray-600">
+                  {ratio.icon}
+                </div>
                 <p className="text-xs text-gray-500 mb-1">
                   {ratio.description}
                 </p>

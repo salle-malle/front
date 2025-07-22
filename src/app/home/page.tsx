@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { Card } from "@/src/components/ui/card";
@@ -29,7 +30,6 @@ export type AssetTrendPoint = number;
 export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
 export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
 export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
-
 export type NewsListResponse = { news: NewsItem[]; };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
 export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
@@ -40,13 +40,39 @@ function getRelativeTime(dateString: string) {
   return dayjs(dateString).fromNow();
 }
 
-export async function fetchNewsList(): Promise<NewsListResponse> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`);
-  
-  if (!res.ok) throw new Error("뉴스 데이터를 불러오지 못했습니다.");
+let hasRedirectedToLogin = false;
 
-  const jsonResponse = await res.json();
-  const news : NewsItem[] = jsonResponse.data.map((item: any) => ({
+async function fetchWithAuthCheck<T>(
+  input: RequestInfo,
+  init: RequestInit = {},
+  router: ReturnType<typeof useRouter>
+): Promise<T> {
+  const res = await fetch(input, init);
+  let jsonResponse: any;
+  try {
+    jsonResponse = await res.json();
+  } catch (e) {
+    throw new Error("서버 응답이 올바르지 않습니다.");
+  }
+  if (jsonResponse.code === "AUTH-002") {
+    if (!hasRedirectedToLogin) {
+      hasRedirectedToLogin = true;
+      router.replace("/login");
+    }
+  }
+  if (!res.ok) {
+    throw new Error(jsonResponse?.message || "데이터를 불러오지 못했습니다.");
+  }
+  return jsonResponse;
+}
+
+export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promise<NewsListResponse> {
+  const jsonResponse = await fetchWithAuthCheck<any>(
+    `${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`,
+    {},
+    router
+  );
+  const news: NewsItem[] = (jsonResponse.data || []).map((item: any) => ({
     id: item.id,
     title: item.newsTitle,
     time: getRelativeTime(item.newsDate),
@@ -54,23 +80,21 @@ export async function fetchNewsList(): Promise<NewsListResponse> {
   return { news };
 }
 
-export async function fetchStockList(): Promise<StockListResponse> {
-  const res = await fetch(
+export async function fetchStockList(router: ReturnType<typeof useRouter>): Promise<StockListResponse> {
+  const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
     {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-    }
+    },
+    router
   );
-  if (!res.ok) throw new Error("종목 데이터를 불러오지 못했습니다.");
-  const jsonResponse = await res.json();
   const stocksRaw =
     jsonResponse.data?.stocks ||
     jsonResponse.data?.stockList ||
     jsonResponse.data ||
     [];
   const companyLogos = jsonResponse.data?.companyLogos || {};
-
   const summary = jsonResponse.data?.summary || undefined;
 
   const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
@@ -92,34 +116,38 @@ export async function fetchStockList(): Promise<StockListResponse> {
   };
 }
 
-export async function fetchAssetTrend(): Promise<AssetTrendResponse> {
-  const res = await fetch("/api/asset-trend");
-  if (!res.ok) throw new Error("자산 추이 데이터를 불러오지 못했습니다.");
-  return res.json();
+export async function fetchAssetTrend(router: ReturnType<typeof useRouter>): Promise<AssetTrendResponse> {
+  const jsonResponse = await fetchWithAuthCheck<any>(
+    "/api/asset-trend",
+    {},
+    router
+  );
+  return jsonResponse;
 }
 
-const fetchDisclosureList = async (): Promise<DisclosureListResponse> => {
-  const res = await fetch(
+const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promise<DisclosureListResponse> => {
+  const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/disclosure/my-current-disclosure`,
     {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-    }
+    },
+    router
   );
-  if (!res.ok) throw new Error("공시 데이터를 불러오지 못했습니다.");
-  const jsonResponse = await res.json();
   if (jsonResponse.code !== "DISCLOSURE-001")
     throw new Error("공시 데이터를 불러오지 못했습니다.");
   return jsonResponse;
 };
 
-export async function fetchEarningCallList(): Promise<EarningCallListResponse> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
-  const jsonResponse = await res.json();
+export async function fetchEarningCallList(router: ReturnType<typeof useRouter>): Promise<EarningCallListResponse> {
+  const jsonResponse = await fetchWithAuthCheck<any>(
+    `${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`,
+    {
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    },
+    router
+  );
   if (jsonResponse.code !== "EARNING-014") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
 
   const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
@@ -197,16 +225,20 @@ export default function HomePage() {
   const sectionCount = 5;
   const mountedIndexes = useStaggeredMount(sectionCount, 60);
 
+  const router = useRouter();
+
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
-    fetchNewsList()
+    // 로그인 리다이렉트 중복 방지 초기화
+    hasRedirectedToLogin = false;
+
+    fetchNewsList(router)
       .then((res) => setNewsItems(Array.isArray(res.news) ? res.news : []))
       .catch(() => setNewsItems([]));
 
-
-    fetchStockList()
+    fetchStockList(router)
       .then((res) => {
         setStocks(res.stocks);
         setLogos(getCompanyLogosByTicker(res.stocks));
@@ -216,13 +248,13 @@ export default function HomePage() {
           setAssetAmount(0);
         }
       })
-      .catch((err) => {
+      .catch(() => {
         setStocks([]);
         setLogos({});
         setAssetAmount(0);
       });
 
-    fetchAssetTrend()
+    fetchAssetTrend(router)
       .then((res) => setAssetTrendData(res.assetTrendData))
       .catch(() =>
         setAssetTrendData({
@@ -267,18 +299,18 @@ export default function HomePage() {
         })
       );
 
-    fetchDisclosureList()
+    fetchDisclosureList(router)
       .then((res) => setDisclosureData(Array.isArray(res.data) ? res.data : []))
       .catch(() => setDisclosureData([]));
 
-    fetchEarningCallList()
+    fetchEarningCallList(router)
       .then((res) => {
         setEarningCallData(Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []);
       })
-      .catch((err) => {
+      .catch(() => {
         setEarningCallData([]);
       });
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (newsItems.length === 0) return;
@@ -343,7 +375,6 @@ export default function HomePage() {
           <InfoTabs
             tab={tab}
             setTab={setTab}
-
             disclosureData={disclosureData
               .slice(0, 3)
               .map((item) => {

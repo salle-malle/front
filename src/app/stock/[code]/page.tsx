@@ -5,9 +5,9 @@ import { useParams } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { StockHeader } from "@/src/components/stock-header";
-
 import { KeyStats } from "@/src/components/key-stats";
-
+import { UpcomingEvents } from "@/src/components/upcoming-events";
+import { StockChart } from "@/src/components/stock-chart";
 import { NewsSection } from "@/src/components/news-section";
 import type {
   OverseasStockDetail,
@@ -101,7 +101,13 @@ export default function EnhancedStockDetailPage() {
         {/* Stock Header - 종목명, 현재가, 등락률 */}
         <StockHeader stockData={stockData} stockCode={stockCode} />
 
-        {/* Key Statistics - 핵심 투자 지표 요약 */}
+        {/* 다가올 주요 이벤트 */}
+        <UpcomingEvents stockCode={stockCode} />
+
+        {/* 주가 차트 */}
+        <StockChart stockCode={stockCode} />
+
+        {/* 주요 지표 */}
         <KeyStats stockData={stockData} />
 
         {/* News Section - 관련 뉴스 */}

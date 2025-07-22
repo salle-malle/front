@@ -4,11 +4,6 @@ import { toast } from "@/src/hooks/use-toast"; // 이미 작성된 커스텀 toa
 export default function useNotification(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
-    // if (!memberId || memberId <= 0) return;
-
-    // const eventSource = new EventSource(
-    //   `http://localhost:8080/api/v1/notifications/stream?memberId=${memberId}`
-    // );
 
     const eventSource = new EventSource(
       "http://localhost:8080/api/v1/notifications/stream",
@@ -24,6 +19,17 @@ export default function useNotification(enabled: boolean) {
       toast({
         title: "🔔 새로운 알림",
         description: event.data,
+        action: (
+          <div
+            onClick={() => (window.location.href = "/notifications")}
+            style={{
+              position: "absolute",
+              inset: 0,
+              cursor: "pointer",
+              zIndex: 10,
+            }}
+          />
+        ),
       });
     };
 
