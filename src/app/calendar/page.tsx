@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import {
@@ -14,18 +15,36 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { EarningCall, EarningCallResponse } from "@/src/types/ApiResponse";
 
 export default function CalendarPage() {
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
+
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
 
-  const [selectedDate, setSelectedDate] = useState(todayString);
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1)
-  );
+  const [selectedDate, setSelectedDate] = useState(dateParam || todayString);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (dateParam) {
+      const targetDate = new Date(dateParam);
+      return new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    }
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
   const [earningCalls, setEarningCalls] = useState<EarningCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<
     Record<string, Array<{ time: string; event: string }>>
   >({});
+
+  // URL 파라미터가 변경되면 선택된 날짜와 현재 월 업데이트
+  useEffect(() => {
+    if (dateParam) {
+      setSelectedDate(dateParam);
+      const targetDate = new Date(dateParam);
+      setCurrentMonth(
+        new Date(targetDate.getFullYear(), targetDate.getMonth(), 1)
+      );
+    }
+  }, [dateParam]);
 
   // API에서 어닝콜 데이터 가져오기
   useEffect(() => {

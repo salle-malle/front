@@ -166,7 +166,7 @@ export function UpcomingEvents({ stockCode }: UpcomingEventsProps) {
               className={`flex items-center justify-between p-3 rounded-lg border ${getEventColor(
                 event.type
               )} cursor-pointer hover:opacity-80 transition-opacity`}
-              onClick={() => router.push("/calendar")}
+              onClick={() => router.push(`/calendar?date=${event.date}`)}
             >
               <div className="flex items-center space-x-3">
                 <span className="text-lg">{getEventIcon(event.type)}</span>
