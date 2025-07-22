@@ -65,7 +65,6 @@ export default function ProfilePage() {
 
       router.replace("/login");
     } catch (err) {
-      console.error("로그아웃 실패:", err);
       alert("로그아웃 중 오류가 발생했습니다.");
     }
   };
