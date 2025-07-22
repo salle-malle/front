@@ -59,7 +59,6 @@ async function fetchWithAuthCheck<T>(
       hasRedirectedToLogin = true;
       router.replace("/login");
     }
-    throw new Error("로그인이 필요합니다.");
   }
   if (!res.ok) {
     throw new Error(jsonResponse?.message || "데이터를 불러오지 못했습니다.");

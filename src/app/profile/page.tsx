@@ -32,19 +32,23 @@ export default function ProfilePage() {
           }
         );
 
-        if (!res.ok) throw new Error("마이페이지 조회 실패");
+        let json: any;
+        json = await res.json();
 
-        const json = await res.json();
+        if (json.code === "AUTH-002") {
+          router.replace("/login");
+          return;
+        }
+
         setNickname(json.data.nickname);
         setInvestmentType(json.data.investmentType);
       } catch (err) {
-        console.error(err);
-        alert("사용자 정보를 불러오지 못했습니다.");
+        alert("프로필 정보를 불러오는 중 오류가 발생했습니다.");
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [router]);
 
   const handleEditNickname = () => {
     router.push("/profile/edit-nickname");
@@ -85,7 +89,8 @@ export default function ProfilePage() {
             rotate: [0, 1, -1, 0],
             transition: { duration: 0.6 },
           }}
-          className="relative mt-6 mb-6">
+          className="relative mt-6 mb-6"
+        >
           <div className="absolute inset-0 rounded-full blur-2xl opacity-40 bg-gradient-to-tr from-blue-400 to-purple-500 animate-pulse"></div>
           <Avatar className="w-32 h-32 border-4 border-white shadow-lg z-10 relative">
             <AvatarImage src="/placeholder.svg" alt="프로필 이미지" />
@@ -95,7 +100,9 @@ export default function ProfilePage() {
 
         {/* 유저 정보 */}
         <div className="text-center mb-6">
-          <h2 className="text-xl font-semibold">{nickname || "로딩 중..."}</h2>
+          <h2 className="text-xl font-semibold">
+            {nickname || "로딩 중..."}
+          </h2>
           <p className="text-gray-500 text-sm">
             {investmentType ? `${investmentType} 투자자` : " "}
           </p>
@@ -109,7 +116,11 @@ export default function ProfilePage() {
                 <Pencil className="w-5 h-5 text-gray-600" />
                 <span className="text-base font-medium">닉네임 수정</span>
               </div>
-              <Button variant="outline" size="sm" onClick={handleEditNickname}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEditNickname}
+              >
                 변경
               </Button>
             </CardContent>
@@ -121,7 +132,11 @@ export default function ProfilePage() {
                 <RefreshCcw className="w-5 h-5 text-gray-600" />
                 <span className="text-base font-medium">투자 성향 재선택</span>
               </div>
-              <Button variant="outline" size="sm" onClick={handleChangeType}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChangeType}
+              >
                 선택
               </Button>
             </CardContent>
@@ -135,7 +150,11 @@ export default function ProfilePage() {
                 <LogOut className="w-5 h-5 text-gray-600" />
                 <span className="text-base font-medium">로그아웃</span>
               </div>
-              <Button variant="destructive" size="sm" onClick={handleLogout}>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleLogout}
+              >
                 로그아웃
               </Button>
             </CardContent>
