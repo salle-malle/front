@@ -17,16 +17,20 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
     return `$${num.toFixed(2)}`;
   };
 
-  const formatNumber = (value: string) => {
+  const formatLargeNumber = (value: string) => {
     const num = Number.parseFloat(value);
     if (isNaN(num)) return "0";
-    return num.toLocaleString();
+
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toLocaleString()}`;
   };
 
   const getPriceChangeData = () => {
-    const currentPrice = Number.parseFloat(stockData.base || stockData.txprc);
+    const currentPrice = Number.parseFloat(stockData.last);
     const changePercent = Number.parseFloat(stockData.txrat);
-    const prevPrice = Number.parseFloat(stockData.last || stockData.pxprc);
+    const prevPrice = Number.parseFloat(stockData.base);
     const changeAmount = currentPrice - prevPrice;
 
     const isPositive = changePercent >= 0;
@@ -64,7 +68,10 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
               {stockCode}
             </p>
           </div>
-          <Badge variant="secondary" className="text-xs font-medium">
+          <Badge
+            variant="secondary"
+            className="text-xs font-medium whitespace-nowrap"
+          >
             {stockData.eicod || "해외주식"}
           </Badge>
         </div>
@@ -73,7 +80,7 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
-              {formatCurrency(stockData.base || stockData.txprc)}
+              {formatCurrency(stockData.last || stockData.txprc)}
             </p>
             <p className="text-sm text-gray-500">현재가</p>
           </div>
@@ -103,9 +110,9 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
             </div>
             <div className="h-8 w-px bg-gray-200"></div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">거래량</p>
+              <p className="text-xs text-gray-500 mb-1">자본금</p>
               <p className="font-semibold text-gray-900">
-                {formatNumber(stockData.pvol)}
+                {formatLargeNumber(stockData.mcap)}
               </p>
             </div>
           </div>
