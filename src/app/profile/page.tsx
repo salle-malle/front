@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [investmentType, setInvestmentType] = useState("");
   const { clearMember } = useMemberStore();
   const router = useRouter();
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -112,7 +113,7 @@ export default function ProfilePage() {
               className="bg-gray-100 hover:bg-gray-200"
               variant="ghost"
               size="sm"
-              onClick={handleEditNickname}>
+              onClick={() => setShowNicknameModal(true)}>
               변경
             </Button>
           </li>
@@ -144,6 +145,53 @@ export default function ProfilePage() {
           </li>
         </ul>
       </main>
+      {showNicknameModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl p-6 shadow-lg w-80">
+            <h3 className="text-lg font-semibold mb-3">닉네임 수정</h3>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="w-full border rounded-md p-2 text-sm mb-4"
+              placeholder="새 닉네임을 입력하세요"
+            />
+            <div className="flex justify-end space-x-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowNicknameModal(false)}>
+                취소
+              </Button>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `${process.env.NEXT_PUBLIC_BACK_API_URL}/mypage/nickname`,
+                      {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nickname }),
+                      }
+                    );
+
+                    if (!res.ok) throw new Error("닉네임 수정 실패");
+
+                    alert("닉네임이 변경되었습니다!");
+                    setShowNicknameModal(false);
+                  } catch (err) {
+                    console.error(err);
+                    alert("닉네임 변경 중 오류가 발생했습니다.");
+                  }
+                }}>
+                저장
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNavigation />
     </div>
