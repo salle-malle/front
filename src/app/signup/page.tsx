@@ -1,5 +1,6 @@
 "use client";
 
+import { useSignupStore } from "@/src/stores/signupStore";
 import { useState } from "react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -8,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function SignupLandingPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const { name, setName } = useSignupStore();
   const [focus, setFocus] = useState(false);
 
   const getUnderlineClass = (isFocused: boolean, value: string) => {

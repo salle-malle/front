@@ -5,15 +5,63 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { useRouter } from "next/navigation";
+import { useSignupStore } from "@/src/stores/signupStore";
 
 export default function AccountRegisterPage() {
   const router = useRouter();
-  const [accountNumber, setAccountNumber] = useState("");
-  const [appKey, setAppKey] = useState("");
   const [focusAppKey, setFocusAppKey] = useState(false);
   const [focusAccountNumber, setFocusAccountNumber] = useState(false);
-  const [appSecret, setAppSecret] = useState("");
   const [focusAppSecret, setFocusAppSecret] = useState(false);
+
+  const {
+    accountNumber,
+    setAccountNumber,
+    appKey,
+    setAppKey,
+    appSecret,
+    setAppSecret,
+    name,
+    nickname,
+    phoneNumber,
+    userId,
+    password,
+  } = useSignupStore();
+
+
+  const fetchSignup = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/auth/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 반드시 필요
+          body: JSON.stringify({
+            userId,
+            nickname,
+            password,
+            phoneNumber,
+            name,
+            accountNumber,
+            appKey,
+            appSecret,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.code === "AUTH-005") {
+        router.push("/home");
+      } else {
+        alert(data.message || "회원가입에 실패했습니다.");
+      }
+    } catch (error) {
+      alert("회원가입 중 오류가 발생했습니다.");
+    }
+  };
 
   const getUnderlineClass = (isFocused: boolean, value: string) => {
     return (isFocused || value !== "")
@@ -106,7 +154,7 @@ export default function AccountRegisterPage() {
           <label
             style={{ color: getLabelColor(focusAppSecret, appSecret) }}
             className="block text-sm font-medium mt-10 mb-1"
-            htmlFor="authCode"
+            htmlFor="appSecret"
           >
             APP SECRET
           </label>
@@ -147,10 +195,11 @@ export default function AccountRegisterPage() {
 
       <div className="mb-9 flex justify-center">
         <Button
-          onClick={() => router.push("/signup/")}
+          onClick={fetchSignup}
+          disabled={!accountNumber || !appKey || !appSecret}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
         >
-          다음
+          완료
         </Button>
       </div>
     </div>

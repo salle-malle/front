@@ -5,13 +5,11 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { useRouter } from "next/navigation";
+import { useSignupStore } from "@/src/stores/signupStore";
 
 export default function UserAccountPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState("");
-  const [password, setPassword] = useState("");
-  const [nickname, setNickname] = useState("");
-
+  const { userId, setUserId, password, setPassword, nickname, setNickname } = useSignupStore();
   const [focusUserId, setFocusUserId] = useState(false);
   const [focusPassword, setFocusPassword] = useState(false);
   const [focusNickname, setFocusNickname] = useState(false);
@@ -32,7 +30,7 @@ export default function UserAccountPage() {
             className="text-lg text-black mt-10 mb-[75px]"
             style={{ fontWeight: 500 }}
           >
-            사용하실 계정을 알려주세요
+            이거 맞아?
           </p>
           <p
             className="text-xs text-[#848A92] mt-[-70px] mb-[60px]"

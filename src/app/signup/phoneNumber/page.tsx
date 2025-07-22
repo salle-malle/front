@@ -5,15 +5,15 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { useRouter } from "next/navigation";
+import { useSignupStore } from "@/src/stores/signupStore";
 
 export default function PhoneNumberPage() {
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [authCode, setAuthCode] = useState("");
   const [focusNumber, setFocusNumber] = useState(false);
   const [focusCode, setFocusCode] = useState(false);
+  const { phoneNumber, setPhoneNumber } = useSignupStore();
 
-  // 입력값이 있거나 포커스일 때 파란색, 아니면 회색
   const getUnderlineClass = (isFocused: boolean, value: string) => {
     return (isFocused || value !== "")
       ? "border-[#2978EE]"
