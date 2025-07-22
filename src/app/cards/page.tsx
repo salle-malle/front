@@ -1,183 +1,210 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-
-const cardData = {
-  "2024-01-15": [
-    {
-      id: 1,
-      title: "애플 3분기 실적 분석",
-      content: "매출 76조원으로 전년 동기 대비 12% 증가",
-      image: "/placeholder.svg?height=200&width=300",
-      tags: ["실적", "반도체"],
-    },
-    {
-      id: 2,
-      title: "메모리 반도체 시장 전망",
-      content: "2024년 하반기 회복세 전망",
-      image: "/placeholder.svg?height=200&width=300",
-      tags: ["시장분석", "반도체"],
-    },
-  ],
-  "2024-01-16": [
-    {
-      id: 3,
-      title: "AI 반도체 수요 급증",
-      content: "ChatGPT 열풍으로 AI 칩 수요 폭증",
-      image: "/placeholder.svg?height=200&width=300",
-      tags: ["AI", "반도체"],
-    },
-  ],
-};
+import { DualSelector } from "@/src/components/ui/DualSelector";
+import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
+import { CardViewer } from "@/src/components/ui/CardViewer";
+import { SnapshotCard } from "@/src/types/SnapshotCard"; // 이전에 만든 타입 import
+import React from "react"; // React import 추가
 
 export default function CardsPage() {
-  const [selectedDate, setSelectedDate] = useState("2024-01-15");
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [activeView, setActiveView] = useState<"date" | "stock">("date");
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [snapshotsByDate, setSnapshotsByDate] = useState<{
+    [date: string]: SnapshotCard[];
+  }>({});
+  const [currentSnapshotIndex, setCurrentSnapshotIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const currentCards = cardData[selectedDate as keyof typeof cardData] || [];
+  // 날짜 목록
+  const allDates = useMemo(
+    () => Object.keys(snapshotsByDate).sort(),
+    [snapshotsByDate]
+  );
+  // 현재 날짜의 카드 목록
+  const currentSnapshots = snapshotsByDate[selectedDate] || [];
+  // 현재 카드
+  const currentSnapshot = currentSnapshots[currentSnapshotIndex];
 
-  const nextCard = () => {
-    setCurrentCardIndex((prev) => (prev + 1) % currentCards.length);
+  // 최초 진입 시 전체 카드 목록 패칭
+  useEffect(() => {
+    const fetchAllSnapshots = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots?sort=createdAt,asc`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        if (
+          data &&
+          data.status &&
+          data.data &&
+          Array.isArray(data.data.content)
+        ) {
+          const fetchedData: SnapshotCard[] = data.data.content;
+          // 날짜별로 그룹화
+          const byDate: { [date: string]: SnapshotCard[] } = {};
+          fetchedData.forEach((snap) => {
+            const date = snap.snapshotCreatedAt.split("T")[0];
+            if (!byDate[date]) byDate[date] = [];
+            byDate[date].push(snap);
+          });
+          setSnapshotsByDate(byDate);
+          // 기본 선택 날짜: 가장 최근 날짜
+          const dates = Object.keys(byDate).sort();
+          if (dates.length > 0) {
+            setSelectedDate(dates[dates.length - 1]);
+            setCurrentSnapshotIndex(0);
+            setActiveView("date");
+          }
+        } else {
+          setSnapshotsByDate({});
+        }
+      } catch (error) {
+        setSnapshotsByDate({});
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAllSnapshots();
+  }, []);
+
+  // 날짜별 카드 조회 (필요시 서버에서 받아와 캐싱)
+  const fetchSnapshotsByDate = async (date: string) => {
+    if (snapshotsByDate[date]) return; // 이미 있으면 패스
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots/by-date?date=${date}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (data && data.status && Array.isArray(data.data)) {
+        setSnapshotsByDate((prev) => ({ ...prev, [date]: data.data }));
+      }
+    } catch (error) {
+      // ignore
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const prevCard = () => {
-    setCurrentCardIndex(
-      (prev) => (prev - 1 + currentCards.length) % currentCards.length
-    );
+  // DualSelector 드래그로 뷰 전환
+  const handleViewChange = (view: "date" | "stock") => {
+    setActiveView(view);
+  };
+
+  // 날짜 선택 시
+  const handleDateChange = async (date: string) => {
+    if (!snapshotsByDate[date]) {
+      await fetchSnapshotsByDate(date);
+    }
+    setSelectedDate(date);
+    setCurrentSnapshotIndex(0);
+    setActiveView("stock");
+  };
+
+  // StockSelector에서 카드 선택
+  const handleStockChange = (snapshotId: number) => {
+    const idx = currentSnapshots.findIndex((s) => s.snapshotId === snapshotId);
+    if (idx !== -1) setCurrentSnapshotIndex(idx);
+  };
+
+  // StockSelector에서 끝에 도달
+  const handleStockEdge = (direction: "left" | "right") => {
+    const idx = allDates.indexOf(selectedDate);
+    const nextDate =
+      direction === "left" ? allDates[idx - 1] : allDates[idx + 1];
+    if (nextDate) {
+      setSelectedDate(nextDate);
+      setCurrentSnapshotIndex(0);
+      setActiveView("date");
+      if (!snapshotsByDate[nextDate]) fetchSnapshotsByDate(nextDate);
+    }
+  };
+
+  // CardViewer에서 좌/우 드래그
+  const handleSwipe = (direction: number) => {
+    const newIndex = currentSnapshotIndex + direction;
+    if (newIndex >= 0 && newIndex < currentSnapshots.length) {
+      setCurrentSnapshotIndex(newIndex);
+    } else {
+      // 끝에 도달: 날짜 이동
+      handleStockEdge(direction < 0 ? "left" : "right");
+    }
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white overflow-hidden">
       <TopNavigation />
-
-      {/* 날짜 선택 바 */}
-      <div className="p-4 border-b bg-white">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const currentDate = new Date(selectedDate);
-              currentDate.setDate(currentDate.getDate() - 1);
-              const newDate = currentDate.toISOString().split("T")[0];
-              setSelectedDate(newDate);
-              setCurrentCardIndex(0);
-            }}
+      <SelectedDateDisplay date={selectedDate} />
+      <div className="relative flex-1">
+        {/* CardViewer는 항상 아래에 깔림 */}
+        <main className="absolute inset-0 top-[90px] flex items-center justify-center">
+          {/* 왼쪽 카드 넘기기 버튼 */}
+          <button
+            onClick={() => handleSwipe(-1)}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
+            aria-label="이전 카드"
+            style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}
+            disabled={isLoading || currentSnapshotIndex === 0}
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4" />
-            <span className="font-medium">{selectedDate}</span>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const currentDate = new Date(selectedDate);
-              currentDate.setDate(currentDate.getDate() + 1);
-              const newDate = currentDate.toISOString().split("T")[0];
-              setSelectedDate(newDate);
-              setCurrentCardIndex(0);
-            }}
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-600"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          {/* 카드 뷰어 */}
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <p>Loading...</p>
+            </div>
+          ) : currentSnapshot ? (
+            <CardViewer
+              key={currentSnapshot.snapshotId}
+              card={currentSnapshot}
+              onSwipe={handleSwipe}
+            />
+          ) : null}
+          {/* 오른쪽 카드 넘기기 버튼 */}
+          <button
+            onClick={() => handleSwipe(1)}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
+            aria-label="다음 카드"
+            style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}
+            disabled={isLoading || currentSnapshotIndex === currentSnapshots.length - 1 || currentSnapshots.length === 0}
           >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-600"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          {activeView === "stock" && !currentSnapshot && !isLoading && (
+            <div className="h-full flex items-center justify-center">
+              <p>뉴스가 없습니다.</p>
+            </div>
+          )}
+        </main>
+        {/* DualSelector 드래그 바는 항상 위에 떠 있음 */}
+        <div className="absolute left-0 right-0 top-0 z-10">
+          <DualSelector
+            activeView={activeView}
+            onViewChange={handleViewChange}
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+            snapshotsForDate={currentSnapshots}
+            selectedSnapshotId={currentSnapshot?.snapshotId}
+            onStockChange={handleStockChange}
+            allowedDates={allDates}
+            onStockEdge={handleStockEdge}
+          />
         </div>
       </div>
-
-      <main className="flex-1 overflow-hidden pb-20">
-        {currentCards.length > 0 ? (
-          <div className="h-full flex items-center justify-center p-4">
-            <div className="relative w-full max-w-sm">
-              <Card className="h-96">
-                <CardContent className="p-0 h-full">
-                  <div className="relative h-full">
-                    <img
-                      src={
-                        currentCards[currentCardIndex].image ||
-                        "/placeholder.svg"
-                      }
-                      alt={currentCards[currentCardIndex].title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg mb-2">
-                        {currentCards[currentCardIndex].title}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-3">
-                        {currentCards[currentCardIndex].content}
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {currentCards[currentCardIndex].tags.map(
-                          (tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                            >
-                              {tag}
-                            </span>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 슬라이드 버튼 */}
-              {currentCards.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
-                    onClick={prevCard}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
-                    onClick={nextCard}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-
-              {/* 인디케이터 */}
-              {currentCards.length > 1 && (
-                <div className="flex justify-center mt-4 space-x-2">
-                  {currentCards.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`w-2 h-2 rounded-full ${
-                        index === currentCardIndex
-                          ? "bg-blue-600"
-                          : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-gray-500">해당 날짜에 카드가 없습니다.</p>
-          </div>
-        )}
-      </main>
-
       <BottomNavigation />
     </div>
   );
