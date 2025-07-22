@@ -7,10 +7,11 @@ import {
   AvatarImage,
   AvatarFallback,
 } from "@/src/components/ui/avatar";
-import { Card, CardContent } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { motion } from "framer-motion";
-import { LogOut, Pencil, RefreshCcw } from "lucide-react";
+import { CiEdit } from "react-icons/ci";
+import { BiSelectMultiple } from "react-icons/bi";
+import { IoLogOutOutline } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { useMemberStore } from "@/src/stores/memberStore";
 import { useEffect, useState } from "react";
@@ -58,7 +59,6 @@ export default function ProfilePage() {
       });
 
       clearMember();
-
       router.replace("/login");
     } catch (err) {
       console.error("로그아웃 실패:", err);
@@ -101,46 +101,48 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {/* 기능 카드 */}
-        <div className="space-y-4 w-full max-w-sm mb-8">
-          <Card className="shadow-sm rounded-2xl">
-            <CardContent className="p-4 flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <Pencil className="w-5 h-5 text-gray-600" />
-                <span className="text-base font-medium">닉네임 수정</span>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleEditNickname}>
-                변경
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm rounded-2xl">
-            <CardContent className="p-4 flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <RefreshCcw className="w-5 h-5 text-gray-600" />
-                <span className="text-base font-medium">투자 성향 재선택</span>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleChangeType}>
-                선택
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="w-full max-w-sm mt-auto pb-24">
-          <Card className="shadow-sm rounded-2xl">
-            <CardContent className="p-4 flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <LogOut className="w-5 h-5 text-gray-600" />
-                <span className="text-base font-medium">로그아웃</span>
-              </div>
-              <Button variant="destructive" size="sm" onClick={handleLogout}>
-                로그아웃
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {/* 기능 리스트 */}
+        <ul className="w-full max-w-sm divide-y rounded-2xl bg-white shadow-sm overflow-hidden mb-8">
+          <li className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center space-x-2 text-sm">
+              <CiEdit className="w-4 h-4 text-gray-500" />
+              <span>닉네임 수정</span>
+            </div>
+            <Button
+              className="bg-gray-100 hover:bg-gray-200"
+              variant="ghost"
+              size="sm"
+              onClick={handleEditNickname}>
+              변경
+            </Button>
+          </li>
+          <li className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center space-x-2 text-sm">
+              <BiSelectMultiple className="w-4 h-4 text-gray-500" />
+              <span>투자 성향 재선택</span>
+            </div>
+            <Button
+              className="bg-gray-100 hover:bg-gray-200"
+              variant="ghost"
+              size="sm"
+              onClick={handleChangeType}>
+              선택
+            </Button>
+          </li>
+          <li className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center space-x-2 text-sm">
+              <IoLogOutOutline className="w-4 h-4 text-gray-500" />
+              <span>로그아웃</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-500 "
+              onClick={handleLogout}>
+              로그아웃
+            </Button>
+          </li>
+        </ul>
       </main>
 
       <BottomNavigation />
