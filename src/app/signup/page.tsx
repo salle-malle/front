@@ -60,6 +60,7 @@ export default function SignupLandingPage() {
             router.push("/signup/phoneNumber");
           }}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
+          disabled={!name}
         >
           다음
         </Button>
