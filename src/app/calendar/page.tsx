@@ -12,6 +12,7 @@ import {
 import { Button } from "@/src/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { EarningCall, EarningCallResponse } from "@/src/types/ApiResponse";
+import InfoTabs from "@/src/components/ui/info-tabs"; // 탭 컴포넌트 import
 
 export default function CalendarPage() {
   const today = new Date();
@@ -21,13 +22,12 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
+  const [tab, setTab] = useState<"공시" | "어닝콜">("공시");
   const [earningCalls, setEarningCalls] = useState<EarningCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<
     Record<string, Array<{ time: string; event: string }>>
   >({});
-
-  // API에서 어닝콜 데이터 가져오기
   useEffect(() => {
     const fetchEarningCalls = async () => {
       try {
@@ -127,16 +127,8 @@ export default function CalendarPage() {
   ];
 
   return (
-    <div className="flex flex-col h-screen">
-      <TopNavigation />
-
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-bold flex items-center">
-          <Calendar className="h-5 w-5 mr-2" />
-          일정
-        </h1>
-      </div>
-
+    <div className="flex flex-col h-screen bg-gray-100">
+      <TopNavigation title="일정" />
       <main className="flex-1 overflow-y-auto pb-20">
         {loading ? (
           <div className="flex items-center justify-center h-64">
@@ -145,7 +137,7 @@ export default function CalendarPage() {
         ) : (
           <>
             {/* 달력 */}
-            <Card className="m-4">
+            <Card className="m-4 border-none">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <Button
@@ -163,7 +155,7 @@ export default function CalendarPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <CardTitle>
+                  <CardTitle className="text-lg">
                     {currentMonth.getFullYear()}년{" "}
                     {monthNames[currentMonth.getMonth()]}
                   </CardTitle>
@@ -234,7 +226,7 @@ export default function CalendarPage() {
             </Card>
 
             {/* 선택된 날짜의 일정 */}
-            <Card className="m-4">
+            <Card className="m-4 border-none">
               <CardHeader>
                 <CardTitle className="text-lg">{selectedDate} 일정</CardTitle>
               </CardHeader>
@@ -260,10 +252,17 @@ export default function CalendarPage() {
                 )}
               </CardContent>
             </Card>
+            <div className="bg-white">
+              <InfoTabs
+                tab={tab}
+                setTab={setTab}
+                disclosureData={[]}
+                earningCallData={[]}
+              />
+            </div>
           </>
         )}
       </main>
-
       <BottomNavigation />
     </div>
   );
