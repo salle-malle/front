@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
@@ -23,6 +24,7 @@ type Notification = {
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -33,7 +35,16 @@ export default function NotificationsPage() {
             credentials: "include", // 쿠키 전송 필요
           }
         );
-        const data = await res.json();
+        let data: any;
+        try {
+          data = await res.json();
+        } catch (e) {
+          throw new Error("서버 응답이 올바르지 않습니다.");
+        }
+        if (data && data.code === "AUTH-002") {
+          router.replace("/login");
+          return;
+        }
         if (data.status) {
           setNotifications(data.data);
         }
@@ -43,7 +54,7 @@ export default function NotificationsPage() {
     };
 
     fetchNotifications();
-  }, []);
+  }, []); // router를 의존성 배열에 넣을 필요 없음
 
   return (
     <div className="flex flex-col h-screen bg-[#f9fafb]">
