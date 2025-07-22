@@ -165,7 +165,7 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation title="일정" />
+      <TopNavigation title="일정test" />
       <main className="flex-1 overflow-y-auto pb-20">
         {loading ? (
           <div className="flex items-center justify-center h-64">

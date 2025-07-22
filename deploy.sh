@@ -7,11 +7,26 @@ cd /var/www/salle-malle-front
 echo "배포 파일 압축 해제 중..."
 tar -xzf deploy.tar.gz --overwrite
 
-# 이름을 직접 쓰는 대신, 설정 파일을 통해 프로세스를 관리합니다.
-# startOrRestart는 프로세스가 없으면 시작, 있으면 재시작해주는 편리한 명령어입니다.
-# --update-env 플래그로 환경 변수 변경 사항도 안정적으로 적용됩니다.
-echo "프로세스 재시작 또는 시작 중..."
-pm2 startOrRestart ecosystem.config.js --update-env
+echo "deploy.sh 실행 권한 부여 중..."
+chmod +x deploy.sh
+
+echo "기존 프로세스 중지 중..."
+pm2 stop salle-malle-front || true
+pm2 delete salle-malle-front || true
+
+echo "Next.js 캐시 정리 중..."
+rm -rf .next/cache || true
+
+echo "의존성 설치 중..."
+pnpm install --prod
+
+echo "프로덕션 환경 변수 로드 중..."
+if [ -f .env.production ]; then
+  export $(cat .env.production | xargs)
+fi
+
+echo "Next.js 애플리케이션 시작 중..."
+pm2 start ecosystem.config.js
 
 pm2 save
 
