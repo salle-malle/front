@@ -80,12 +80,14 @@ export const DateSelector = ({
                     disabled={!allowed}
                     className={`w-9 h-9 rounded-full flex items-center justify-center font-bold transition-colors text-base
                     ${
-                      selectedDate === dateStr
-                        ? "bg-blue-600 text-white shadow"
+                      selectedDate === dateStr && isToday(date)
+                        ? "bg-blue-600 text-red-500 shadow"
+                        : selectedDate === dateStr
+                        ? "bg-blue-600 text-white"
                         : isToday(date)
-                        ? "text-blue-600 bg-gray-200"
+                        ? "text-red-600 border-t-red-500"
                         : allowed
-                        ? "bg-white text-gray-700 hover:bg-gray-100"
+                        ? "bg-white text-gray-700 hover:bg-gray-100 border-t-red-500"
                         : "bg-gray-100 text-gray-300 opacity-50"
                     }
                   `}
