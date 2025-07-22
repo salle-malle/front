@@ -81,7 +81,6 @@ export default function AccountRegisterPage() {
       router.push("/home");
     } catch (error) {
       setErrorMessage("회원가입 중 오류가 발생했습니다.");
-    } finally {
       setIsLoading(false);
     }
   };

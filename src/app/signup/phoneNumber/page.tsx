@@ -45,7 +45,6 @@ export default function PhoneNumberPage() {
     setErrorMessage("");
     setAuthCodeErrorMessage("");
     setAuthCodeSuccessMessage("");
-    // 인증 성공 이후에도 다시 인증번호 요청 가능하도록 상태 초기화
     setAuthCodeSuccess(false);
 
     try {

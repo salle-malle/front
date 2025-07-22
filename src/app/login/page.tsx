@@ -83,6 +83,7 @@ export default function LoginPage() {
                   로그인
                 </Button>
                 <Button
+                  type="button"
                   className="bg-[#bad6ff5a] text-[#0064FF] w-full transition-colors duration-150 hover:bg-[#a0c6ff2d]"
                   onClick={() => router.push("/signup")}>
                   회원가입
