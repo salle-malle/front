@@ -37,7 +37,7 @@ export default function AccountRegisterPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // 반드시 필요
+          credentials: "include",
           body: JSON.stringify({
             userId,
             nickname,
