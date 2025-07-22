@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { HiBell } from "react-icons/hi";
@@ -30,11 +31,39 @@ export function TopNavigation({
   const isNotificationPage = pathname === "/notifications";
   const isCalendarPage = pathname === "/calendar";
 
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    const fetchUnreadStatus = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/notifications/unread-exists`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!res.ok) {
+          console.error("알림 상태 요청 실패:", res.status, res.statusText);
+          return;
+        }
+
+        const data = await res.json();
+        console.log("알림 읽음 여부 응답:", data);
+
+        setHasUnread(data?.data?.hasUnread ?? false);
+      } catch (error) {
+        console.error("알림 상태 요청 중 예외 발생:", error);
+      }
+    };
+
+    fetchUnreadStatus();
+  }, []);
+
   return (
     <nav
       className={`flex justify-between items-center p-4 bg-white ${borderClass} ${shadowClass}`}
-      style={{ minHeight: 56 }}
-    >
+      style={{ minHeight: 56 }}>
       <div className="flex items-center space-x-2">
         {showBackButton && (
           <Button
@@ -43,8 +72,7 @@ export function TopNavigation({
             onClick={() => router.back()}
             className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
-            tabIndex={0}
-          >
+            tabIndex={0}>
             <ArrowLeft width={24} height={24} className="text-gray-600" />
           </Button>
         )}
@@ -52,7 +80,9 @@ export function TopNavigation({
       </div>
 
       {showRightIcons && (
-        <div className="flex space-x-2 items-center" style={{ marginRight: 12 }}>
+        <div
+          className="flex space-x-2 items-center"
+          style={{ marginRight: 12 }}>
           {/* 캘린더 버튼 */}
           <Button
             variant="ghost"
@@ -60,8 +90,7 @@ export function TopNavigation({
             onClick={() => router.push("/calendar")}
             className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
-            tabIndex={0}
-          >
+            tabIndex={0}>
             <FaCalendar
               width={24}
               height={24}
@@ -84,21 +113,27 @@ export function TopNavigation({
             onClick={() => router.push("/notifications")}
             className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
-            tabIndex={0}
-          >
-            <HiBell
-              width={26}
-              height={26}
-              color={isNotificationPage ? "#4B5563" : "#D1D5DB"}
-              className={isNotificationPage ? "text-gray-600" : "text-gray-300"}
-              style={{
-                minWidth: 26,
-                minHeight: 26,
-                width: 26,
-                height: 26,
-                display: "block",
-              }}
-            />
+            tabIndex={0}>
+            <div className="relative">
+              <HiBell
+                width={26}
+                height={26}
+                color={isNotificationPage ? "#4B5563" : "#D1D5DB"}
+                className={
+                  isNotificationPage ? "text-gray-600" : "text-gray-300"
+                }
+                style={{
+                  minWidth: 26,
+                  minHeight: 26,
+                  width: 26,
+                  height: 26,
+                  display: "block",
+                }}
+              />
+              {hasUnread && (
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border border-white" />
+              )}
+            </div>
           </Button>
         </div>
       )}
