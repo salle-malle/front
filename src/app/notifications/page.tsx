@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 const iconMap: Record<string, any> = {
