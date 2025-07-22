@@ -1,8 +1,9 @@
 export interface SnapshotCard {
   snapshotId: number;
-  snapshotCreatedAt: string; // ISO 문자열 형태
+  snapshotCreatedAt: string;
   personalizedComment: string;
   stockCode: string;
   stockName: string;
   newsContent: string;
+  newsImage: string;
 }
