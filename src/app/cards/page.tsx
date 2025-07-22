@@ -6,8 +6,8 @@ import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { DualSelector } from "@/src/components/ui/DualSelector";
 import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
 import { CardViewer } from "@/src/components/ui/CardViewer";
-import { SnapshotCard } from "@/src/types/SnapshotCard"; // 이전에 만든 타입 import
-import React from "react"; // React import 추가
+import { SnapshotCard } from "@/src/types/SnapshotCard";
+import React from "react";
 
 export default function CardsPage() {
   const [activeView, setActiveView] = useState<"date" | "stock">("date");
@@ -157,10 +157,27 @@ export default function CardsPage() {
             onClick={() => handleSwipe(-1)}
             className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
             aria-label="이전 카드"
-            style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}
-            disabled={isLoading || currentSnapshotIndex === 0}
-          >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-600"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            style={{
+              position: "absolute",
+              left: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+            }}
+            disabled={isLoading || currentSnapshotIndex === 0}>
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              className="text-gray-600">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
           </button>
           {/* 카드 뷰어 */}
           {isLoading ? (
@@ -179,10 +196,31 @@ export default function CardsPage() {
             onClick={() => handleSwipe(1)}
             className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
             aria-label="다음 카드"
-            style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}
-            disabled={isLoading || currentSnapshotIndex === currentSnapshots.length - 1 || currentSnapshots.length === 0}
-          >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-600"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            style={{
+              position: "absolute",
+              right: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+            }}
+            disabled={
+              isLoading ||
+              currentSnapshotIndex === currentSnapshots.length - 1 ||
+              currentSnapshots.length === 0
+            }>
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              className="text-gray-600">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
           </button>
           {activeView === "stock" && !currentSnapshot && !isLoading && (
             <div className="h-full flex items-center justify-center">
