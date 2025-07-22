@@ -1,5 +1,6 @@
 "use client";
 
+import { useSignupStore } from "@/src/stores/signupStore";
 import { useState } from "react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -8,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function SignupLandingPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const { name, setName } = useSignupStore();
   const [focus, setFocus] = useState(false);
 
   const getUnderlineClass = (isFocused: boolean, value: string) => {
@@ -59,6 +60,7 @@ export default function SignupLandingPage() {
             router.push("/signup/phoneNumber");
           }}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
+          disabled={!name}
         >
           다음
         </Button>

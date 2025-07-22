@@ -1,12 +1,15 @@
 import { useEffect } from "react";
 import { toast } from "@/src/hooks/use-toast"; // 이미 작성된 커스텀 toast 사용
 
-export default function useNotification(memberId: number) {
+export default function useNotification(enabled: boolean) {
   useEffect(() => {
-    if (!memberId) return;
+    if (!enabled) return;
 
     const eventSource = new EventSource(
-      `http://localhost:8080/api/v1/notifications/stream?memberId=${memberId}`
+      "http://localhost:8080/api/v1/notifications/stream",
+      {
+        withCredentials: true,
+      }
     );
 
     eventSource.onmessage = function (event) {
@@ -16,6 +19,17 @@ export default function useNotification(memberId: number) {
       toast({
         title: "🔔 새로운 알림",
         description: event.data,
+        action: (
+          <div
+            onClick={() => (window.location.href = "/notifications")}
+            style={{
+              position: "absolute",
+              inset: 0,
+              cursor: "pointer",
+              zIndex: 10,
+            }}
+          />
+        ),
       });
     };
 
@@ -27,5 +41,5 @@ export default function useNotification(memberId: number) {
       console.log("SSE 연결 해제");
       eventSource.close();
     };
-  }, [memberId]);
+  }, [enabled]);
 }

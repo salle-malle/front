@@ -5,15 +5,85 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { useRouter } from "next/navigation";
+import { useSignupStore } from "@/src/stores/signupStore";
 
 export default function AccountRegisterPage() {
   const router = useRouter();
-  const [accountNumber, setAccountNumber] = useState("");
-  const [appKey, setAppKey] = useState("");
   const [focusAppKey, setFocusAppKey] = useState(false);
   const [focusAccountNumber, setFocusAccountNumber] = useState(false);
-  const [appSecret, setAppSecret] = useState("");
   const [focusAppSecret, setFocusAppSecret] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const {
+    accountNumber,
+    setAccountNumber,
+    appKey,
+    setAppKey,
+    appSecret,
+    setAppSecret,
+    name,
+    nickname,
+    phoneNumber,
+    userId,
+    password,
+  } = useSignupStore();
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchSignup = async () => {
+    if (isLoading) return;
+
+    setErrorMessage("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/auth/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            userId,
+            nickname,
+            password,
+            phoneNumber,
+            name,
+            accountNumber,
+            appKey,
+            appSecret,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        setErrorMessage("서버와의 통신에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data || typeof data.code !== "string") {
+        setErrorMessage("알 수 없는 오류가 발생했습니다.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.code !== "AUTH-005") {
+        setErrorMessage(data.message || "회원가입에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+
+      router.push("/home");
+    } catch (error) {
+      setErrorMessage("회원가입 중 오류가 발생했습니다.");
+      setIsLoading(false);
+    }
+  };
 
   const getUnderlineClass = (isFocused: boolean, value: string) => {
     return (isFocused || value !== "")
@@ -25,6 +95,9 @@ export default function AccountRegisterPage() {
       ? "#2978EE"
       : "#848A92";
   };
+
+  // 필수값이 모두 입력되어야 버튼 활성화
+  const isButtonDisabled = !accountNumber || !appKey || !appSecret || isLoading;
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -64,21 +137,8 @@ export default function AccountRegisterPage() {
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="account-number"
+              disabled={isLoading}
             />
-            <Button
-              type="button"
-              className="absolute right-0 -top-1 shadow-sm rounded-[10px] transition-colors duration-150 bg-[#2978ee]  hover:bg-blue-600"
-              style={{
-                width: "60px",
-                height: "32px",
-                fontSize: "13px",
-                color: "#fff",
-                boxShadow: "0 4px 12px 0 rgba(130,130,130,0.15), 0 1.5px 4px 0 rgba(130,130,130,0.10)",
-              }}
-              tabIndex={-1}
-            >
-              확인
-            </Button>
           </div>
 
           <label
@@ -100,13 +160,14 @@ export default function AccountRegisterPage() {
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="app-key"
+              disabled={isLoading}
             />
           </div>
 
           <label
             style={{ color: getLabelColor(focusAppSecret, appSecret) }}
             className="block text-sm font-medium mt-10 mb-1"
-            htmlFor="authCode"
+            htmlFor="appSecret"
           >
             APP SECRET
           </label>
@@ -122,35 +183,22 @@ export default function AccountRegisterPage() {
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="one-time-code"
+              disabled={isLoading}
             />
-            <Button
-              type="button"
-              className="absolute right-0 -top-1 shadow-sm rounded-[10px] transition-colors duration-150 bg-[#2978ee]  hover:bg-blue-600"
-              style={{
-                width: "60px",
-                height: "32px",
-                fontSize: "13px",
-                color: "#fff",
-                boxShadow: "0 4px 12px 0 rgba(130,130,130,0.15), 0 1.5px 4px 0 rgba(130,130,130,0.10)",
-              }}
-              tabIndex={-1}
-            >
-              <span
-                className={`transition-colors duration-150 text-white`}
-              >
-                확인
-              </span>
-            </Button>
           </div>
         </div>
+        {errorMessage && (
+          <div className="text-center text-red-500 text-sm mt-4">{errorMessage}</div>
+        )}
       </div>
 
       <div className="mb-9 flex justify-center">
         <Button
-          onClick={() => router.push("/signup/")}
+          onClick={fetchSignup}
+          disabled={isButtonDisabled}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
         >
-          다음
+          {isLoading ? "처리 중..." : "완료"}
         </Button>
       </div>
     </div>
