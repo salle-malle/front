@@ -21,7 +21,8 @@ export default function RootLayout({
       attribute="class"
       defaultTheme="light"
       enableSystem
-      disableTransitionOnChange>
+      disableTransitionOnChange
+    >
       <main>{children}</main>
       <Toaster />
     </ThemeProvider>
