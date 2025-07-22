@@ -12,6 +12,7 @@ export default function AccountRegisterPage() {
   const [focusAppKey, setFocusAppKey] = useState(false);
   const [focusAccountNumber, setFocusAccountNumber] = useState(false);
   const [focusAppSecret, setFocusAppSecret] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const {
     accountNumber,
@@ -27,8 +28,14 @@ export default function AccountRegisterPage() {
     password,
   } = useSignupStore();
 
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchSignup = async () => {
+    if (isLoading) return;
+
+    setErrorMessage("");
+    setIsLoading(true);
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACK_API_URL}/auth/signup`,
@@ -51,15 +58,31 @@ export default function AccountRegisterPage() {
         }
       );
 
+      if (!response.ok) {
+        setErrorMessage("서버와의 통신에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+
       const data = await response.json();
 
-      if (data.code === "AUTH-005") {
-        router.push("/home");
-      } else {
-        alert(data.message || "회원가입에 실패했습니다.");
+      if (!data || typeof data.code !== "string") {
+        setErrorMessage("알 수 없는 오류가 발생했습니다.");
+        setIsLoading(false);
+        return;
       }
+
+      if (data.code !== "AUTH-005") {
+        setErrorMessage(data.message || "회원가입에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+
+      router.push("/home");
     } catch (error) {
-      alert("회원가입 중 오류가 발생했습니다.");
+      setErrorMessage("회원가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,6 +96,9 @@ export default function AccountRegisterPage() {
       ? "#2978EE"
       : "#848A92";
   };
+
+  // 필수값이 모두 입력되어야 버튼 활성화
+  const isButtonDisabled = !accountNumber || !appKey || !appSecret || isLoading;
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -112,21 +138,8 @@ export default function AccountRegisterPage() {
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="account-number"
+              disabled={isLoading}
             />
-            <Button
-              type="button"
-              className="absolute right-0 -top-1 shadow-sm rounded-[10px] transition-colors duration-150 bg-[#2978ee]  hover:bg-blue-600"
-              style={{
-                width: "60px",
-                height: "32px",
-                fontSize: "13px",
-                color: "#fff",
-                boxShadow: "0 4px 12px 0 rgba(130,130,130,0.15), 0 1.5px 4px 0 rgba(130,130,130,0.10)",
-              }}
-              tabIndex={-1}
-            >
-              확인
-            </Button>
           </div>
 
           <label
@@ -148,6 +161,7 @@ export default function AccountRegisterPage() {
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="app-key"
+              disabled={isLoading}
             />
           </div>
 
@@ -170,36 +184,22 @@ export default function AccountRegisterPage() {
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="one-time-code"
+              disabled={isLoading}
             />
-            <Button
-              type="button"
-              className="absolute right-0 -top-1 shadow-sm rounded-[10px] transition-colors duration-150 bg-[#2978ee]  hover:bg-blue-600"
-              style={{
-                width: "60px",
-                height: "32px",
-                fontSize: "13px",
-                color: "#fff",
-                boxShadow: "0 4px 12px 0 rgba(130,130,130,0.15), 0 1.5px 4px 0 rgba(130,130,130,0.10)",
-              }}
-              tabIndex={-1}
-            >
-              <span
-                className={`transition-colors duration-150 text-white`}
-              >
-                확인
-              </span>
-            </Button>
           </div>
         </div>
+        {errorMessage && (
+          <div className="text-center text-red-500 text-sm mt-4">{errorMessage}</div>
+        )}
       </div>
 
       <div className="mb-9 flex justify-center">
         <Button
           onClick={fetchSignup}
-          disabled={!accountNumber || !appKey || !appSecret}
+          disabled={isButtonDisabled}
           className="w-[90%] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-sm mt-10 text-sm shadow-lg hover:shadow-lg"
         >
-          완료
+          {isLoading ? "처리 중..." : "완료"}
         </Button>
       </div>
     </div>
