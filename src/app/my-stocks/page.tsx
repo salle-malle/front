@@ -18,7 +18,9 @@ type CompanyLogos = {
   [code: string]: string;
 };
 
-const getCompanyLogosByTicker = (stocks: StockItem[]): Record<string, string> => {
+const getCompanyLogosByTicker = (
+  stocks: StockItem[]
+): Record<string, string> => {
   const logos: Record<string, string> = {};
   stocks.forEach((stock) => {
     logos[stock.ticker.toString()] = `/ticker-icon/${stock.ticker}.png`;
@@ -26,7 +28,10 @@ const getCompanyLogosByTicker = (stocks: StockItem[]): Record<string, string> =>
   return logos;
 };
 
-async function fetchStockList(): Promise<{ stocks: StockItem[]; companyLogos: CompanyLogos }> {
+async function fetchStockList(): Promise<{
+  stocks: StockItem[];
+  companyLogos: CompanyLogos;
+}> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
     {
@@ -38,7 +43,8 @@ async function fetchStockList(): Promise<{ stocks: StockItem[]; companyLogos: Co
     return { stocks: [], companyLogos: {} };
   }
   const json = await res.json();
-  const stocksRaw = json.data?.stocks || json.data?.stockList || json.data || [];
+  const stocksRaw =
+    json.data?.stocks || json.data?.stockList || json.data || [];
   const companyLogos = json.data?.companyLogos || {};
 
   const stocks: StockItem[] = stocksRaw.map((item: any) => ({
@@ -46,8 +52,11 @@ async function fetchStockList(): Promise<{ stocks: StockItem[]; companyLogos: Co
     name: item.prdt_name,
     quantity: item.quantity,
     avgPrice: Math.round((Number(item.avg_price) + Number.EPSILON) * 100) / 100,
-    profit_loss_amount: Math.round((Number(item.profit_loss_amount) + Number.EPSILON) * 100) / 100,
-    profit_loss_rate: Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
+    profit_loss_amount:
+      Math.round((Number(item.profit_loss_amount) + Number.EPSILON) * 100) /
+      100,
+    profit_loss_rate:
+      Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
   }));
   return { stocks, companyLogos };
 }
@@ -110,16 +119,18 @@ export default function MyStocksPage() {
               return (
                 <a
                   key={stock.ticker}
-                  href={`/stocks/${stock.ticker}`}
+                  href={`/stock/${stock.ticker}`}
                   className={[
                     "flex items-center py-2 px-5 hover:bg-[#f2f4f6] cursor-pointer transition mb-1 h-12 w-full",
                     idx === 0 ? "mt-2" : "",
-                    idx === stocks.length - 1 ? "mb-3" : ""
+                    idx === stocks.length - 1 ? "mb-3" : "",
                   ].join(" ")}
                   style={{
                     minWidth: "100%",
                     ...(idx === 0 ? { marginTop: "10px" } : {}),
-                    ...(idx === stocks.length - 1 ? { marginBottom: "12px" } : {}),
+                    ...(idx === stocks.length - 1
+                      ? { marginBottom: "12px" }
+                      : {}),
                   }}
                 >
                   <div
@@ -186,7 +197,8 @@ export default function MyStocksPage() {
                       className={`text-[11px] flex items-center font-medium mt-0.5 ${profitLossColor}`}
                       style={{ background: "none" }}
                     >
-                      {getProfitLossAmountString(stock.profit_loss_amount)}&nbsp;(
+                      {getProfitLossAmountString(stock.profit_loss_amount)}
+                      &nbsp;(
                       {getProfitLossRateString(stock.profit_loss_rate)})
                     </span>
                   </div>

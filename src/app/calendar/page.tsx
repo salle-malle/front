@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import {
@@ -10,25 +11,46 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { EarningCall, EarningCallResponse } from "@/src/types/ApiResponse";
 
 export default function CalendarPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const dateParam = searchParams.get("date");
+
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
 
-  const [selectedDate, setSelectedDate] = useState(todayString);
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1)
-  );
+  const [selectedDate, setSelectedDate] = useState(dateParam || todayString);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (dateParam) {
+      const targetDate = new Date(dateParam);
+      return new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    }
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+
   const [earningCalls, setEarningCalls] = useState<EarningCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<
     Record<string, Array<{ time: string; event: string }>>
   >({});
 
+  // URL 파라미터가 변경되면 선택된 날짜와 현재 월 업데이트
+  useEffect(() => {
+    if (dateParam) {
+      setSelectedDate(dateParam);
+      const targetDate = new Date(dateParam);
+      setCurrentMonth(
+        new Date(targetDate.getFullYear(), targetDate.getMonth(), 1)
+      );
+    }
+  }, [dateParam]);
+
   // API에서 어닝콜 데이터 가져오기
   useEffect(() => {
+    let hasRedirectedToLogin = false;
     const fetchEarningCalls = async () => {
       try {
         const response = await fetch(
@@ -42,8 +64,23 @@ export default function CalendarPage() {
           }
         );
 
+        let data: EarningCallResponse | any;
+        try {
+          data = await response.json();
+        } catch (e) {
+          throw new Error("서버 응답이 올바르지 않습니다.");
+        }
+
+        // AUTH-002 코드면 로그인 페이지로 리다이렉트
+        if (data && data.code === "AUTH-002") {
+          if (!hasRedirectedToLogin) {
+            hasRedirectedToLogin = true;
+            router.replace("/login");
+          }
+          throw new Error("인증 오류");
+        }
+
         if (response.ok) {
-          const data: EarningCallResponse = await response.json();
           setEarningCalls(data.data);
 
           // 어닝콜 데이터를 scheduleData 형식으로 변환
@@ -51,7 +88,7 @@ export default function CalendarPage() {
             string,
             Array<{ time: string; event: string }>
           > = {};
-          data.data.forEach((call) => {
+          data.data.forEach((call: EarningCall) => {
             const dateKey = call.earningCallDate;
             if (!newScheduleData[dateKey]) {
               newScheduleData[dateKey] = [];
@@ -73,7 +110,7 @@ export default function CalendarPage() {
     };
 
     fetchEarningCalls();
-  }, []);
+  }, [router]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -127,16 +164,8 @@ export default function CalendarPage() {
   ];
 
   return (
-    <div className="flex flex-col h-screen">
-      <TopNavigation />
-
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-bold flex items-center">
-          <Calendar className="h-5 w-5 mr-2" />
-          일정
-        </h1>
-      </div>
-
+    <div className="flex flex-col h-screen bg-gray-100">
+      <TopNavigation title="일정" />
       <main className="flex-1 overflow-y-auto pb-20">
         {loading ? (
           <div className="flex items-center justify-center h-64">
@@ -145,7 +174,7 @@ export default function CalendarPage() {
         ) : (
           <>
             {/* 달력 */}
-            <Card className="m-4">
+            <Card className="m-4 border-none">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <Button
@@ -163,7 +192,7 @@ export default function CalendarPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <CardTitle>
+                  <CardTitle className="text-lg">
                     {currentMonth.getFullYear()}년{" "}
                     {monthNames[currentMonth.getMonth()]}
                   </CardTitle>
@@ -234,7 +263,7 @@ export default function CalendarPage() {
             </Card>
 
             {/* 선택된 날짜의 일정 */}
-            <Card className="m-4">
+            <Card className="m-4 border-none">
               <CardHeader>
                 <CardTitle className="text-lg">{selectedDate} 일정</CardTitle>
               </CardHeader>
@@ -263,7 +292,6 @@ export default function CalendarPage() {
           </>
         )}
       </main>
-
       <BottomNavigation />
     </div>
   );

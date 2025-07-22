@@ -8,6 +8,32 @@ import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
 import { CardViewer } from "@/src/components/ui/CardViewer";
 import { SnapshotCard } from "@/src/types/SnapshotCard";
 import React from "react";
+import { useRouter } from "next/navigation";
+
+// 중복 로그인 리다이렉트 방지 ref
+let hasRedirectedToLogin = false;
+
+async function fetchWithAuthCheck(
+  input: RequestInfo,
+  init: RequestInit = {},
+  router: ReturnType<typeof useRouter>
+) {
+  const res = await fetch(input, init);
+  let jsonResponse: any;
+  try {
+    jsonResponse = await res.json();
+  } catch (e) {
+    throw new Error("서버 응답이 올바르지 않습니다.");
+  }
+  if (jsonResponse.code === "AUTH-002") {
+    if (!hasRedirectedToLogin) {
+      hasRedirectedToLogin = true;
+      router.replace("/login");
+    }
+    throw new Error("인증 오류");
+  }
+  return jsonResponse;
+}
 
 export default function CardsPage() {
   const [activeView, setActiveView] = useState<"date" | "stock">("date");
@@ -17,6 +43,7 @@ export default function CardsPage() {
   }>({});
   const [currentSnapshotIndex, setCurrentSnapshotIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   // 날짜 목록
   const allDates = useMemo(
@@ -33,15 +60,16 @@ export default function CardsPage() {
     const fetchAllSnapshots = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
+        const data = await fetchWithAuthCheck(
           `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots?sort=createdAt,asc`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-          }
+          },
+          router
         );
-        const data = await response.json();
+
         if (
           data &&
           data.status &&
@@ -74,22 +102,22 @@ export default function CardsPage() {
       }
     };
     fetchAllSnapshots();
-  }, []);
+  }, [router]);
 
   // 날짜별 카드 조회 (필요시 서버에서 받아와 캐싱)
   const fetchSnapshotsByDate = async (date: string) => {
     if (snapshotsByDate[date]) return; // 이미 있으면 패스
     setIsLoading(true);
     try {
-      const response = await fetch(
+      const data = await fetchWithAuthCheck(
         `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots/by-date?date=${date}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-        }
+        },
+        router
       );
-      const data = await response.json();
       if (data && data.status && Array.isArray(data.data)) {
         setSnapshotsByDate((prev) => ({ ...prev, [date]: data.data }));
       }
