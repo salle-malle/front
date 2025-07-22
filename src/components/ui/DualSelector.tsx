@@ -95,3 +95,100 @@ export const DualSelector = ({
     </div>
   );
 };
+
+// "use client";
+
+// import { useDrag } from "react-use-gesture";
+// import { useTransition, animated } from "react-spring";
+// import { DateSelector } from "./DateSelector";
+// import { StockSelector } from "./StockSelector";
+// import { MoreHorizontal } from "lucide-react";
+// import { useRef } from "react";
+// import { SnapshotCard } from "@/src/types/SnapshotCard";
+
+// interface DualSelectorProps {
+//   activeView: "date" | "stock";
+//   onViewChange: (view: "date" | "stock") => void;
+//   selectedDate: string;
+//   allowedDates?: string[];
+//   onDateChange: (date: string) => void;
+//   snapshotsForDate: SnapshotCard[];
+//   selectedSnapshotId?: number;
+//   onStockChange: (snapshotId: number) => void;
+//   onStockEdge?: (direction: "left" | "right") => void; // 추가: 스냅샷 경계 도달 시 콜백
+// }
+
+// const SELECTOR_HEIGHT = 90;
+
+// export const DualSelector = ({
+//   activeView,
+//   onViewChange,
+//   selectedDate,
+//   onDateChange,
+//   snapshotsForDate,
+//   selectedSnapshotId,
+//   onStockChange,
+// }: DualSelectorProps) => {
+//   const dragDirection = useRef(1);
+
+//   const transitions = useTransition(activeView, {
+//     from: {
+//       transform: `translateY(${dragDirection.current * 100}%)`,
+//       opacity: 0,
+//     },
+//     enter: { transform: "translateY(0%)", opacity: 1 },
+//     leave: {
+//       transform: `translateY(${-dragDirection.current * 100}%)`,
+//       opacity: 0,
+//     },
+//     config: { tension: 300, friction: 30 },
+//     exitBeforeEnter: true, // 이전 컴포넌트가 사라진 후 새 컴포넌트가 나타남
+//   });
+
+//   const bind = useDrag(
+//     ({ down, movement: [, my], direction: [, dy], cancel }) => {
+//       if (down) return; // 드래그가 끝났을 때만 실행
+//       if (Math.abs(my) > SELECTOR_HEIGHT / 3) {
+//         dragDirection.current = dy > 0 ? 1 : -1;
+//         onViewChange(activeView === "date" ? "stock" : "date");
+//         if (cancel) cancel();
+//       }
+//     },
+//     { filterTaps: true, axis: "y" } // y축으로만 드래그 감지
+//   );
+
+//   return (
+//     <div
+//       {...bind()}
+//       className="relative bg-gray-100 overflow-hidden cursor-grab active:cursor-grabbing touch-none"
+//       style={{ height: SELECTOR_HEIGHT }}
+//     >
+//       {transitions((style, view) => (
+//         <animated.div
+//           style={{
+//             ...style,
+//             position: "absolute",
+//             width: "100%",
+//             height: "100%",
+//           }}
+//         >
+//           {view === "date" ? (
+//             <DateSelector
+//               selectedDate={selectedDate}
+//               onDateSelect={onDateChange}
+//             />
+//           ) : (
+//             <StockSelector
+//               snapshots={snapshotsForDate}
+//               selectedSnapshotId={selectedSnapshotId}
+//               onStockSelect={onStockChange}
+//             />
+//           )}
+//         </animated.div>
+//       ))}
+//       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+//         <MoreHorizontal />
+//       </div>
+//     </div>
+//   );
+// };

@@ -7,6 +7,7 @@ import { DualSelector } from "@/src/components/ui/DualSelector";
 import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
 import { CardViewer } from "@/src/components/ui/CardViewer";
 import { SnapshotCard } from "@/src/types/SnapshotCard";
+import { preloadImage } from "@/src/lib/image-preloader";
 import React from "react";
 import { useRouter } from "next/navigation";
 
@@ -45,17 +46,14 @@ export default function CardsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // 날짜 목록
-  const allDates = useMemo(
+  const allowedDates = useMemo(
     () => Object.keys(snapshotsByDate).sort(),
     [snapshotsByDate]
   );
-  // 현재 날짜의 카드 목록
+
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
-  // 현재 카드
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
 
-  // 최초 진입 시 전체 카드 목록 패칭
   useEffect(() => {
     const fetchAllSnapshots = async () => {
       setIsLoading(true);
@@ -77,15 +75,21 @@ export default function CardsPage() {
           Array.isArray(data.data.content)
         ) {
           const fetchedData: SnapshotCard[] = data.data.content;
-          // 날짜별로 그룹화
+          fetchedData.forEach((snap) => {
+            preloadImage(snap.newsImage);
+            if (snap.stockCode) {
+              preloadImage(`/ticker-icon/${snap.stockCode}.png`);
+            }
+          });
+
           const byDate: { [date: string]: SnapshotCard[] } = {};
           fetchedData.forEach((snap) => {
             const date = snap.snapshotCreatedAt.split("T")[0];
             if (!byDate[date]) byDate[date] = [];
             byDate[date].push(snap);
           });
+
           setSnapshotsByDate(byDate);
-          // 기본 선택 날짜: 가장 최근 날짜
           const dates = Object.keys(byDate).sort();
           if (dates.length > 0) {
             setSelectedDate(dates[dates.length - 1]);
@@ -95,7 +99,7 @@ export default function CardsPage() {
         } else {
           setSnapshotsByDate({});
         }
-      } catch (error) {
+      } catch {
         setSnapshotsByDate({});
       } finally {
         setIsLoading(false);
@@ -104,9 +108,8 @@ export default function CardsPage() {
     fetchAllSnapshots();
   }, [router]);
 
-  // 날짜별 카드 조회 (필요시 서버에서 받아와 캐싱)
   const fetchSnapshotsByDate = async (date: string) => {
-    if (snapshotsByDate[date]) return; // 이미 있으면 패스
+    if (snapshotsByDate[date]) return;
     setIsLoading(true);
     try {
       const data = await fetchWithAuthCheck(
@@ -121,55 +124,82 @@ export default function CardsPage() {
       if (data && data.status && Array.isArray(data.data)) {
         setSnapshotsByDate((prev) => ({ ...prev, [date]: data.data }));
       }
-    } catch (error) {
-      // ignore
     } finally {
       setIsLoading(false);
     }
   };
 
-  // DualSelector 드래그로 뷰 전환
-  const handleViewChange = (view: "date" | "stock") => {
-    setActiveView(view);
-  };
-
-  // 날짜 선택 시
   const handleDateChange = async (date: string) => {
+    // 이미 선택된 날짜라면 무시 (선택적)
+    if (date === selectedDate) return;
+
     if (!snapshotsByDate[date]) {
       await fetchSnapshotsByDate(date);
     }
+
+    const newSnapshots = snapshotsByDate[date] || [];
+    newSnapshots.forEach((snap) => {
+      preloadImage(snap.newsImage);
+      if (snap.stockCode) {
+        preloadImage(`/ticker-icon/${snap.stockCode}.png`);
+      }
+    });
+
     setSelectedDate(date);
     setCurrentSnapshotIndex(0);
-    setActiveView("stock");
+    setActiveView("stock"); // ✅ 꼭 필요!
   };
 
-  // StockSelector에서 카드 선택
+  useEffect(() => {
+    if (currentSnapshotIndex >= currentSnapshots.length) {
+      setCurrentSnapshotIndex(currentSnapshots.length - 1);
+    }
+  }, [selectedDate, currentSnapshots.length]);
+
+  useEffect(() => {
+    setCurrentSnapshotIndex(0);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (activeView === "stock" && currentSnapshots.length > 0) {
+      setCurrentSnapshotIndex((prev) =>
+        prev >= currentSnapshots.length ? 0 : prev
+      );
+    }
+  }, [activeView, currentSnapshots.length]);
+
+  useEffect(() => {
+    if (activeView === "date") {
+      setCurrentSnapshotIndex(0);
+    }
+  }, [activeView, currentSnapshots.length]);
+
   const handleStockChange = (snapshotId: number) => {
     const idx = currentSnapshots.findIndex((s) => s.snapshotId === snapshotId);
     if (idx !== -1) setCurrentSnapshotIndex(idx);
   };
 
-  // StockSelector에서 끝에 도달
-  const handleStockEdge = (direction: "left" | "right") => {
-    const idx = allDates.indexOf(selectedDate);
+  const handleStockEdge = async (direction: "left" | "right") => {
+    const idx = allowedDates.indexOf(selectedDate);
     const nextDate =
-      direction === "left" ? allDates[idx - 1] : allDates[idx + 1];
-    if (nextDate) {
-      setSelectedDate(nextDate);
-      setCurrentSnapshotIndex(0);
-      setActiveView("date");
-      if (!snapshotsByDate[nextDate]) fetchSnapshotsByDate(nextDate);
+      direction === "left" ? allowedDates[idx - 1] : allowedDates[idx + 1];
+    if (!nextDate) return;
+    if (!snapshotsByDate[nextDate]) {
+      await fetchSnapshotsByDate(nextDate);
     }
+    await handleDateChange(nextDate);
+    setSelectedDate(nextDate);
+    setActiveView("date");
+    setCurrentSnapshotIndex(0);
   };
 
-  // CardViewer에서 좌/우 드래그
-  const handleSwipe = (direction: number) => {
+  const handleSwipe = async (direction: number) => {
     const newIndex = currentSnapshotIndex + direction;
     if (newIndex >= 0 && newIndex < currentSnapshots.length) {
       setCurrentSnapshotIndex(newIndex);
+      if (activeView === "date") setActiveView("stock");
     } else {
-      // 끝에 도달: 날짜 이동
-      handleStockEdge(direction < 0 ? "left" : "right");
+      await handleStockEdge(direction < 0 ? "left" : "right");
     }
   };
 
@@ -178,11 +208,9 @@ export default function CardsPage() {
       <TopNavigation />
       <SelectedDateDisplay date={selectedDate} />
       <div className="relative flex-1">
-        {/* CardViewer는 항상 아래에 깔림 */}
-        <main className="absolute inset-0 top-[90px] flex items-center justify-center">
-          {/* 왼쪽 카드 넘기기 버튼 */}
+        <main className="absolute inset-0 top-[5px] flex items-center justify-center">
           <button
-            onClick={() => handleSwipe(-1)}
+            onClick={async () => await handleSwipe(-1)}
             className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
             aria-label="이전 카드"
             style={{
@@ -191,7 +219,8 @@ export default function CardsPage() {
               top: "50%",
               transform: "translateY(-50%)",
             }}
-            disabled={isLoading || currentSnapshotIndex === 0}>
+            disabled={isLoading}
+          >
             <svg
               width="20"
               height="20"
@@ -199,7 +228,8 @@ export default function CardsPage() {
               stroke="currentColor"
               strokeWidth="2"
               viewBox="0 0 24 24"
-              className="text-gray-600">
+              className="text-gray-600"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -207,21 +237,19 @@ export default function CardsPage() {
               />
             </svg>
           </button>
-          {/* 카드 뷰어 */}
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <p>Loading...</p>
             </div>
           ) : currentSnapshot ? (
             <CardViewer
-              key={currentSnapshot.snapshotId}
-              card={currentSnapshot}
+              cards={currentSnapshots}
+              currentIndex={currentSnapshotIndex}
               onSwipe={handleSwipe}
             />
           ) : null}
-          {/* 오른쪽 카드 넘기기 버튼 */}
           <button
-            onClick={() => handleSwipe(1)}
+            onClick={async () => await handleSwipe(1)}
             className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
             aria-label="다음 카드"
             style={{
@@ -230,11 +258,8 @@ export default function CardsPage() {
               top: "50%",
               transform: "translateY(-50%)",
             }}
-            disabled={
-              isLoading ||
-              currentSnapshotIndex === currentSnapshots.length - 1 ||
-              currentSnapshots.length === 0
-            }>
+            disabled={isLoading}
+          >
             <svg
               width="20"
               height="20"
@@ -242,7 +267,8 @@ export default function CardsPage() {
               stroke="currentColor"
               strokeWidth="2"
               viewBox="0 0 24 24"
-              className="text-gray-600">
+              className="text-gray-600"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -256,17 +282,16 @@ export default function CardsPage() {
             </div>
           )}
         </main>
-        {/* DualSelector 드래그 바는 항상 위에 떠 있음 */}
-        <div className="absolute left-0 right-0 top-0 z-10">
+        <div className="relative z-20">
           <DualSelector
             activeView={activeView}
-            onViewChange={handleViewChange}
+            onViewChange={setActiveView}
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
             snapshotsForDate={currentSnapshots}
             selectedSnapshotId={currentSnapshot?.snapshotId}
             onStockChange={handleStockChange}
-            allowedDates={allDates}
+            allowedDates={allowedDates}
             onStockEdge={handleStockEdge}
           />
         </div>

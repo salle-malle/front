@@ -3,12 +3,12 @@
 import { useRouter, usePathname } from "next/navigation";
 import { GoHomeFill } from "react-icons/go";
 import { PiCardsThreeFill } from "react-icons/pi";
-import { FaUser, FaHeartCirclePlus } from "react-icons/fa6";
+import { FaUser, FaHeartCirclePlus, FaHeart } from "react-icons/fa6";
 
 const NAV_ITEMS = [
   { icon: GoHomeFill, label: "홈", path: "/home" },
   { icon: PiCardsThreeFill, label: "카드", path: "/cards" },
-  { icon: FaHeartCirclePlus, label: "스크랩", path: "/scrap" },
+  { icon: FaHeart, label: "스크랩", path: "/scrap" },
   { icon: FaUser, label: "MY", path: "/profile" },
 ];
 
@@ -21,8 +21,7 @@ export function BottomNavigation() {
       <div className="flex">
         {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
           const isActive =
-            pathname === path ||
-            (path !== "/" && pathname.startsWith(path));
+            pathname === path || (path !== "/" && pathname.startsWith(path));
 
           return (
             <button
