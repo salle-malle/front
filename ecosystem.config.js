@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'salle-malle-front',
-      script: 'npm',
+      script: 'pnpm',
       args: 'start',
       cwd: '/var/www/salle-malle-front',
       instances: 1,
