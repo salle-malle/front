@@ -17,7 +17,7 @@ export default function ConditionalLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center">
-      <div className="w-full max-w-sm bg-white shadow-lg">{children}</div>
+      <div className="w-full bg-white shadow-lg">{children}</div>
     </div>
   );
 }

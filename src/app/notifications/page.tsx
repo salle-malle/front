@@ -60,7 +60,7 @@ export default function NotificationsPage() {
     <div className="flex flex-col h-screen bg-[#f9fafb]">
       <TopNavigation />
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="space-y-3 p-4">
+        <div className="space-y-3 p-4 max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mx-auto">
           {notifications
             .slice()
             .reverse()

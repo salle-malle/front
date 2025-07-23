@@ -221,33 +221,36 @@ export default function ScrapPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white relative">
+    <div className="flex flex-col h-screen mx-auto bg-white relative">
       <TopNavigation />
 
       <div className="px-4 pt-3 pb-2 border-b bg-white">
-        <h1 className="text-lg font-bold flex items-center mb-3"></h1>
-        <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
-          <Button
-            variant={activeTab === "stocks" ? "default" : "ghost"}
-            size="sm"
-            className="flex-1 rounded-md"
-            onClick={() => setActiveTab("stocks")}
-          >
-            종목
-          </Button>
-          <Button
-            variant={activeTab === "groups" ? "default" : "ghost"}
-            size="sm"
-            className="flex-1 rounded-md"
-            onClick={() => setActiveTab("groups")}
-          >
-            그룹
-          </Button>
+        <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
+          <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
+            <Button
+              variant={activeTab === "stocks" ? "default" : "ghost"}
+              size="sm"
+              className="flex-1 rounded-md"
+              onClick={() => setActiveTab("stocks")}
+            >
+              종목
+            </Button>
+            <Button
+              variant={activeTab === "groups" ? "default" : "ghost"}
+              size="sm"
+              className="flex-1 rounded-md"
+              onClick={() => setActiveTab("groups")}
+            >
+              그룹
+            </Button>
+          </div>
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto pb-24 bg-gray-50">
-        {activeTab === "stocks" ? renderStocksTab() : renderGroupsTab()}
+      <main className="flex-1 overflow-y-auto pb-24 bg-gray-50 ">
+        <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
+          {activeTab === "stocks" ? renderStocksTab() : renderGroupsTab()}
+        </div>
       </main>
 
       <BottomNavigation />

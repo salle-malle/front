@@ -165,8 +165,9 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation title="일정test" />
+      <TopNavigation title="BLML" />
       <main className="flex-1 overflow-y-auto pb-20">
+      <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-gray-500">데이터를 불러오는 중...</div>
@@ -291,6 +292,7 @@ export default function CalendarPage() {
             </Card>
           </>
         )}
+        </div>
       </main>
       <BottomNavigation />
     </div>
