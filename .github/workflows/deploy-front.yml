@@ -63,4 +63,4 @@ jobs:
           scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no deploy.tar.gz ubuntu@43.200.100.172:/var/www/salle-malle-front/
 
           # 3. 실제 배포 폴더로 바로 이동해서 deploy.sh 실행
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ubuntu@43.200.100.172 "cd /var/www/salle-malle-front && ./deploy.sh"
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ubuntu@43.200.100.172 "cd /var/www/salle-malle-front && chmod +x deploy.sh && ./deploy.sh"
