@@ -6,10 +6,12 @@ import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { DualSelector } from "@/src/components/ui/DualSelector";
 import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
 import { CardViewer } from "@/src/components/ui/CardViewer";
-import { SnapshotCard } from "@/src/types/SnapshotCard";
+import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
 import { preloadImage } from "@/src/lib/image-preloader";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { Toaster } from "@/src/components/ui/Sonner";
+import { toast } from "sonner";
 
 // 중복 로그인 리다이렉트 방지 ref
 let hasRedirectedToLogin = false;
@@ -53,8 +55,51 @@ export default function CardsPage() {
 
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
+  const [portfolio, setPortfolio] = useState<
+    { [stockCode: string]: UnifiedStockItem } | undefined
+  >(undefined);
+
+  const fetchAllPortfolio = async () => {
+    try {
+      const portfolioResponse = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        },
+        router
+      );
+
+      if (portfolioResponse?.status && portfolioResponse.data?.stocks) {
+        const portfolioItems: UnifiedStockItem[] =
+          portfolioResponse.data.stocks;
+        const portfolioMap = portfolioItems.reduce((acc, item) => {
+          acc[item.pdno] = item; // pdno (상품번호/종목코드)를 key로 사용
+          return acc;
+        }, {} as { [stockCode: string]: UnifiedStockItem });
+
+        console.log("Portfolio fetched:", portfolioMap);
+        setPortfolio(portfolioMap);
+      } else {
+        setPortfolio({}); // 데이터가 없는 경우 빈 객체로 초기화
+      }
+    } catch (error) {
+      console.error("Failed to fetch portfolio:", error);
+      setPortfolio({}); // 에러 발생 시 빈 객체로 초기화
+    }
+  };
 
   useEffect(() => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+
+      // 스냅샷과 포트폴리오를 동시에 요청하여 병렬로 처리
+      await Promise.all([fetchAllSnapshots(), fetchAllPortfolio()]);
+
+      setIsLoading(false);
+    };
+
     const fetchAllSnapshots = async () => {
       setIsLoading(true);
       try {
@@ -105,7 +150,8 @@ export default function CardsPage() {
         setIsLoading(false);
       }
     };
-    fetchAllSnapshots();
+
+    fetchInitialData();
   }, [router]);
 
   const fetchSnapshotsByDate = async (date: string) => {
@@ -147,7 +193,7 @@ export default function CardsPage() {
 
     setSelectedDate(date);
     setCurrentSnapshotIndex(0);
-    setActiveView("stock"); // ✅ 꼭 필요!
+    setActiveView("stock");
   };
 
   useEffect(() => {
@@ -203,8 +249,47 @@ export default function CardsPage() {
     }
   };
 
+  if (isLoading || !portfolio) {
+    return (
+      <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white">
+        <TopNavigation />
+        <div className="flex-1 flex items-center justify-center">
+          <p>Loading...</p>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  const handleScrapClick = async (snapshotId: number) => {
+    try {
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scraps`, // API 엔드포인트 확인
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ memberStockSnapshotId: snapshotId }),
+        },
+        router
+      );
+
+      if (response.success) {
+        // 성공 시 toast.success()를 호출합니다.
+        toast.success("스크랩에 추가되었습니다.");
+      } else {
+        // 실패 시 toast.error()를 호출합니다.
+        toast.error(response.message || "스크랩 추가에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Scrap request failed:", error);
+      toast.error("스크랩 추가 중 오류가 발생했습니다.");
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white overflow-hidden">
+      <Toaster />
       <TopNavigation />
       <SelectedDateDisplay date={selectedDate} />
       <div className="relative flex-1">
@@ -246,6 +331,7 @@ export default function CardsPage() {
               cards={currentSnapshots}
               currentIndex={currentSnapshotIndex}
               onSwipe={handleSwipe}
+              onScrap={handleScrapClick}
             />
           ) : null}
           <button
@@ -293,6 +379,8 @@ export default function CardsPage() {
             onStockChange={handleStockChange}
             allowedDates={allowedDates}
             onStockEdge={handleStockEdge}
+            portfolio={portfolio}
+            onScrap={handleScrapClick}
           />
         </div>
       </div>

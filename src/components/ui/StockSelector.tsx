@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SnapshotCard } from "@/src/types/SnapshotCard"; // 공통 타입 import
+import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard"; // 공통 타입 import
 import { StockLogo } from "./StockLogo";
 import Image from "next/image";
 
-// StockLogo 컴포넌트는 별도로 구현되어 있다고 가정합니다.
-// import { StockLogo } from "./StockLogo";
-
 interface StockSelectorProps {
-  snapshots: SnapshotCard[]; // events -> snapshots로 이름 및 타입 변경
-  selectedSnapshotId?: number; // selectedStock -> selectedSnapshotId로 변경
-  onStockSelect: (snapshotId: number) => void; // onStockSelect -> onStockChange로 변경되어 전달될 수 있음
-  onEdge?: (direction: "left" | "right") => void; // 추가
+  snapshots: SnapshotCard[];
+  selectedSnapshotId?: number;
+  onStockSelect: (snapshotId: number) => void;
+  onEdge?: (direction: "left" | "right") => void;
+  portfolio?: { [pdno: string]: UnifiedStockItem };
 }
 
 export const StockSelector = ({
@@ -21,6 +19,7 @@ export const StockSelector = ({
   selectedSnapshotId,
   onStockSelect,
   onEdge,
+  portfolio,
 }: StockSelectorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
@@ -69,7 +68,25 @@ export const StockSelector = ({
   }
 
   const currentSnapshot = snapshots[currentIndex];
-  if (!currentSnapshot) return null; // 데이터가 없는 경우 렌더링하지 않음
+  if (!currentSnapshot) return null;
+
+  const stockInfo =
+    portfolio && currentSnapshot.stockCode
+      ? portfolio[currentSnapshot.stockCode.trim().toString()]
+      : undefined;
+
+  const evaluationAmount = stockInfo?.evaluation_amount || "---";
+  const profitLossAmount = stockInfo?.profit_loss_amount || "---";
+  const rateStr = stockInfo?.profit_loss_rate;
+  const profitLossRate =
+    rateStr && !isNaN(+rateStr) ? Math.floor(+rateStr * 100) / 100 : "---";
+
+  const getProfitColor = (value: string) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue === 0) return "text-gray-500";
+    return numValue > 0 ? "text-red-600" : "text-blue-600";
+  };
+  const profitColor = getProfitColor(profitLossAmount);
 
   return (
     <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full">
@@ -102,12 +119,20 @@ export const StockSelector = ({
             <p className="font-bold text-base truncate">
               {currentSnapshot.stockName}
             </p>
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {evaluationAmount}
+            </p>
             <p className="text-xs text-gray-500 truncate"></p>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-base whitespace-nowrap">
-              {currentSnapshot.stockCode}
+            {/* 손익금액 표시 */}
+            <p
+              className={`font-semibold text-base whitespace-nowrap ${profitColor}`}
+            >
+              {profitLossAmount}
             </p>
+            {/* 손익률 표시 */}
+            <p className={`text-sm ${profitColor}`}>({profitLossRate}%)</p>
           </div>
         </div>
       </div>

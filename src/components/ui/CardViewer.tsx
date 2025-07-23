@@ -15,6 +15,7 @@ interface CardViewerProps {
   cards: SnapshotCard[];
   currentIndex: number;
   onSwipe: (direction: number) => void;
+  onScrap: (snapshotId: number) => void;
 }
 
 const CARD_WIDTH = 320;
@@ -24,6 +25,7 @@ export const CardViewer = ({
   cards,
   currentIndex,
   onSwipe,
+  onScrap,
 }: CardViewerProps) => {
   const [springs, api] = useSprings(cards.length, (i) => ({
     x: (i - currentIndex) * (CARD_WIDTH + 40),
@@ -120,11 +122,12 @@ export const CardViewer = ({
                   </ScrollArea>
                 </CardContent>
               </Card>
+
               {card.personalizedComment && (
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="absolute bottom-[-6%] right-[-16px] h-12 w-12 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20"
+                    className="absolute bottom-[75%] right-[17%] h-8 w-8 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20"
                   >
                     <MessageSquare size={36} />
                   </Button>
@@ -132,7 +135,8 @@ export const CardViewer = ({
               )}
               <Button
                 variant="ghost"
-                className="absolute bottom-[4%] right-[-15px] h-12 w-12 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20"
+                className="absolute bottom-[75%] right-[3%] h-8 w-8 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20"
+                onClick={() => onScrap(card.snapshotId)}
               >
                 <FaHeartCirclePlus size={36}></FaHeartCirclePlus>
               </Button>
@@ -188,126 +192,15 @@ export const CardViewer = ({
   );
 };
 
-// "use client";
-
-// import React from "react";
-// import { useSprings, animated } from "react-spring";
-// import { useDrag } from "react-use-gesture"; // useDrag import 추가
-// import { Card, CardContent } from "./card";
-// import { SnapshotCard } from "@/src/types/SnapshotCard";
-// import { Button } from "./button";
-// import { Dialog, DialogContent, DialogTrigger } from "./dialog";
-// import { MessageSquare } from "lucide-react";
-
-// interface CardViewerProps {
-//   cards: SnapshotCard[];
-//   currentIndex: number;
-//   onSwipe: (direction: number) => void;
-// }
-
-// const CARD_WIDTH = 320;
-// const CARD_IMAGE_HEIGHT = 160;
-
-// export const CardViewer = ({
-//   cards,
-//   currentIndex,
-//   onSwipe,
-// }: CardViewerProps) => {
-//   const [springs, api] = useSprings(cards.length, (i) => ({
-//     x: (i - currentIndex) * (CARD_WIDTH + 40), // 카드 너비 + 간격 만큼 이동
-//     scale: i === currentIndex ? 1 : 0.85,
-//     opacity: Math.abs(i - currentIndex) > 1 ? 0 : 1,
-//   }));
-
-//   React.useEffect(() => {
-//     api.start((i) => ({
-//       x: (i - currentIndex) * (CARD_WIDTH + 40),
-//       scale: i === currentIndex ? 1 : 0.85,
-//       opacity: Math.abs(i - currentIndex) > 1 ? 0 : 1,
-//     }));
-//   }, [currentIndex, api]);
-
-//   const bind = useDrag(({ down, movement: [mx], direction: [dx], cancel }) => {
-//     if (!down && Math.abs(mx) > CARD_WIDTH / 4) {
-//       const direction = dx > 0 ? -1 : 1;
-//       onSwipe(direction);
-//       if (cancel) cancel();
-//     } else {
-//       api.start((i) => ({
-//         x: (i - currentIndex) * (CARD_WIDTH + 40) + (down ? mx : 0),
-//       }));
-//     }
-//   });
-
-//   return (
-//     <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-//       {springs.map((style, i) => {
-//         const card = cards[i];
-//         if (!card) return null;
-
-//         return (
-//           <animated.div
-//             {...bind()}
-//             key={card.snapshotId}
-//             style={{
-//               ...style,
-//               position: "absolute",
-//               width: CARD_WIDTH,
-//               height: "100%",
-//               maxHeight: "75%",
-//               touchAction: "pan-y", // 좌우 스와이프 우선
-//               cursor: "grab",
-//             }}
-//           >
-//             <Dialog>
-//               <Card className="h-full flex flex-col shadow-lg relative">
-//                 <CardContent className="p-0 relative flex-1 overflow-hidden rounded-lg flex flex-col">
-//                   <div
-//                     className="w-full bg-gray-200 rounded-t-lg overflow-hidden"
-//                     style={{ height: CARD_IMAGE_HEIGHT }}
-//                   >
-//                     {card.newsImage && (
-//                       <img
-//                         src={card.newsImage}
-//                         alt="News Image"
-//                         className="w-full h-full object-cover"
-//                       />
-//                     )}
-//                   </div>
-//                   <div className="p-4 flex-1 overflow-y-auto">
-//                     <p className="text-gray-600 text-sm">{card.newsContent}</p>
-//                   </div>
-//                 </CardContent>
-
-//                 {card.personalizedComment && (
-//                   <DialogTrigger asChild>
-//                     <Button
-//                       variant="ghost"
-//                       className="absolute bottom-4 right-4 h-12 w-12 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20"
-//                     >
-//                       <MessageSquare size={24} />
-//                     </Button>
-//                   </DialogTrigger>
-//                 )}
-//               </Card>
-
-//               {card.personalizedComment && (
-//                 <DialogContent>
-//                   <div className="relative bg-white p-6 rounded-lg shadow-xl max-w-xs mx-auto">
-//                     <h4 className="font-bold text-gray-800 mb-2">AI Comment</h4>
-//                     <p className="text-sm text-gray-600 break-words">
-//                       {typeof card.personalizedComment === "number"
-//                         ? String(card.personalizedComment)
-//                         : card.personalizedComment || ""}
-//                     </p>
-//                     <div className="relative left-1/2 -bottom-2.5 w-5 h-5 bg-white transform rotate-45 -z-10"></div>
-//                   </div>
-//                 </DialogContent>
-//               )}
-//             </Dialog>
-//           </animated.div>
-//         );
-//       })}
-//     </div>
-//   );
-// };
+function fetchWithAuthCheck(
+  arg0: string,
+  arg1: {
+    method: string;
+    headers: { "Content-Type": string };
+    credentials: string;
+    body: string;
+  },
+  router: any
+) {
+  throw new Error("Function not implemented.");
+}
