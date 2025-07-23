@@ -248,8 +248,8 @@ export default function ScrapPage() {
       </div>
 
       <main className="flex-1 overflow-y-auto pb-24 bg-gray-50 ">
-      <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
-        {activeTab === "stocks" ? renderStocksTab() : renderGroupsTab()}
+        <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
+          {activeTab === "stocks" ? renderStocksTab() : renderGroupsTab()}
         </div>
       </main>
 
