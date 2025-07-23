@@ -25,6 +25,9 @@ if [ -f .env.production ]; then
   export $(cat .env.production | xargs)
 fi
 
+echo "Next.js 애플리케이션 빌드 중..."
+pnpm build
+
 echo "Next.js 애플리케이션 시작 중..."
 pm2 start ecosystem.config.js
 
@@ -34,4 +37,4 @@ echo "배포된 프로세스 상태:"
 pm2 list
 
 echo "✅ 프론트엔드 배포 완료!"
-echo "🌐 애플리케이션 URL: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000"
+echo "🌐 애플리케이션 URL: http://43.200.100.172:3000"
