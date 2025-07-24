@@ -536,6 +536,14 @@ export default function CalendarPage() {
     </svg>
   );
 
+  // 날짜를 "YYYY-MM-DD" -> "YYYY년 MM월 DD일"로 변환하는 함수 (0000-00-00 -> 0000년 00월 00일)
+  function formatDateToKoreanDisplay(dateStr: string) {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    if (!year || !month || !day) return dateStr;
+    return `${year}년 ${parseInt(month, 10)}월 ${parseInt(day, 10)}일`;
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <TopNavigation title="" showBackButton={true}/>
@@ -641,7 +649,9 @@ export default function CalendarPage() {
                 }}
               >
                 <CardHeader>
-                  <CardTitle className="text-lg">{selectedDate} 일정</CardTitle>
+                  <CardTitle className="text-md">
+                    {formatDateToKoreanDisplay(selectedDate)}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {scheduleData[selectedDate] && scheduleData[selectedDate].length > 0 ? (
