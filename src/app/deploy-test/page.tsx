@@ -13,7 +13,7 @@ export default function DeployTestPage() {
     timestamp: new Date().toLocaleString("ko-KR"),
     version: "1.0.0",
     environment: process.env.NODE_ENV || "development",
-    apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://43.200.100.172:8080",
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || "/api/v1",
     buildTime: new Date().toISOString(),
   };
 

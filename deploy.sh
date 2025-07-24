@@ -37,4 +37,4 @@ echo "배포된 프로세스 상태:"
 pm2 list
 
 echo "✅ 프론트엔드 배포 완료!"
-echo "🌐 애플리케이션 URL: http://43.200.100.172:3000"
+echo "🌐 애플리케이션 URL: https://sumearly.store"

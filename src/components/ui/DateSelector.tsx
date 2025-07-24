@@ -18,6 +18,8 @@ export const DateSelector = ({
   const [weekDates, setWeekDates] = useState<Date[]>([]);
   const weekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
+
+
   useEffect(() => {
     const startOfWeek = new Date(displayDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -53,7 +55,7 @@ export const DateSelector = ({
     allowedDates.length === 0 || allowedDates.includes(formatDate(date));
 
   return (
-    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm">
+    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm select-none">
       <div
         className="flex-1 bg-white p-1.5 rounded-xl shadow-sm"
         // onClick={() => changeStock("right")}

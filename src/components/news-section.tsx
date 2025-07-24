@@ -112,7 +112,7 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
         // 중복 요청 방지
         const data = await newsRequestManager.executeRequest(code, async () => {
           const response = await fetch(
-            `http://localhost:8080/api/v1/news/stock/${code}`,
+            `${process.env.NEXT_PUBLIC_BACK_API_URL}/news/stock/${code}`,
             {
               signal: abortControllerRef.current?.signal,
             }
