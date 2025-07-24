@@ -18,3 +18,14 @@ export interface MemberStockResponseDto {
   memberId: number;
   stock: Stock;
 }
+
+export interface MemberStockSnapshotDetailResponseDto {
+  snapshotId: number;
+  snapshotCreatedAt: string;
+  personalizedComment: string;
+  stockCode: string;
+  stockName: string;
+  newsContent: string;
+  newsImage: string;
+  isScrap: boolean;
+}

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard"; // 공통 타입 import
-import { StockLogo } from "./StockLogo";
+import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
 import Image from "next/image";
 
-interface StockSelectorProps {
+interface ScrapStockSelectorProps {
   snapshots: SnapshotCard[];
   selectedSnapshotId?: number;
   onStockSelect: (snapshotId: number) => void;
@@ -14,13 +13,13 @@ interface StockSelectorProps {
   portfolio?: { [pdno: string]: UnifiedStockItem };
 }
 
-export const StockSelector = ({
+export const ScrapStockSelector = ({
   snapshots,
   selectedSnapshotId,
   onStockSelect,
   onEdge,
   portfolio,
-}: StockSelectorProps) => {
+}: ScrapStockSelectorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
 
@@ -61,8 +60,8 @@ export const StockSelector = ({
 
   if (!snapshots || snapshots.length === 0) {
     return (
-      <div className="bg-gray-100 pt-9 flex items-center justify-center h-full">
-        <p className="text-sm text-gray-500">해당 날짜의 종목이 없습니다.</p>
+      <div className="bg-gray-100 p-2 flex items-center justify-center h-full rounded-xl shadow-sm">
+        <p className="text-sm text-gray-500">해당 날짜의 스크랩이 없습니다.</p>
       </div>
     );
   }
@@ -89,7 +88,7 @@ export const StockSelector = ({
   const profitColor = getProfitColor(profitLossAmount);
 
   return (
-    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full select-none">
+    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm select-none">
       <button
         onClick={() => changeStock("left")}
         className="p-1 rounded-full hover:bg-gray-200 transition-colors"

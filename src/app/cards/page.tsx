@@ -10,8 +10,9 @@ import { SnapshotCard } from "@/src/types/SnapshotCard";
 import { preloadImage } from "@/src/lib/image-preloader";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { UnifiedStockItem } from "@/src/types/SnapshotCard";
+import { Toaster } from "@/src/components/ui/Sonner";
 
-// 중복 로그인 리다이렉트 방지 ref
 let hasRedirectedToLogin = false;
 
 async function fetchWithAuthCheck(
@@ -38,13 +39,19 @@ async function fetchWithAuthCheck(
 
 export default function CardsPage() {
   const [activeView, setActiveView] = useState<"date" | "stock">("date");
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  // const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
   const [snapshotsByDate, setSnapshotsByDate] = useState<{
     [date: string]: SnapshotCard[];
   }>({});
   const [currentSnapshotIndex, setCurrentSnapshotIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const [portfolio, setPortfolio] = useState<{
+    [stockCode: string]: UnifiedStockItem;
+  }>({});
 
   const allowedDates = useMemo(
     () => Object.keys(snapshotsByDate).sort(),
@@ -54,59 +61,97 @@ export default function CardsPage() {
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
 
+  // 뷰 순서 정의 (scrap 페이지와 유사하게)
+  const viewOrder = ["date", "stock"] as const;
+  const currentViewIndex = viewOrder.indexOf(activeView);
+
+  // CardsPage.tsx
+
+  // 최초 진입 시 스냅샷과 보유 주식 정보를 함께 패칭합니다.
   useEffect(() => {
     const fetchAllSnapshots = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchWithAuthCheck(
-          `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots?sort=createdAt,asc`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          },
-          router
-        );
+        // 스냅샷 목록과 보유 주식 정보를 동시에 요청하여 로딩 시간을 단축합니다.
+        const [snapshotsResponse, portfolioResponse] = await Promise.all([
+          fetchWithAuthCheck(
+            `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots?sort=createdAt,asc`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            },
+            router
+          ),
+          fetchWithAuthCheck(
+            `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+            },
+            router
+          ),
+        ]);
 
+        // portfolioResponse 구조 수정
+        if (portfolioResponse.status && portfolioResponse.data?.stocks) {
+          const portfolioItems: UnifiedStockItem[] =
+            portfolioResponse.data.stocks;
+          const portfolioMap = portfolioItems.reduce((acc, item) => {
+            acc[item.pdno] = item;
+            return acc;
+          }, {} as { [stockCode: string]: UnifiedStockItem });
+          setPortfolio(portfolioMap);
+        }
+
+        // 2. 스냅샷(카드) 데이터 처리
+        // 응답 구조: data.data.content -> data.content
         if (
-          data &&
-          data.status &&
-          data.data &&
-          Array.isArray(data.data.content)
+          snapshotsResponse &&
+          snapshotsResponse.status &&
+          snapshotsResponse.data &&
+          Array.isArray(snapshotsResponse.data.content)
         ) {
-          const fetchedData: SnapshotCard[] = data.data.content;
-          fetchedData.forEach((snap) => {
-            preloadImage(snap.newsImage);
-            if (snap.stockCode) {
-              preloadImage(`/ticker-icon/${snap.stockCode}.png`);
-            }
-          });
+          const fetchedData: SnapshotCard[] = snapshotsResponse.data.content;
 
+          // 날짜별로 그룹화
           const byDate: { [date: string]: SnapshotCard[] } = {};
           fetchedData.forEach((snap) => {
             const date = snap.snapshotCreatedAt.split("T")[0];
             if (!byDate[date]) byDate[date] = [];
             byDate[date].push(snap);
           });
-
           setSnapshotsByDate(byDate);
+
+          // 기본 선택 날짜 설정 및 이미지 사전 로딩
           const dates = Object.keys(byDate).sort();
           if (dates.length > 0) {
-            setSelectedDate(dates[dates.length - 1]);
+            const latestDate = dates[dates.length - 1];
+            setSelectedDate(latestDate);
             setCurrentSnapshotIndex(0);
-            setActiveView("date");
+            setActiveView("stock");
+
+            byDate[latestDate].forEach((snap) => {
+              preloadImage(snap.newsImage);
+              if (snap.stockCode) {
+                preloadImage(`/ticker-icon/${snap.stockCode}.png`);
+              }
+            });
           }
         } else {
           setSnapshotsByDate({});
         }
-      } catch {
+      } catch (error) {
+        console.error("Failed to fetch initial data:", error);
         setSnapshotsByDate({});
+        setPortfolio({});
       } finally {
         setIsLoading(false);
       }
     };
     fetchAllSnapshots();
-  }, [router]);
+  }, [router]); // router를 의존성 배열에 추가
 
   const fetchSnapshotsByDate = async (date: string) => {
     if (snapshotsByDate[date]) return;
@@ -147,7 +192,7 @@ export default function CardsPage() {
 
     setSelectedDate(date);
     setCurrentSnapshotIndex(0);
-    setActiveView("stock"); // ✅ 꼭 필요!
+    setActiveView("stock");
   };
 
   useEffect(() => {
@@ -193,6 +238,108 @@ export default function CardsPage() {
     setCurrentSnapshotIndex(0);
   };
 
+  // 뷰 전환 함수들 (scrap 페이지와 유사하게)
+  const handleNextView = () => {
+    const nextIndex = (currentViewIndex + 1) % viewOrder.length;
+    setActiveView(viewOrder[nextIndex]);
+  };
+
+  const handlePrevView = () => {
+    const prevIndex =
+      (currentViewIndex - 1 + viewOrder.length) % viewOrder.length;
+    setActiveView(viewOrder[prevIndex]);
+  };
+
+  const handleScrap = async (snapshotId: number): Promise<number | null> => {
+    console.log("=== Cards Page handleScrap Debug ===");
+    console.log("handleScrap called with snapshotId:", snapshotId);
+
+    try {
+      console.log("Making API request to /scrap");
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ memberStockSnapshotId: snapshotId }),
+        },
+        router
+      );
+
+      console.log("API response:", response);
+
+      if (response.status) {
+        console.log("스크랩에 추가되었습니다.");
+        // 스크랩 ID 반환 (실제 응답 구조에 따라 조정 필요)
+        return response.data?.id || response.data?.scrapId || null;
+      } else {
+        console.error(response.message || "스크랩 추가에 실패했습니다.");
+        throw new Error(response.message || "스크랩 추가에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Scrap request failed:", error);
+      throw error;
+    }
+  };
+
+  const handleUnscrap = async (snapshotId: number): Promise<void> => {
+    console.log("=== Cards Page handleUnscrap Debug ===");
+    console.log("handleUnscrap called with snapshotId:", snapshotId);
+
+    try {
+      // 먼저 스크랩 상태를 확인
+      console.log("Checking scrap status for snapshotId:", snapshotId);
+      const statusResponse = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap/status/${snapshotId}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        },
+        router
+      );
+
+      console.log("Status response:", statusResponse);
+
+      if (!statusResponse.status) {
+        throw new Error("스크랩 상태를 확인할 수 없습니다.");
+      }
+
+      // 스크랩 상태가 true이고 scrapId가 있는 경우에만 삭제 시도
+      if (statusResponse.data?.scrapped && statusResponse.data?.scrapId) {
+        console.log(
+          "Snapshot is scraped, attempting to delete scrap with ID:",
+          statusResponse.data.scrapId
+        );
+
+        // scrapId로 스크랩 삭제
+        const deleteResponse = await fetchWithAuthCheck(
+          `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap/${statusResponse.data.scrapId}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          },
+          router
+        );
+
+        if (deleteResponse.status) {
+          console.log("스크랩에서 제거되었습니다.");
+        } else {
+          throw new Error(
+            deleteResponse.message || "스크랩 제거에 실패했습니다."
+          );
+        }
+      } else {
+        console.log("Snapshot is not scraped, no need to delete");
+      }
+    } catch (error) {
+      console.error("Unscrap request failed:", error);
+      throw error;
+    }
+  };
+
   const handleSwipe = async (direction: number) => {
     const newIndex = currentSnapshotIndex + direction;
     if (newIndex >= 0 && newIndex < currentSnapshots.length) {
@@ -205,6 +352,8 @@ export default function CardsPage() {
 
   return (
     <div className="flex flex-col h-screen mx-auto bg-white overflow-hidden">
+      <Toaster />
+
       <TopNavigation />
       <SelectedDateDisplay date={selectedDate} />
       <div className="relative flex-1">
@@ -246,6 +395,8 @@ export default function CardsPage() {
               cards={currentSnapshots}
               currentIndex={currentSnapshotIndex}
               onSwipe={handleSwipe}
+              onScrap={handleScrap}
+              onUnscrap={handleUnscrap}
             />
           ) : null}
           <button
@@ -293,6 +444,10 @@ export default function CardsPage() {
             onStockChange={handleStockChange}
             allowedDates={allowedDates}
             onStockEdge={handleStockEdge}
+            portfolio={portfolio}
+            onScrap={handleScrap}
+            onNextView={handleNextView}
+            onPrevView={handlePrevView}
           />
         </div>
       </div>
