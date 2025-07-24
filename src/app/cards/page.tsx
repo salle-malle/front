@@ -351,8 +351,9 @@ export default function CardsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white overflow-hidden">
+    <div className="flex flex-col h-screen mx-auto bg-white overflow-hidden">
       <Toaster />
+
       <TopNavigation />
       <SelectedDateDisplay date={selectedDate} />
       <div className="relative flex-1">

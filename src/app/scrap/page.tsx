@@ -630,7 +630,7 @@ export default function ScrapPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white overflow-hidden">
+    <div className="flex flex-col h-screen mx-auto bg-white overflow-hidden">
       <Toaster />
       <TopNavigation />
       
@@ -697,7 +697,7 @@ export default function ScrapPage() {
                           </p>
                         </div>
                       </div>
-
+                      
                       <div className="text-right">
                         <div className="text-sm font-medium">
                           {parseFloat(stock.current_price).toLocaleString()}
@@ -709,7 +709,7 @@ export default function ScrapPage() {
                               : parseFloat(stock.profit_loss_rate) < 0
                               ? "text-blue-500"
                               : "text-gray-500"
-                          }`}
+                          
                         >
                           {parseFloat(stock.profit_loss_rate) > 0 ? "+" : ""}
                           {parseFloat(stock.profit_loss_rate).toFixed(2)}%

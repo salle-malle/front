@@ -100,9 +100,9 @@ export function KeyStats({ stockData }: KeyStatsProps) {
       icon: <DollarSign className="h-4 w-4" />,
     },
     {
-      label: "Dividend Yield",
-      value: formatPercent("2.5"), // 임시 데이터
-      description: "배당수익률",
+      label: "BPS",
+      value: formatCurrency(stockData.bpsx),
+      description: "주당순자산",
       icon: <Percent className="h-4 w-4" />,
     },
     {

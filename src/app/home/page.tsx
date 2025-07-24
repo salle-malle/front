@@ -28,7 +28,7 @@ export type StockItem = {
 export type AssetTrendPoint = number;
 
 export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
-export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
+export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId : string; stockName : string};
 export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
 export type NewsListResponse = { news: NewsItem[]; };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
@@ -217,7 +217,6 @@ export default function HomePage() {
   const [newsIndex, setNewsIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [tab, setTab] = useState<"공시" | "어닝콜">("공시");
 
   const hasFetched = useRef(false);
@@ -349,8 +348,8 @@ export default function HomePage() {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <TopNavigation title="" />
-      <main className="flex-1 overflow-y-auto p-4 pb-20">
-        <div style={getSectionStyle(0)}>
+      <main className="flex-1 overflow-y-auto pb-20 p-0">
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(0)}>
           <NewsSlider
             newsItems={newsItems}
             newsIndex={newsIndex}
@@ -358,20 +357,20 @@ export default function HomePage() {
             onClick={() => handleSlide("up")}
           />
         </div>
-        <div style={getSectionStyle(1)}>
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(1)}>
           <AssetSummary assetAmount={assetAmount} />
         </div>
-        <div style={getSectionStyle(2)}>
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(2)}>
           <StockList stocks={stocks} companyLogos={logos} />
         </div>
-        <div style={getSectionStyle(3)}>
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(3)}>
           <AssetChart assetTrendData={assetTrendData} />
           <Card
             className="mb-2 rounded-xl border-0 w-full"
             style={{ maxWidth: "800px", margin: "0 auto" }}
           />
         </div>
-        <div style={getSectionStyle(4)}>
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(4)}>
           <InfoTabs
             tab={tab}
             setTab={setTab}
@@ -379,7 +378,7 @@ export default function HomePage() {
               .slice(0, 3)
               .map((item) => {
                 return {
-                  id: item.disclosureId,
+                  id: item.id,
                   title: item.disclosureTitle,
                   date: getRelativeTime(item.disclosureDate),
                 };

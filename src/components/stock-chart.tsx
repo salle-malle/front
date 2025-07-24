@@ -9,6 +9,14 @@ import {
 } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { BarChart3, ZoomIn, ZoomOut, Move } from "lucide-react";
+import {
+  createChart,
+  IChartApi,
+  ISeriesApi,
+  CandlestickData,
+  ColorType,
+  CandlestickSeries,
+} from "lightweight-charts";
 
 interface StockChartProps {
   stockCode: string;
@@ -44,18 +52,61 @@ interface AlphaVantageData {
   };
 }
 
+// API 캐싱을 위한 클래스
+class StockDataCache {
+  private cache = new Map<string, { data: CandleData[]; timestamp: number }>();
+  private readonly CACHE_DURATION = 5 * 6000 * 1000; // 500분 캐시
+
+  get(symbol: string): CandleData[] | null {
+    const cached = this.cache.get(symbol);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+    return null;
+  }
+
+  set(symbol: string, data: CandleData[]): void {
+    this.cache.set(symbol, { data, timestamp: Date.now() });
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+// 중복 요청 방지를 위한 클래스
+class RequestManager {
+  private pendingRequests = new Map<string, Promise<CandleData[]>>();
+
+  async executeRequest(
+    symbol: string,
+    requestFn: () => Promise<CandleData[]>
+  ): Promise<CandleData[]> {
+    if (this.pendingRequests.has(symbol)) {
+      return this.pendingRequests.get(symbol)!;
+    }
+
+    const promise = requestFn().finally(() => {
+      this.pendingRequests.delete(symbol);
+    });
+
+    this.pendingRequests.set(symbol, promise);
+    return promise;
+  }
+}
+
+const stockDataCache = new StockDataCache();
+const requestManager = new RequestManager();
+
 export function StockChart({ stockCode }: StockChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<ChartPeriod>("1Y");
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<CandleData[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1); // 0.1 ~ 3.0
-  const [panOffset, setPanOffset] = useState(0); // 패닝 오프셋
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState(0);
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const periods: { value: ChartPeriod; label: string }[] = [
     { value: "1W", label: "1주" },
@@ -63,52 +114,105 @@ export function StockChart({ stockCode }: StockChartProps) {
     { value: "6M", label: "6개월" },
     { value: "1Y", label: "1년" },
     { value: "5Y", label: "5년" },
-    { value: "10Y", label: "10년" },
   ];
 
-  // Alpha Vantage API에서 데이터 가져오기
-  const fetchStockData = async (symbol: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/stock-data?symbol=${symbol}`);
-      if (!response.ok) {
-        throw new Error("데이터를 가져오는데 실패했습니다.");
+  // Alpha Vantage API에서 데이터 가져오기 (개선된 버전)
+  const fetchStockData = useCallback(
+    async (symbol: string, forceRefresh = false) => {
+      // 이전 요청 취소
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
 
-      const data: AlphaVantageData = await response.json();
+      abortControllerRef.current = new AbortController();
 
-      if (!data["Time Series (Daily)"]) {
-        throw new Error("주식 데이터를 찾을 수 없습니다.");
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 캐시 확인 (강제 새로고침이 아닌 경우)
+        if (!forceRefresh) {
+          const cachedData = stockDataCache.get(symbol);
+          if (cachedData) {
+            setChartData(cachedData);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // API 호출 부분 주석 해제
+        // 중복 요청 방지
+        const data = await requestManager.executeRequest(symbol, async () => {
+          const response = await fetch(`/api/stock-data?symbol=${symbol}`, {
+            signal: abortControllerRef.current?.signal,
+          });
+
+          if (!response.ok) {
+            throw new Error("데이터를 가져오는데 실패했습니다.");
+          }
+
+          const apiData: AlphaVantageData = await response.json();
+
+          if (!apiData["Time Series (Daily)"]) {
+            throw new Error("주식 데이터를 찾을 수 없습니다.");
+          }
+
+          // 데이터를 CandleData 형식으로 변환
+          const timeSeriesData = apiData["Time Series (Daily)"];
+          const candleData: CandleData[] = Object.entries(timeSeriesData)
+            .map(([date, values]) => ({
+              time: new Date(date).getTime() / 1000,
+              open: parseFloat(values["1. open"]),
+              high: parseFloat(values["2. high"]),
+              low: parseFloat(values["3. low"]),
+              close: parseFloat(values["4. close"]),
+              volume: parseInt(values["5. volume"]),
+            }))
+            .sort((a, b) => a.time - b.time); // 날짜순 정렬
+
+          return candleData;
+        });
+
+        // 더미 데이터 사용 (주석처리)
+        /*
+        const dummyData: CandleData[] = [
+          { time: 1640995200, open: 150.0, high: 155.0, low: 148.0, close: 153.0, volume: 1000000 },
+          { time: 1641081600, open: 153.0, high: 158.0, low: 152.0, close: 156.0, volume: 1200000 },
+          { time: 1641168000, open: 156.0, high: 160.0, low: 154.0, close: 159.0, volume: 1100000 },
+          { time: 1641254400, open: 159.0, high: 162.0, low: 157.0, close: 161.0, volume: 1300000 },
+          { time: 1641340800, open: 161.0, high: 165.0, low: 160.0, close: 164.0, volume: 1400000 },
+          { time: 1641427200, open: 164.0, high: 168.0, low: 163.0, close: 167.0, volume: 1500000 },
+          { time: 1641513600, open: 167.0, high: 170.0, low: 166.0, close: 169.0, volume: 1600000 },
+          { time: 1641600000, open: 169.0, high: 172.0, low: 168.0, close: 171.0, volume: 1700000 },
+          { time: 1641686400, open: 171.0, high: 175.0, low: 170.0, close: 174.0, volume: 1800000 },
+          { time: 1641772800, open: 174.0, high: 178.0, low: 173.0, close: 177.0, volume: 1900000 },
+        ];
+        */
+
+        // 캐시에 저장
+        stockDataCache.set(symbol, data);
+        setChartData(data);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return; // 요청이 취소된 경우
+        }
+
+        console.error("주식 데이터 가져오기 실패:", err);
+        setError(
+          err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다."
+        );
+      } finally {
+        setLoading(false);
       }
-
-      // 데이터를 CandleData 형식으로 변환
-      const timeSeriesData = data["Time Series (Daily)"];
-      const candleData: CandleData[] = Object.entries(timeSeriesData)
-        .map(([date, values]) => ({
-          time: new Date(date).getTime() / 1000,
-          open: parseFloat(values["1. open"]),
-          high: parseFloat(values["2. high"]),
-          low: parseFloat(values["3. low"]),
-          close: parseFloat(values["4. close"]),
-          volume: parseInt(values["5. volume"]),
-        }))
-        .sort((a, b) => a.time - b.time); // 날짜순 정렬
-
-      setChartData(candleData);
-    } catch (err) {
-      console.error("주식 데이터 가져오기 실패:", err);
-      setError(
-        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    []
+  );
 
   // 기간에 따른 데이터 필터링
-  const getFilteredData = (data: CandleData[], period: ChartPeriod) => {
+  const getFilteredData = (
+    data: CandleData[],
+    period: ChartPeriod
+  ): CandlestickData[] => {
     const now = new Date();
     const periods = {
       "1W": 7,
@@ -125,356 +229,216 @@ export function StockChart({ stockCode }: StockChartProps) {
     );
     const cutoffTime = cutoffDate.getTime() / 1000;
 
-    return data.filter((item) => item.time >= cutoffTime);
+    return data
+      .filter((item) => item.time >= cutoffTime)
+      .map((item) => ({
+        time: item.time as any,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+      }));
   };
 
-  // 줌 레벨과 패닝에 따른 데이터 조정
-  const getZoomedAndPannedData = (
-    data: CandleData[],
-    zoom: number,
-    pan: number
-  ) => {
-    if (!data || data.length === 0) return [];
+  // 차트 초기화
+  const initializeChart = useCallback(() => {
+    if (!chartContainerRef.current) return;
 
-    const baseCount = 50; // 기본 표시 캔들 수
-    const targetCount = Math.max(10, Math.floor(baseCount / zoom));
-
-    // 패닝 오프셋 계산 (전체 데이터에서 이동할 인덱스)
-    const maxPanOffset = Math.max(0, data.length - targetCount);
-    const adjustedPanOffset = Math.min(
-      maxPanOffset,
-      Math.max(0, Math.floor(pan))
-    );
-
-    // 안전한 인덱스 계산
-    const startIndex = Math.max(
-      0,
-      data.length - targetCount - adjustedPanOffset
-    );
-    const endIndex = Math.max(startIndex, data.length - adjustedPanOffset);
-
-    return data.slice(startIndex, endIndex);
-  };
-
-  // 스크롤 이벤트 핸들러 (줌)
-  const handleWheel = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoomLevel((prev) => Math.max(0.1, Math.min(3.0, prev * delta)));
-  }, []);
-
-  // 마우스 드래그 이벤트 핸들러 (패닝)
-  const handleMouseDown = useCallback((e: MouseEvent) => {
-    setIsPanning(true);
-    setPanStart(e.clientX);
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (isPanning) {
-        e.preventDefault();
-        const deltaX = e.clientX - panStart;
-        // 마우스 움직임과 차트 움직임을 1:1로 맞춤
-        setPanOffset((prev) => prev + deltaX);
-        setPanStart(e.clientX);
-      }
-    },
-    [isPanning, panStart]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
-  }, []);
-
-  // 터치 이벤트 핸들러 (줌 + 패닝)
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (e.touches.length === 2) {
-      // 핀치 줌
-      setIsDragging(true);
-      setDragStart(e.touches[0].clientX);
-    } else if (e.touches.length === 1) {
-      // 단일 터치 패닝
-      setIsPanning(true);
-      setPanStart(e.touches[0].clientX);
+    // 기존 차트 정리
+    if (chartRef.current) {
+      chartRef.current.remove();
     }
+
+    const chartOptions = {
+      layout: {
+        textColor: "black",
+        background: { type: ColorType.Solid, color: "white" },
+      },
+      grid: {
+        vertLines: { color: "#e5e7eb" },
+        horzLines: { color: "#e5e7eb" },
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          color: "#2962FF",
+          width: 1 as any,
+          style: 1,
+          labelVisible: true,
+          labelBackgroundColor: "#2962FF",
+          labelTextColor: "#FFFFFF",
+        },
+        horzLine: {
+          color: "#2962FF",
+          width: 1 as any,
+          style: 1,
+          labelVisible: true,
+          labelBackgroundColor: "#2962FF",
+          labelTextColor: "#FFFFFF",
+        },
+      },
+      rightPriceScale: {
+        borderColor: "#d1d5db",
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.1,
+        },
+      },
+      timeScale: {
+        borderColor: "#d1d5db",
+        timeVisible: true,
+        secondsVisible: false,
+        rightOffset: 12,
+        barSpacing: 6,
+        fixLeftEdge: true,
+        lockVisibleTimeRangeOnResize: true,
+        rightBarStaysOnScroll: true,
+        borderVisible: true,
+        visible: true,
+        tickMarkFormatter: (time: number) => {
+          const date = new Date(time * 1000);
+          return date.toLocaleDateString("ko-KR", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        },
+        timeUnit: "day",
+      },
+    };
+
+    const chart = createChart(chartContainerRef.current, chartOptions);
+    chartRef.current = chart;
+
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#ef5350",
+      downColor: "#26a69a",
+      borderVisible: false,
+      wickUpColor: "#ef5350",
+      wickDownColor: "#26a69a",
+    });
+    candlestickSeriesRef.current = candlestickSeries;
+
+    // 크로스헤어 이벤트 리스너 추가
+    chart.subscribeCrosshairMove((param) => {
+      if (param.time && typeof param.time === "number") {
+        const date = new Date(param.time * 1000);
+        const formattedDate = date.toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+
+        // 크로스헤어 라벨 업데이트 (가능한 경우)
+        if (param.seriesData && param.seriesData.size > 0) {
+          // 시리즈 데이터가 있을 때만 라벨 업데이트
+          console.log("크로스헤어 날짜:", formattedDate);
+        }
+      }
+    });
+
+    // 차트 크기 조정
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartRef.current) {
+        chartRef.current.applyOptions({
+          width: chartContainerRef.current?.clientWidth || 400,
+          height: chartContainerRef.current?.clientHeight || 300,
+        });
+      }
+    });
+
+    if (chartContainerRef.current) {
+      resizeObserver.observe(chartContainerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+      if (chartRef.current) {
+        chartRef.current.remove();
+      }
+    };
   }, []);
 
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (e.touches.length === 2 && isDragging) {
-        // 핀치 줌
-        e.preventDefault();
-        const currentX = e.touches[0].clientX;
-        const delta = (dragStart - currentX) / 100;
-        setZoomLevel((prev) =>
-          Math.max(0.1, Math.min(3.0, prev + delta * 0.1))
-        );
-        setDragStart(currentX);
-      } else if (e.touches.length === 1 && isPanning) {
-        // 단일 터치 패닝 - 마우스와 동일한 1:1 비율
-        e.preventDefault();
-        const deltaX = e.touches[0].clientX - panStart;
-        setPanOffset((prev) => prev + deltaX);
-        setPanStart(e.touches[0].clientX);
-      }
-    },
-    [isDragging, isPanning, dragStart, panStart]
-  );
+  // 차트 데이터 업데이트
+  const updateChartData = useCallback((data: CandlestickData[]) => {
+    if (candlestickSeriesRef.current && data.length > 0) {
+      candlestickSeriesRef.current.setData(data);
 
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    setIsPanning(false);
+      // 차트 내용에 맞게 자동 조정
+      if (chartRef.current) {
+        chartRef.current.timeScale().fitContent();
+      }
+    }
   }, []);
 
   // 줌 컨트롤
   const handleZoomIn = () => {
-    setZoomLevel((prev) => Math.min(3.0, prev * 1.2));
+    if (chartRef.current) {
+      chartRef.current.timeScale().applyOptions({
+        rightOffset: 0,
+        barSpacing: Math.min(
+          50,
+          (chartRef.current.timeScale().options().barSpacing || 6) * 1.2
+        ),
+      });
+    }
   };
 
   const handleZoomOut = () => {
-    setZoomLevel((prev) => Math.max(0.1, prev / 1.2));
+    if (chartRef.current) {
+      chartRef.current.timeScale().applyOptions({
+        rightOffset: 0,
+        barSpacing: Math.max(
+          1,
+          (chartRef.current.timeScale().options().barSpacing || 6) / 1.2
+        ),
+      });
+    }
   };
 
   const handleResetZoom = () => {
-    setZoomLevel(1);
-    setPanOffset(0);
+    if (chartRef.current) {
+      chartRef.current.timeScale().fitContent();
+    }
   };
 
+  // stockCode 변경 시 데이터 가져오기
   useEffect(() => {
     if (stockCode) {
       fetchStockData(stockCode);
     }
-  }, [stockCode]);
 
-  // 기간 변경 시 차트 리렌더링을 위한 상태
-  const [chartKey, setChartKey] = useState(0);
+    // 컴포넌트 언마운트 시 요청 취소
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [stockCode, fetchStockData]);
+
+  // 차트 초기화
+  useEffect(() => {
+    const cleanup = initializeChart();
+    return cleanup;
+  }, [initializeChart]);
+
+  // 데이터 변경 시 차트 업데이트
+  useEffect(() => {
+    if (chartData.length > 0) {
+      const filteredData = getFilteredData(chartData, selectedPeriod);
+      updateChartData(filteredData);
+    }
+  }, [chartData, selectedPeriod, updateChartData]);
 
   // 기간 변경 핸들러
   const handlePeriodChange = (period: ChartPeriod) => {
     setSelectedPeriod(period);
-    setChartKey((prev) => prev + 1); // 차트 강제 리렌더링
   };
 
-  useEffect(() => {
-    const container = chartContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    container.addEventListener("mousedown", handleMouseDown);
-    container.addEventListener("mousemove", handleMouseMove);
-    container.addEventListener("mouseup", handleMouseUp);
-    container.addEventListener("mouseleave", handleMouseUp);
-    container.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
-    });
-    container.addEventListener("touchmove", handleTouchMove, {
-      passive: false,
-    });
-    container.addEventListener("touchend", handleTouchEnd);
-
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-      container.removeEventListener("mousedown", handleMouseDown);
-      container.removeEventListener("mousemove", handleMouseMove);
-      container.removeEventListener("mouseup", handleMouseUp);
-      container.removeEventListener("mouseleave", handleMouseUp);
-      container.removeEventListener("touchstart", handleTouchStart);
-      container.removeEventListener("touchmove", handleTouchMove);
-      container.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [
-    handleWheel,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-  ]);
-
-  // 캔들 차트 렌더링
-  const renderCandles = useCallback(() => {
-    if (chartData.length === 0) return null;
-
-    const filteredData = getFilteredData(chartData, selectedPeriod);
-    if (filteredData.length === 0) return null;
-
-    const zoomedAndPannedData = getZoomedAndPannedData(
-      filteredData,
-      zoomLevel,
-      panOffset
-    );
-
-    // 데이터 유효성 검사
-    if (zoomedAndPannedData.length === 0) return null;
-
-    const maxPrice = Math.max(...zoomedAndPannedData.map((d) => d.high));
-    const minPrice = Math.min(...zoomedAndPannedData.map((d) => d.low));
-    const priceRange = maxPrice - minPrice || 1;
-
-    const containerHeight = 300;
-    const containerWidth = 400;
-    const margin = { top: 20, right: 60, bottom: 40, left: 60 };
-    const chartWidth = containerWidth - margin.left - margin.right;
-    const chartHeight = containerHeight - margin.top - margin.bottom;
-
-    const candleWidth = chartWidth / zoomedAndPannedData.length;
-    const candleSpacing = candleWidth * 0.7;
-
-    // 안전한 좌표 계산 함수
-    const safeCoordinate = (value: number): number => {
-      return isNaN(value) || !isFinite(value) ? 0 : value;
-    };
-
-    // 가격 눈금 생성
-    const priceTicks = [];
-    const tickCount = 6;
-    for (let i = 0; i <= tickCount; i++) {
-      const price = minPrice + (priceRange * i) / tickCount;
-      priceTicks.push(price);
-    }
-
-    // 시간 눈금 생성
-    const timeTicks = [];
-    const timeTickCount = 5;
-    for (let i = 0; i <= timeTickCount; i++) {
-      const index = Math.floor(
-        ((zoomedAndPannedData.length - 1) * i) / timeTickCount
-      );
-      if (zoomedAndPannedData[index]) {
-        const date = new Date(zoomedAndPannedData[index].time * 1000);
-        timeTicks.push({
-          x: safeCoordinate(margin.left + index * candleWidth),
-          label: date.toLocaleDateString("ko-KR", {
-            month: "short",
-            day: "numeric",
-          }),
-        });
-      }
-    }
-
-    return (
-      <div className="flex items-center justify-center h-full">
-        <svg
-          width={containerWidth}
-          height={containerHeight}
-          className="mx-auto"
-        >
-          {/* 배경 */}
-          <rect width="100%" height="100%" fill="#ffffff" />
-
-          {/* 가격 눈금과 그리드 */}
-          {priceTicks.map((price, index) => {
-            const y = safeCoordinate(
-              margin.top + ((maxPrice - price) / priceRange) * chartHeight
-            );
-            return (
-              <g key={`price-${index}`}>
-                {/* 그리드 라인 */}
-                <line
-                  x1={margin.left}
-                  y1={y}
-                  x2={margin.left + chartWidth}
-                  y2={y}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                />
-                {/* 가격 라벨 */}
-                <text
-                  x={margin.left - 10}
-                  y={y + 4}
-                  textAnchor="end"
-                  fontSize="12"
-                  fill="#6b7280"
-                >
-                  ${price.toFixed(2)}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* 시간 눈금 */}
-          {timeTicks.map((tick, index) => (
-            <text
-              key={`time-${index}`}
-              x={tick.x}
-              y={containerHeight - 10}
-              textAnchor="middle"
-              fontSize="11"
-              fill="#6b7280"
-            >
-              {tick.label}
-            </text>
-          ))}
-
-          {/* 캔들 차트 */}
-          {zoomedAndPannedData.map((candle, index) => {
-            const x = safeCoordinate(
-              margin.left +
-                index * candleWidth +
-                (candleWidth - candleSpacing) / 2
-            );
-            const isUp = candle.close >= candle.open;
-
-            // 가격을 차트 높이로 변환 (안전한 계산)
-            const highY = safeCoordinate(
-              margin.top + ((maxPrice - candle.high) / priceRange) * chartHeight
-            );
-            const lowY = safeCoordinate(
-              margin.top + ((maxPrice - candle.low) / priceRange) * chartHeight
-            );
-            const openY = safeCoordinate(
-              margin.top + ((maxPrice - candle.open) / priceRange) * chartHeight
-            );
-            const closeY = safeCoordinate(
-              margin.top +
-                ((maxPrice - candle.close) / priceRange) * chartHeight
-            );
-
-            const bodyTop = Math.min(openY, closeY);
-            const bodyBottom = Math.max(openY, closeY);
-            const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
-
-            return (
-              <g key={index}>
-                {/* Wick (심지) */}
-                <line
-                  x1={safeCoordinate(x + candleSpacing / 2)}
-                  y1={highY}
-                  x2={safeCoordinate(x + candleSpacing / 2)}
-                  y2={lowY}
-                  stroke={isUp ? "#ef4444" : "#3b82f6"}
-                  strokeWidth="1.5"
-                />
-                {/* Body (몸통) */}
-                <rect
-                  x={x}
-                  y={bodyTop}
-                  width={candleSpacing}
-                  height={bodyHeight}
-                  fill={isUp ? "#ef4444" : "#3b82f6"}
-                  stroke={isUp ? "#ef4444" : "#3b82f6"}
-                  strokeWidth="1"
-                />
-              </g>
-            );
-          })}
-
-          {/* 차트 테두리 */}
-          <rect
-            x={margin.left}
-            y={margin.top}
-            width={chartWidth}
-            height={chartHeight}
-            fill="none"
-            stroke="#d1d5db"
-            strokeWidth="1"
-          />
-        </svg>
-      </div>
-    );
-  }, [chartData, selectedPeriod, zoomLevel, panOffset]);
+  // 강제 새로고침 핸들러
+  const handleRefresh = () => {
+    fetchStockData(stockCode, true);
+  };
 
   return (
     <Card className="mx-4 mt-4 shadow-sm border-0 bg-white">
@@ -493,9 +457,6 @@ export function StockChart({ stockCode }: StockChartProps) {
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <span className="text-xs text-gray-500 min-w-[40px] text-center">
-              {Math.round(zoomLevel * 100)}%
-            </span>
             <Button
               variant="outline"
               size="sm"
@@ -533,11 +494,8 @@ export function StockChart({ stockCode }: StockChartProps) {
 
         {/* 차트 영역 */}
         <div
-          key={chartKey} // 기간 변경 시 차트 강제 리렌더링
           ref={chartContainerRef}
-          className={`h-80 bg-white rounded-lg border border-gray-200 ${
-            isPanning ? "cursor-grabbing" : "cursor-grab"
-          }`}
+          className="h-80 bg-white rounded-lg border border-gray-200"
         >
           {loading ? (
             <div className="h-full flex items-center justify-center">
@@ -550,24 +508,18 @@ export function StockChart({ stockCode }: StockChartProps) {
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
                 <p className="text-sm text-red-500 mb-2">{error}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchStockData(stockCode)}
-                >
+                <Button variant="outline" size="sm" onClick={handleRefresh}>
                   다시 시도
                 </Button>
               </div>
             </div>
-          ) : (
-            <div className="w-full h-full">{renderCandles()}</div>
-          )}
+          ) : null}
         </div>
 
         {/* 조작 안내 */}
         <div className="mt-2 text-center">
           <p className="text-xs text-gray-500">
-            마우스 휠: 확대/축소 | 드래그: 좌우 이동 | 핀치: 확대/축소
+            마우스 휠: 확대/축소 | 드래그: 좌우 이동 | 더블클릭: 리셋
           </p>
         </div>
 
