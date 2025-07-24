@@ -1,11 +1,10 @@
 "use client";
 
-import { useDrag } from "react-use-gesture";
 import { useTransition, animated } from "react-spring";
 import { DateSelector } from "./DateSelector";
 import { StockSelector } from "./StockSelector";
 import { MoreHorizontal } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
 
 interface DualSelectorProps {
@@ -20,6 +19,8 @@ interface DualSelectorProps {
   onStockEdge?: (direction: "left" | "right") => void; // 추가
   portfolio: { [stockCode: string]: UnifiedStockItem };
   onScrap: (snapshotId: number) => void;
+  onNextView?: () => void; // 다음 뷰로 이동
+  onPrevView?: () => void; // 이전 뷰로 이동
 }
 
 const SELECTOR_HEIGHT = 90;
@@ -36,8 +37,14 @@ export const DualSelector = ({
   onStockEdge,
   portfolio,
   onScrap,
+  onNextView,
+  onPrevView,
 }: DualSelectorProps) => {
   const dragDirection = useRef(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+
+
 
   const transitions = useTransition(activeView, {
     from: { y: dragDirection.current * SELECTOR_HEIGHT, opacity: 0 },
@@ -46,27 +53,93 @@ export const DualSelector = ({
     config: { tension: 300, friction: 30 },
   });
 
-  const bind = useDrag(
-    ({ down, movement: [, my], direction: [, dy], cancel }) => {
-      if (!down && Math.abs(my) > SELECTOR_HEIGHT / 3) {
-        dragDirection.current = dy > 0 ? 1 : -1;
-        if (dy > 0) {
-          onViewChange("stock"); // 아래로 드래그: 종목
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // 버튼 클릭 시 드래그 방지
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      return;
+    }
+    
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setStartY(clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+    const clientY = 'touches' in e ? e.changedTouches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    
+    if (Math.abs(deltaY) > 30) {
+      if (deltaY > 0) {
+        // 아래로 드래그: 다음 뷰로
+        if (onNextView) {
+          onNextView();
         } else {
-          onViewChange("date"); // 위로 드래그: 달력
+          onViewChange("stock");
         }
-        if (cancel) cancel();
+      } else {
+        // 위로 드래그: 이전 뷰로
+        if (onPrevView) {
+          onPrevView();
+        } else {
+          onViewChange("date");
+        }
       }
-    },
-    { filterTaps: true, taps: true }
-  );
+    }
+    setIsDragging(false);
+  };
+
+  // 드래그 중일 때 하위 컴포넌트 클릭 방지
+  const handleChildClick = (e: React.MouseEvent) => {
+    if (isDragging) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
 
   return (
-    <div
-      {...bind()}
-      className="relative bg-gray-100 overflow-hidden cursor-grab active:cursor-grabbing"
-      style={{ height: SELECTOR_HEIGHT }}
-    >
+    <div className="relative">
+      {/* 뷰 전환 버튼 */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 z-30">
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // 이벤트 버블링 방지
+            if (onNextView) {
+              onNextView();
+            } else {
+              onViewChange(activeView === "date" ? "stock" : "date");
+            }
+          }}
+          onTouchStart={(e) => e.stopPropagation()} // 터치 이벤트 버블링 방지
+          onMouseDown={(e) => e.stopPropagation()} // 마우스 이벤트 버블링 방지
+          className="w-8 h-2 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors cursor-pointer"
+          title="뷰 전환"
+        />
+      </div>
+      
+      <div
+        className="relative bg-gray-100 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        style={{ height: SELECTOR_HEIGHT }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleTouchStart}
+        onMouseMove={handleTouchMove}
+        onMouseUp={handleTouchEnd}
+        onClick={(e) => {
+          // 클릭 이벤트가 드래그 영역에서 발생했을 때만 처리
+          if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
       {transitions((style, view) => (
         <animated.div
           style={{
@@ -77,24 +150,26 @@ export const DualSelector = ({
           }}
         >
           {view === "date" ? (
-            <DateSelector
-              selectedDate={selectedDate}
-              onDateSelect={onDateChange} // DateSelector의 onDateSelect prop으로 전달
-              allowedDates={allowedDates} // 추가
-            />
+            <div onClick={handleChildClick}>
+              <DateSelector
+                selectedDate={selectedDate}
+                onDateSelect={onDateChange} // DateSelector의 onDateSelect prop으로 전달
+                allowedDates={allowedDates} // 추가
+              />
+            </div>
           ) : (
-            <StockSelector
-              snapshots={snapshotsForDate}
-              selectedSnapshotId={selectedSnapshotId}
-              onStockSelect={onStockChange}
-              onEdge={onStockEdge} // 추가
-              portfolio={portfolio}
-            />
+            <div onClick={handleChildClick}>
+              <StockSelector
+                snapshots={snapshotsForDate}
+                selectedSnapshotId={selectedSnapshotId}
+                onStockSelect={onStockChange}
+                onEdge={onStockEdge} // 추가
+                portfolio={portfolio}
+              />
+            </div>
           )}
         </animated.div>
       ))}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
-        <MoreHorizontal />
       </div>
     </div>
   );

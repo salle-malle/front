@@ -6,6 +6,7 @@ export interface SnapshotCard {
   stockName: string;
   newsContent: string;
   newsImage: string;
+  isScrap?: boolean;
 }
 
 export interface UnifiedStockItem {
