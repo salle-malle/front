@@ -75,7 +75,7 @@ export default function DisclosureDetail() {
     return (
       <div className="flex flex-col min-h-screen bg-gray-100">
         <div className="fixed top-0 left-0 w-full z-30">
-          <TopNavigation showBackButton={true} title="공시정보" />
+          <TopNavigation showBackButton={true} title="" />
         </div>
         <div className="flex-1 flex items-center justify-center pt-[56px]">
           <span className="text-gray-400">불러오는 중...</span>
