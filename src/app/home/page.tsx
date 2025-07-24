@@ -28,7 +28,7 @@ export type StockItem = {
 export type AssetTrendPoint = number;
 
 export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
-export type DisclosureItem = { disclosureId: number; disclosureTitle: string; disclosureDate: string; };
+export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId : string; stockName : string};
 export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
 export type NewsListResponse = { news: NewsItem[]; };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
@@ -217,7 +217,6 @@ export default function HomePage() {
   const [newsIndex, setNewsIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [tab, setTab] = useState<"공시" | "어닝콜">("공시");
 
   const hasFetched = useRef(false);
@@ -379,7 +378,7 @@ export default function HomePage() {
               .slice(0, 3)
               .map((item) => {
                 return {
-                  id: item.disclosureId,
+                  id: item.id,
                   title: item.disclosureTitle,
                   date: getRelativeTime(item.disclosureDate),
                 };

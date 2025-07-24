@@ -22,6 +22,20 @@ export default function ProfilePage() {
   const { clearMember } = useMemberStore();
   const router = useRouter();
   const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const profileImageMap: Record<string, string> = {
+    안정형: "/characters/moli-profile.png",
+    보수형: "/characters/shoo-profile.png",
+    적극형: "/characters/pli-profile.png",
+    공격형: "/characters/sol-profile.png",
+  };
+  const profileBlurColorMap: Record<string, string> = {
+    안정형: "#e6d4ff", // moli
+    보수형: "#c8b4a5", // shoo
+    적극형: "#fed7a6", // pli
+    공격형: "#94c9ff", // sol
+  };
+  const profileImageSrc = profileImageMap[investmentType] ?? "/placeholder.svg";
+  const profileBlurColor = profileBlurColorMap[investmentType] ?? "#d1d5db";
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -51,10 +65,6 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [router]);
-
-  const handleEditNickname = () => {
-    router.push("/profile/edit-nickname");
-  };
 
   const handleLogout = async () => {
     try {
@@ -89,20 +99,20 @@ export default function ProfilePage() {
             rotate: [0, 1, -1, 0],
             transition: { duration: 0.6 },
           }}
-          className="relative mt-6 mb-6"
-        >
-          <div className="absolute inset-0 rounded-full blur-2xl opacity-40 bg-gradient-to-tr from-blue-400 to-purple-500 animate-pulse"></div>
-          <Avatar className="w-32 h-32 border-4 border-white shadow-lg z-10 relative">
-            <AvatarImage src="/placeholder.svg" alt="프로필 이미지" />
+          className="relative mt-6 mb-6">
+          <div
+            className="absolute inset-0 rounded-full blur-2xl opacity-100 animate-pulse"
+            style={{ backgroundColor: profileBlurColor }}></div>
+
+          <Avatar className="w-32 h-32 z-10 relative">
+            <AvatarImage src={profileImageSrc} alt="프로필 이미지" />
             <AvatarFallback>유</AvatarFallback>
           </Avatar>
         </motion.div>
 
         {/* 유저 정보 */}
         <div className="text-center mb-6">
-          <h2 className="text-xl font-semibold">
-            {nickname || "로딩 중..."}
-          </h2>
+          <h2 className="text-xl font-semibold">{nickname || "로딩 중..."}</h2>
           <p className="text-gray-500 text-sm">
             {investmentType ? `${investmentType} 투자자` : " "}
           </p>
