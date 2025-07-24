@@ -98,20 +98,22 @@ export default function EnhancedStockDetailPage() {
       />
 
       <main className="flex-1 overflow-y-auto pb-20">
-        {/* Stock Header - 종목명, 현재가, 등락률 */}
-        <StockHeader stockData={stockData} stockCode={stockCode} />
+        <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
+          {/* Stock Header - 종목명, 현재가, 등락률 */}
+          <StockHeader stockData={stockData} stockCode={stockCode} />
 
-        {/* 다가올 주요 이벤트 */}
-        <UpcomingEvents stockCode={stockCode} />
+          {/* 다가올 주요 이벤트 */}
+          <UpcomingEvents stockCode={stockCode} />
 
-        {/* 주가 차트 */}
-        <StockChart stockCode={stockCode} />
+          {/* 주가 차트 */}
+          <StockChart stockCode={stockCode} />
 
-        {/* 주요 지표 */}
-        <KeyStats stockData={stockData} />
+          {/* 주요 지표 */}
+          <KeyStats stockData={stockData} />
 
-        {/* News Section - 관련 뉴스 */}
-        <NewsSection stockCode={stockCode} companyName={stockData.etyp_nm} />
+          {/* News Section - 관련 뉴스 */}
+          <NewsSection stockCode={stockCode} companyName={stockData.etyp_nm} />
+        </div>
       </main>
 
       <BottomNavigation />
