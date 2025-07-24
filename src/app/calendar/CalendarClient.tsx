@@ -165,133 +165,133 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation title="BLML" />
+      <TopNavigation showBackButton={true} title="BLML" />
       <main className="flex-1 overflow-y-auto pb-20">
-      <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">데이터를 불러오는 중...</div>
-          </div>
-        ) : (
-          <>
-            {/* 달력 */}
-            <Card className="m-4 border-none">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentMonth(
-                        new Date(
-                          currentMonth.getFullYear(),
-                          currentMonth.getMonth() - 1,
-                          1
+        <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-gray-500">데이터를 불러오는 중...</div>
+            </div>
+          ) : (
+            <>
+              {/* 달력 */}
+              <Card className="m-4 border-none">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentMonth(
+                          new Date(
+                            currentMonth.getFullYear(),
+                            currentMonth.getMonth() - 1,
+                            1
+                          )
                         )
-                      )
-                    }
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <CardTitle className="text-lg">
-                    {currentMonth.getFullYear()}년{" "}
-                    {monthNames[currentMonth.getMonth()]}
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentMonth(
-                        new Date(
-                          currentMonth.getFullYear(),
-                          currentMonth.getMonth() + 1,
-                          1
-                        )
-                      )
-                    }
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
-                    <div
-                      key={day}
-                      className="text-center text-sm font-medium text-gray-600 p-2"
+                      }
                     >
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {days.map((day, index) => (
-                    <div key={index} className="aspect-square">
-                      {day && (
-                        <Button
-                          variant={
-                            selectedDate === formatDate(day)
-                              ? "default"
-                              : "ghost"
-                          }
-                          size="sm"
-                          className={`w-full h-full text-sm relative ${
-                            hasSchedule(day)
-                              ? selectedDate === formatDate(day)
-                                ? "bg-blue-600 hover:bg-blue-700"
-                                : "bg-blue-50 hover:bg-blue-100"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedDate(formatDate(day))}
-                        >
-                          {day}
-                          {hasSchedule(day) && (
-                            <div
-                              className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full ${
-                                selectedDate === formatDate(day)
-                                  ? "bg-white"
-                                  : "bg-blue-600"
-                              }`}
-                            ></div>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 선택된 날짜의 일정 */}
-            <Card className="m-4 border-none">
-              <CardHeader>
-                <CardTitle className="text-lg">{selectedDate} 일정</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {scheduleData[selectedDate] ? (
-                  <div className="space-y-3">
-                    {scheduleData[selectedDate].map((schedule, index) => (
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <CardTitle className="text-lg">
+                      {currentMonth.getFullYear()}년{" "}
+                      {monthNames[currentMonth.getMonth()]}
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentMonth(
+                          new Date(
+                            currentMonth.getFullYear(),
+                            currentMonth.getMonth() + 1,
+                            1
+                          )
+                        )
+                      }
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
                       <div
-                        key={index}
-                        className="flex items-center space-x-3 p-2 bg-gray-50 rounded"
+                        key={day}
+                        className="text-center text-sm font-medium text-gray-600 p-2"
                       >
-                        <div className="text-sm font-medium text-blue-600 min-w-[60px]">
-                          {schedule.time}
-                        </div>
-                        <div className="text-sm">{schedule.event}</div>
+                        {day}
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-4">
-                    일정이 없습니다.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
+                  <div className="grid grid-cols-7 gap-1">
+                    {days.map((day, index) => (
+                      <div key={index} className="aspect-square">
+                        {day && (
+                          <Button
+                            variant={
+                              selectedDate === formatDate(day)
+                                ? "default"
+                                : "ghost"
+                            }
+                            size="sm"
+                            className={`w-full h-full text-sm relative ${
+                              hasSchedule(day)
+                                ? selectedDate === formatDate(day)
+                                  ? "bg-blue-600 hover:bg-blue-700"
+                                  : "bg-blue-50 hover:bg-blue-100"
+                                : ""
+                            }`}
+                            onClick={() => setSelectedDate(formatDate(day))}
+                          >
+                            {day}
+                            {hasSchedule(day) && (
+                              <div
+                                className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full ${
+                                  selectedDate === formatDate(day)
+                                    ? "bg-white"
+                                    : "bg-blue-600"
+                                }`}
+                              ></div>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 선택된 날짜의 일정 */}
+              <Card className="m-4 border-none">
+                <CardHeader>
+                  <CardTitle className="text-lg">{selectedDate} 일정</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {scheduleData[selectedDate] ? (
+                    <div className="space-y-3">
+                      {scheduleData[selectedDate].map((schedule, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-3 p-2 bg-gray-50 rounded"
+                        >
+                          <div className="text-sm font-medium text-blue-600 min-w-[60px]">
+                            {schedule.time}
+                          </div>
+                          <div className="text-sm">{schedule.event}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">
+                      일정이 없습니다.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </main>
       <BottomNavigation />
