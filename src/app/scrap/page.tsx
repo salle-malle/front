@@ -247,7 +247,7 @@ export default function ScrapPage() {
     console.log("current selectedGroupId:", selectedGroupId);
 
     console.log("current activeView:", activeView);
-    
+
     // 이전 종목 스냅샷과 그룹 스냅샷 초기화
     setSelectedStockSnapshots([]);
     setCurrentStockSnapshotIndex(0);
@@ -256,7 +256,7 @@ export default function ScrapPage() {
 
     // 종목별 스크랩 조회
     await fetchStockSnapshots(stockCode);
-    
+
     // activeView를 "stock"으로 변경하여 CardViewer가 표시되도록 함
     console.log("Setting activeView to stock");
     setActiveView("stock");
@@ -384,7 +384,7 @@ export default function ScrapPage() {
     console.log("groupId:", groupId);
     console.log("current selectedGroupId:", selectedGroupId);
     console.log("current activeView:", activeView);
-    
+
     setSelectedGroupId(groupId);
 
     if (groupId !== null) {
@@ -538,10 +538,12 @@ export default function ScrapPage() {
     );
   }
 
-  const handleScrapClick = async (snapshotId: number): Promise<number | null> => {
+  const handleScrapClick = async (
+    snapshotId: number
+  ): Promise<number | null> => {
     console.log("=== Scrap Page handleScrapClick Debug ===");
     console.log("handleScrapClick called with snapshotId:", snapshotId);
-    
+
     try {
       console.log("Making API request to /api/v1/scrap");
       const response = await fetchWithAuthCheck(
@@ -577,7 +579,7 @@ export default function ScrapPage() {
   const handleUnscrapClick = async (snapshotId: number): Promise<void> => {
     console.log("=== Scrap Page handleUnscrapClick Debug ===");
     console.log("handleUnscrapClick called with snapshotId:", snapshotId);
-    
+
     try {
       // 먼저 스크랩 상태를 확인
       console.log("Checking scrap status for snapshotId:", snapshotId);
@@ -599,8 +601,11 @@ export default function ScrapPage() {
 
       // 스크랩 상태가 true이고 scrapId가 있는 경우에만 삭제 시도
       if (statusResponse.data?.isScrap && statusResponse.data?.scrapId) {
-        console.log("Snapshot is scraped, attempting to delete scrap with ID:", statusResponse.data.scrapId);
-        
+        console.log(
+          "Snapshot is scraped, attempting to delete scrap with ID:",
+          statusResponse.data.scrapId
+        );
+
         // scrapId로 스크랩 삭제
         const deleteResponse = await fetchWithAuthCheck(
           `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap/${statusResponse.data.scrapId}`,
@@ -616,7 +621,9 @@ export default function ScrapPage() {
           console.log("스크랩에서 제거되었습니다.");
           toast.success("스크랩에서 제거되었습니다.");
         } else {
-          throw new Error(deleteResponse.message || "스크랩 제거에 실패했습니다.");
+          throw new Error(
+            deleteResponse.message || "스크랩 제거에 실패했습니다."
+          );
         }
       } else {
         console.log("Snapshot is not scraped, no need to delete");
@@ -633,7 +640,7 @@ export default function ScrapPage() {
     <div className="flex flex-col h-screen mx-auto bg-white overflow-hidden">
       <Toaster />
       <TopNavigation />
-      
+
       {/* ScrapGroupSelector 고정 배치 */}
       <div className="px-4 py-2">
         <ScrapGroupSelector
@@ -645,7 +652,7 @@ export default function ScrapPage() {
           onStockClick={handleStockClick}
         />
       </div>
-      
+
       <div className="relative flex-1">
         <main className="absolute inset-0 top-[5px] flex items-center justify-center">
           {/* 보유 종목 리스트 표시 */}
@@ -653,19 +660,33 @@ export default function ScrapPage() {
             console.log("=== Rendering stock list condition ===");
             console.log("selectedGroupId:", selectedGroupId);
             console.log("activeView:", activeView);
-            console.log("selectedStockSnapshots.length:", selectedStockSnapshots.length);
+            console.log(
+              "selectedStockSnapshots.length:",
+              selectedStockSnapshots.length
+            );
             console.log("groupedSnapshots.length:", groupedSnapshots.length);
             console.log("unifiedStocks:", unifiedStocks);
             console.log("unifiedStocks.stocks:", unifiedStocks?.stocks);
-            console.log("Should show stock list:", selectedGroupId === null && activeView === "date" && unifiedStocks && unifiedStocks?.stocks);
-            return selectedGroupId === null && activeView === "date" && unifiedStocks && unifiedStocks?.stocks;
+            console.log(
+              "Should show stock list:",
+              selectedGroupId === null &&
+                activeView === "date" &&
+                unifiedStocks &&
+                unifiedStocks?.stocks
+            );
+            return (
+              selectedGroupId === null &&
+              activeView === "date" &&
+              unifiedStocks &&
+              unifiedStocks?.stocks
+            );
           })() && (
             <div className="w-full h-[80%] overflow-y-auto px-4 py-2">
               <div className="mb-4">
                 {/* <h2 className="text-lg font-semibold text-gray-800 mb-2">보유 종목</h2>
-                <div className="text-sm text-gray-600 mb-4">
-                  총 {unifiedStocks.summary?.total_stock_count || 0}개 종목
-                </div> */}
+              <div className="text-sm text-gray-600 mb-4">
+                총 {unifiedStocks.summary?.total_stock_count || 0}개 종목
+              </div> */}
               </div>
               <div className="space-y-3">
                 {unifiedStocks?.stocks?.map((stock) => (
@@ -687,17 +708,15 @@ export default function ScrapPage() {
                               {stock.prdt_name}
                             </h3>
                             {/* <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                              {stock.stock_type === "REGULAR"
-                                ? "일반"
-                                : "소수점"}
-                            </span> */}
+                            {stock.stock_type === "REGULAR" ? "일반" : "소수점"}
+                          </span> */}
                           </div>
                           <p className="text-xs text-gray-500">
                             {stock.pdno} • {stock.exchange}
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="text-right">
                         <div className="text-sm font-medium">
                           {parseFloat(stock.current_price).toLocaleString()}
@@ -709,7 +728,7 @@ export default function ScrapPage() {
                               : parseFloat(stock.profit_loss_rate) < 0
                               ? "text-blue-500"
                               : "text-gray-500"
-                          
+                          }`}
                         >
                           {parseFloat(stock.profit_loss_rate) > 0 ? "+" : ""}
                           {parseFloat(stock.profit_loss_rate).toFixed(2)}%
@@ -744,7 +763,7 @@ export default function ScrapPage() {
           )}
 
           {/* 좌우 스와이프 버튼 - 항상 표시 */}
-          {(
+          {
             <>
               <button
                 onClick={async () => await handleSwipe(-1)}
@@ -848,7 +867,7 @@ export default function ScrapPage() {
                 </svg>
               </button>
             </>
-          )}
+          }
           {activeView === "stock" &&
             !currentSnapshot &&
             !isLoading &&
