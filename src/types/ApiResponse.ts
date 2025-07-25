@@ -90,3 +90,48 @@ export interface OverseasStockDetailResponse {
     msg1: string;
   };
 }
+
+export interface UnifiedStockResponse {
+  stocks: UnifiedStockItem[];
+  summary: UnifiedStockSummary;
+  rt_cd: string;
+  msg_cd: string;
+  msg1: string;
+}
+
+export interface UnifiedStockItem {
+  stock_type: string;
+  prdt_name: string;
+  pdno: string;
+  std_pdno: string;
+  quantity: string;
+  avg_price: string;
+  current_price: string;
+  purchase_amount: string;
+  evaluation_amount: string;
+  profit_loss_amount: string;
+  profit_loss_rate: string;
+  exchange: string;
+  currency: string;
+  market_name: string;
+  country: string;
+  product_type: string;
+  securities_division: string;
+  order_available_quantity: string;
+  today_buy_quantity: string;
+  today_sell_quantity: string;
+  exchange_rate: string;
+  unit_amount: string;
+}
+
+export interface UnifiedStockSummary {
+  total_purchase_amount: string;
+  total_evaluation_amount: string;
+  total_profit_loss_amount: string;
+  total_profit_loss_rate: string;
+  total_assets: string;
+  withdrawable_amount: string;
+  regular_stock_count: number;
+  fractional_stock_count: number;
+  total_stock_count: number;
+}
