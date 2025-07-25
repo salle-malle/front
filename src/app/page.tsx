@@ -87,7 +87,7 @@ export default function SplashPage() {
             textShadow: "0 2px 8px rgba(0, 100, 255, 0.08)",
           }}
         >
-          bolle malle !
+          {/* bolle malle ! */}
         </div>
       </div>
 
