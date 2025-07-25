@@ -6,7 +6,7 @@ import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { TrebleSelector } from "@/src/components/scrap/TrebleSelector";
 import { ScrapGroupSelector } from "@/src/components/scrap/ScrapGroupSelector";
 import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
-import { CardViewer } from "@/src/components/ui/CardViewer";
+import { ScrapCardViewer } from "@/src/components/scrap/ScrapCardViewer";
 import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
 import { ScrapGroup } from "@/src/types/ScrapGroup";
 import { preloadImage } from "@/src/lib/image-preloader";
@@ -20,6 +20,9 @@ import {
 } from "@/src/types/MemberStock";
 import { ApiResponse, UnifiedStockResponse } from "@/src/types/ApiResponse";
 import { ScrapGroupedResponseDto } from "@/src/types/ScrapGroup";
+import { StockLogo } from "@/src/components/ui/StockLogo";
+import { AddGroupDialog } from "@/src/components/ui/AddGroupDialog";
+import { ScrapStockList } from "@/src/components/scrap/ScrapStockList";
 
 // 중복 로그인 리다이렉트 방지 ref
 let hasRedirectedToLogin = false;
@@ -47,8 +50,8 @@ async function fetchWithAuthCheck(
 }
 
 export default function ScrapPage() {
-  const [activeView, setActiveView] = useState<"date" | "stock" | "group">(
-    "date"
+  const [activeView, setActiveView] = useState<"date" | "stock" | "stocklist">(
+    "stocklist"
   );
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -91,6 +94,13 @@ export default function ScrapPage() {
     useState(false);
   const [currentGroupedSnapshotIndex, setCurrentGroupedSnapshotIndex] =
     useState(0);
+
+  // 그룹 추가 관련 상태
+  const [isAddGroupDialogOpen, setIsAddGroupDialogOpen] = useState(false);
+  const [isAddingGroup, setIsAddingGroup] = useState(false);
+  
+  // 종목 선택 상태 (그룹 선택과 별도로 관리)
+  const [selectedStockCode, setSelectedStockCode] = useState<string | null>(null);
 
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
@@ -257,6 +267,9 @@ export default function ScrapPage() {
     // 종목별 스크랩 조회
     await fetchStockSnapshots(stockCode);
 
+    // 종목 선택 상태 업데이트 (그룹 선택은 유지)
+    setSelectedStockCode(stockCode);
+
     // activeView를 "stock"으로 변경하여 CardViewer가 표시되도록 함
     console.log("Setting activeView to stock");
     setActiveView("stock");
@@ -266,7 +279,7 @@ export default function ScrapPage() {
     setIsGroupedSnapshotsLoading(true);
     try {
       const response = await fetchWithAuthCheck(
-        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgroup/${groupId}`,
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgrouped/${groupId}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -305,8 +318,8 @@ export default function ScrapPage() {
       // 페이지 접근 시 '전체'가 클릭 상태가 되도록 설정
       console.log("Setting selectedGroupId to null");
       setSelectedGroupId(null);
-      console.log("Setting activeView to date");
-      setActiveView("date");
+      console.log("Setting activeView to stocklist");
+      setActiveView("stocklist");
 
       setIsLoading(false);
       console.log("Initial data fetch completed");
@@ -365,7 +378,7 @@ export default function ScrapPage() {
           if (dates.length > 0) {
             setSelectedDate(dates[dates.length - 1]);
             setCurrentSnapshotIndex(0);
-            setActiveView("date");
+            setActiveView("stocklist");
           }
         }
       } else {
@@ -385,6 +398,9 @@ export default function ScrapPage() {
     console.log("current selectedGroupId:", selectedGroupId);
     console.log("current activeView:", activeView);
 
+    // 종목 선택 해제
+    setSelectedStockCode(null);
+
     setSelectedGroupId(groupId);
 
     if (groupId !== null) {
@@ -399,8 +415,8 @@ export default function ScrapPage() {
       console.log("Clearing stock snapshots and grouped snapshots");
       setSelectedStockSnapshots([]);
       setGroupedSnapshots([]);
-      console.log("Setting activeView to date");
-      setActiveView("date");
+      console.log("Setting activeView to stocklist");
+      setActiveView("stocklist");
     }
   };
 
@@ -463,7 +479,7 @@ export default function ScrapPage() {
     }
     await handleDateChange(nextDate);
     setSelectedDate(nextDate);
-    setActiveView("date");
+    setActiveView("stocklist");
     setCurrentSnapshotIndex(0);
   };
 
@@ -522,8 +538,45 @@ export default function ScrapPage() {
   };
 
   const handleAddGroup = () => {
-    // 그룹 추가 로직 (나중에 구현)
-    toast.info("그룹 추가 기능은 추후 구현 예정입니다.");
+    console.log("=== handleAddGroup Debug ===");
+    console.log("handleAddGroup called");
+    setIsAddGroupDialogOpen(true);
+  };
+
+  const handleCreateGroup = async (groupName: string) => {
+    console.log("=== handleCreateGroup Debug ===");
+    console.log("Creating group with name:", groupName);
+    
+    setIsAddingGroup(true);
+    try {
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgroup/push`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ scrapGroupName: groupName }),
+        },
+        router
+      );
+
+      console.log("Create group response:", response);
+
+      if (response.status) {
+        toast.success("그룹이 성공적으로 추가되었습니다.");
+        setIsAddGroupDialogOpen(false);
+        
+        // 그룹 목록 새로고침
+        await fetchGroups();
+      } else {
+        toast.error(response.message || "그룹 추가에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to create group:", error);
+      toast.error("그룹 추가 중 오류가 발생했습니다.");
+    } finally {
+      setIsAddingGroup(false);
+    }
   };
 
   if (isLoading || !portfolio) {
@@ -650,120 +703,23 @@ export default function ScrapPage() {
           onAddGroup={handleAddGroup}
           unifiedStocks={unifiedStocks}
           onStockClick={handleStockClick}
+          selectedStockCode={selectedStockCode}
         />
       </div>
 
       <div className="relative flex-1">
         <main className="absolute inset-0 top-[5px] flex items-center justify-center">
           {/* 보유 종목 리스트 표시 */}
-          {(() => {
-            console.log("=== Rendering stock list condition ===");
-            console.log("selectedGroupId:", selectedGroupId);
-            console.log("activeView:", activeView);
-            console.log(
-              "selectedStockSnapshots.length:",
-              selectedStockSnapshots.length
-            );
-            console.log("groupedSnapshots.length:", groupedSnapshots.length);
-            console.log("unifiedStocks:", unifiedStocks);
-            console.log("unifiedStocks.stocks:", unifiedStocks?.stocks);
-            console.log(
-              "Should show stock list:",
-              selectedGroupId === null &&
-                activeView === "date" &&
-                unifiedStocks &&
-                unifiedStocks?.stocks
-            );
-            return (
-              selectedGroupId === null &&
-              activeView === "date" &&
-              unifiedStocks &&
-              unifiedStocks?.stocks
-            );
-          })() && (
-            <div className="w-full h-[80%] overflow-y-auto px-4 py-2">
-              <div className="mb-4">
-                {/* <h2 className="text-lg font-semibold text-gray-800 mb-2">보유 종목</h2>
-              <div className="text-sm text-gray-600 mb-4">
-                총 {unifiedStocks.summary?.total_stock_count || 0}개 종목
-              </div> */}
-              </div>
-              <div className="space-y-3">
-                {unifiedStocks?.stocks?.map((stock) => (
-                  <div
-                    key={stock.pdno}
-                    className="bg-white rounded-lg p-4 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleStockClick(stock.pdno)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">
-                            {stock.pdno.slice(0, 2)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-semibold text-sm truncate">
-                              {stock.prdt_name}
-                            </h3>
-                            {/* <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {stock.stock_type === "REGULAR" ? "일반" : "소수점"}
-                          </span> */}
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {stock.pdno} • {stock.exchange}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-sm font-medium">
-                          {parseFloat(stock.current_price).toLocaleString()}
-                        </div>
-                        <div
-                          className={`text-xs ${
-                            parseFloat(stock.profit_loss_rate) > 0
-                              ? "text-red-500"
-                              : parseFloat(stock.profit_loss_rate) < 0
-                              ? "text-blue-500"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {parseFloat(stock.profit_loss_rate) > 0 ? "+" : ""}
-                          {parseFloat(stock.profit_loss_rate).toFixed(2)}%
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                      <div>
-                        <div className="text-gray-400">보유수량</div>
-                        <div className="font-medium">
-                          {parseFloat(stock.quantity).toLocaleString()}주
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">평균단가</div>
-                        <div className="font-medium">
-                          {parseFloat(stock.avg_price).toLocaleString()}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">평가금액</div>
-                        <div className="font-medium">
-                          {parseFloat(stock.evaluation_amount).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 좌우 스와이프 버튼 - 항상 표시 */}
-          {
+          {selectedGroupId === null &&
+            activeView === "stocklist" &&
+            unifiedStocks &&
+            unifiedStocks?.stocks ? (
+            <ScrapStockList
+              unifiedStocks={unifiedStocks}
+              onStockClick={handleStockClick}
+              selectedStockCode={selectedStockCode}
+            />
+          ) : (
             <>
               <button
                 onClick={async () => await handleSwipe(-1)}
@@ -810,15 +766,19 @@ export default function ScrapPage() {
                   <p>그룹 스크랩 로딩 중...</p>
                 </div>
               ) : selectedStockSnapshots.length > 0 ? (
-                <CardViewer
+                <ScrapCardViewer
                   cards={selectedStockSnapshots.map(convertToSnapshotCard)}
                   currentIndex={currentStockSnapshotIndex}
                   onSwipe={handleStockSnapshotSwipe}
                   onScrap={handleScrapClick}
                   onUnscrap={handleUnscrapClick}
                 />
+              ) : (activeView === "stock" && selectedGroupId === -1 && !isStockSnapshotsLoading && !isLoading) ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>해당 종목의 스크랩이 없습니다.</p>
+                </div>
               ) : groupedSnapshots.length > 0 ? (
-                <CardViewer
+                <ScrapCardViewer
                   cards={groupedSnapshots.map(convertGroupedToSnapshotCard)}
                   currentIndex={currentGroupedSnapshotIndex}
                   onSwipe={handleGroupedSnapshotSwipe}
@@ -826,7 +786,7 @@ export default function ScrapPage() {
                   onUnscrap={handleUnscrapClick}
                 />
               ) : currentSnapshot ? (
-                <CardViewer
+                <ScrapCardViewer
                   cards={currentSnapshots}
                   currentIndex={currentSnapshotIndex}
                   onSwipe={handleSwipe}
@@ -867,7 +827,7 @@ export default function ScrapPage() {
                 </svg>
               </button>
             </>
-          }
+          )}
           {activeView === "stock" &&
             !currentSnapshot &&
             !isLoading &&
@@ -876,18 +836,36 @@ export default function ScrapPage() {
                 <p>스크랩이 없습니다.</p>
               </div>
             )}
-          {selectedStockSnapshots.length === 0 &&
-            !isStockSnapshotsLoading &&
-            !isLoading &&
-            selectedGroupId !== null && (
-              <div className="h-full flex items-center justify-center">
-                <p>해당 종목의 스크랩이 없습니다.</p>
-              </div>
-            )}
+          {(() => {
+            if (
+              selectedStockSnapshots.length === 0 &&
+              !isStockSnapshotsLoading &&
+              !isLoading &&
+              selectedGroupId !== null
+            ) {
+              console.log("[TEST] 조건 진입: 해당 종목의 스크랩이 없습니다.", {
+                selectedGroupId,
+                activeView,
+                selectedStockSnapshotsLength: selectedStockSnapshots.length,
+                isStockSnapshotsLoading,
+                isLoading
+              });
+              return (
+                <div className="h-full flex items-center justify-center">
+                  <p>
+                    해당 종목의 스크랩이 없습니다.<br/>
+                    [TEST] selectedGroupId: {String(selectedGroupId)}, activeView: {String(activeView)}, selectedStockSnapshots.length: {selectedStockSnapshots.length}, isStockSnapshotsLoading: {String(isStockSnapshotsLoading)}, isLoading: {String(isLoading)}
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
           {groupedSnapshots.length === 0 &&
             !isGroupedSnapshotsLoading &&
             !isLoading &&
-            selectedGroupId !== null && (
+            selectedGroupId !== null &&
+            selectedGroupId !== -1 && (
               <div className="h-full flex items-center justify-center">
                 <p>해당 그룹의 스크랩이 없습니다.</p>
               </div>
@@ -920,10 +898,22 @@ export default function ScrapPage() {
             onScrap={handleScrapClick}
             onStockClick={handleStockClick}
             unifiedStocks={unifiedStocks}
+            hasStockSnapshots={selectedStockSnapshots.length > 0}
+            selectedStockCode={selectedStockCode}
           />
         </div>
       </div>
       <BottomNavigation />
+      
+      {/* 그룹 추가 다이얼로그 */}
+      <AddGroupDialog
+        isOpen={isAddGroupDialogOpen}
+        onClose={() => setIsAddGroupDialogOpen(false)}
+        onSubmit={handleCreateGroup}
+        isLoading={isAddingGroup}
+      />
     </div>
   );
 }
+
+

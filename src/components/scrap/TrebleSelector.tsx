@@ -5,6 +5,7 @@ import { useTransition, animated } from "react-spring";
 import { ScrapGroupSelector } from "./ScrapGroupSelector";
 import { ScrapDateSelector } from "./ScrapDateSelector";
 import { ScrapStockSelector } from "./ScrapStockSelector";
+import { ScrapStockList } from "./ScrapStockList";
 import { MoreHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
@@ -29,6 +30,8 @@ interface TrebleSelectorProps {
   onScrap: (snapshotId: number) => void;
   unifiedStocks?: UnifiedStockResponse | null;
   onStockClick?: (stockCode: string) => void;
+  hasStockSnapshots?: boolean; // 종목 스크랩이 있는지 확인하는 prop 추가
+  selectedStockCode?: string | null; // 선택된 종목 코드 추가
 }
 
 const SELECTOR_HEIGHT = 90;
@@ -51,6 +54,8 @@ export const TrebleSelector = ({
   onScrap,
   unifiedStocks,
   onStockClick,
+  hasStockSnapshots = false, // 기본값 false
+  selectedStockCode = null, // 기본값 null
 }: TrebleSelectorProps) => {
   const dragDirection = useRef(1);
 
@@ -63,39 +68,53 @@ export const TrebleSelector = ({
     config: { tension: 300, friction: 30 },
   });
 
+  // 셀렉터 비활성화 조건 - 종목이 선택되었거나 그룹이 선택되었으면 활성화
+  const isSelectorDisabled = selectedGroupId === null && selectedStockCode === null;
+
   const bind = useDrag(
     ({ down, movement: [, my], direction: [, dy], cancel }) => {
-      // '전체'가 선택되었을 때는 드래그 비활성화
-      if (selectedGroupId === null) {
-        console.log("=== TrebleSelector Drag Disabled ===");
-        console.log("selectedGroupId is null, drag disabled");
+      // 드래그 비활성화 조건 확인
+      if (isSelectorDisabled) {
         return;
       }
       
+      // 드래그가 끝났고 충분한 거리를 이동했을 때만 뷰 전환
       if (!down && Math.abs(my) > SELECTOR_HEIGHT / 3) {
-        console.log("=== TrebleSelector Drag ===");
-        console.log("activeView:", activeView);
-        console.log("selectedGroupId:", selectedGroupId);
-        
         dragDirection.current = dy > 0 ? 1 : -1;
         
-        if (dy > 0) {
-          // 아래로 드래그: 다음 뷰로 (순환)
-          if (activeView === "date") {
-            console.log("Dragging to stock view");
-            onViewChange("stock");
-          } else if (activeView === "stock") {
-            console.log("Dragging to date view");
-            onViewChange("date"); // 순환
+        // 종목이 선택된 상태에서는 ScrapDateSelector와 ScrapStockSelector만 번갈아가며 전환
+        if (selectedStockCode !== null) {
+          if (dy > 0) {
+            // 아래로 드래그
+            if (activeView === "date") {
+              onViewChange("stock");
+            } else if (activeView === "stock") {
+              onViewChange("date");
+            }
+          } else {
+            // 위로 드래그
+            if (activeView === "stock") {
+              onViewChange("date");
+            } else if (activeView === "date") {
+              onViewChange("stock");
+            }
           }
         } else {
-          // 위로 드래그: 이전 뷰로 (순환)
-          if (activeView === "stock") {
-            console.log("Dragging to date view");
-            onViewChange("date");
-          } else if (activeView === "date") {
-            console.log("Dragging to stock view");
-            onViewChange("stock"); // 순환
+          // 종목이 선택되지 않은 상태에서는 date와 stock만 번갈아가며 전환
+          if (dy > 0) {
+            // 아래로 드래그: 다음 뷰로 (순환)
+            if (activeView === "date") {
+              onViewChange("stock");
+            } else if (activeView === "stock") {
+              onViewChange("date"); // 순환
+            }
+          } else {
+            // 위로 드래그: 이전 뷰로 (순환)
+            if (activeView === "date") {
+              onViewChange("stock");
+            } else if (activeView === "stock") {
+              onViewChange("date");
+            }
           }
         }
         if (cancel) cancel();
@@ -110,24 +129,33 @@ export const TrebleSelector = ({
       <div className="absolute top-0 left-1/2 -translate-x-1/2 z-30">
         <button
           onClick={() => {
-            // '전체'가 선택되었을 때는 뷰 전환 비활성화
-            if (selectedGroupId === null) {
+            if (isSelectorDisabled) {
               return;
             }
             
-            if (activeView === "date") {
-              onViewChange("stock");
+            // 종목이 선택된 상태에서는 ScrapDateSelector와 ScrapStockSelector만 번갈아가며 전환
+            if (selectedStockCode !== null) {
+              if (activeView === "date") {
+                onViewChange("stock");
+              } else {
+                onViewChange("date");
+              }
             } else {
-              onViewChange("date");
+              // 종목이 선택되지 않은 상태에서는 date와 stock만 번갈아가며 전환
+              if (activeView === "date") {
+                onViewChange("stock");
+              } else {
+                onViewChange("date");
+              }
             }
           }}
           className={`w-8 h-2 rounded-full transition-colors ${
-            selectedGroupId === null
+            isSelectorDisabled
               ? "bg-gray-200 cursor-not-allowed"
               : "bg-gray-300 hover:bg-gray-400 cursor-pointer"
           }`}
-          title={selectedGroupId === null ? "전체 선택 시 비활성화" : "뷰 전환"}
-          disabled={selectedGroupId === null}
+          title={isSelectorDisabled ? "전체 선택 시 비활성화" : "뷰 전환"}
+          disabled={isSelectorDisabled}
         />
       </div>
       
@@ -153,19 +181,12 @@ export const TrebleSelector = ({
             }}
           >
             {view === "date" ? (
-              (() => {
-                console.log("=== TrebleSelector DateSelector ===");
-                console.log("selectedGroupId:", selectedGroupId);
-                console.log("disabled:", selectedGroupId === null);
-                return (
-                  <ScrapDateSelector
-                    selectedDate={selectedDate}
-                    onDateSelect={onDateChange}
-                    allowedDates={allowedDates}
-                    disabled={selectedGroupId === null}
-                  />
-                );
-              })()
+              <ScrapDateSelector
+                selectedDate={selectedDate}
+                onDateSelect={onDateChange}
+                allowedDates={allowedDates}
+                disabled={selectedGroupId === null}
+              />
             ) : (
               <ScrapStockSelector
                 snapshots={snapshotsForDate}
@@ -173,6 +194,8 @@ export const TrebleSelector = ({
                 onStockSelect={onStockChange}
                 onEdge={onStockEdge}
                 portfolio={portfolio}
+                selectedStockCode={selectedStockCode}
+                selectedStockName={selectedStockCode ? unifiedStocks?.stocks?.find(stock => stock.pdno === selectedStockCode)?.prdt_name || selectedStockCode : null}
               />
             )}
           </animated.div>
