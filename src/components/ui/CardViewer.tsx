@@ -20,6 +20,7 @@ import { ScrollArea } from "./scroll-area";
 import { FaHeartCirclePlus, FaHeartCircleMinus } from "react-icons/fa6";
 import { ScrapGroupDialog } from "./ScrapGroupDialog";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 interface CardViewerProps {
   cards: SnapshotCard[];
@@ -128,15 +129,16 @@ export const CardViewer = ({
               maxHeight: "100%",
               touchAction: "pan-y",
               cursor: "grab",
-            }}
-          >
+            }}>
             <Dialog>
               <Card className="h-full flex flex-col shadow-lg relative">
                 <CardContent className="p-0 relative flex-1 overflow-hidden rounded-lg flex flex-col">
                   <div
                     className="w-full bg-gray-200 rounded-t-lg overflow-hidden"
-                    style={{ height: CARD_IMAGE_HEIGHT }}
-                  >
+                    style={{
+                      height: CARD_IMAGE_HEIGHT,
+                      minHeight: CARD_IMAGE_HEIGHT - 15,
+                    }}>
                     {card.newsImage && (
                       <img
                         src={card.newsImage}
@@ -150,10 +152,8 @@ export const CardViewer = ({
                   </div> */}
 
                   <ScrollArea>
-                    <div className="p-4 flex-1 overflow-y-auto">
-                      <p className="text-gray-600 text-sm">
-                        {card.newsContent}
-                      </p>
+                    <div className="p-4 flex-1 overflow-y-auto prose prose-sm">
+                      <ReactMarkdown>{card.newsContent}</ReactMarkdown>
                     </div>
                   </ScrollArea>
                 </CardContent>
@@ -163,8 +163,7 @@ export const CardViewer = ({
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="absolute bottom-[75%] right-[17%] h-8 w-8 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20"
-                  >
+                    className="absolute bottom-[75%] right-[17%] h-8 w-8 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg z-20">
                     <MessageSquare size={36} />
                   </Button>
                 </DialogTrigger>
@@ -240,6 +239,7 @@ export const CardViewer = ({
                     // API 실패 시 로컬 상태 변경하지 않음
                     console.error("Scrap/Unscrap failed:", error);
                   }
+
                 }}
               >
                 {card.isScrap || localScrapStates[card.snapshotId] ? (
@@ -272,8 +272,7 @@ export const CardViewer = ({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="w-5 h-5 text-blue-600"
-                        >
+                          className="w-5 h-5 text-blue-600">
                           <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2 18l-2 4 4-2 16.36-16.36a1.21 1.21 0 0 0 0-1.72Z" />
                           <path d="m14 7 3 3" />
                           <path d="M5 6v4" />
@@ -339,8 +338,7 @@ export const CardViewer = ({
               onClick={() => {
                 setShowDeleteConfirmDialog(false);
                 setPendingDeleteSnapshotId(null);
-              }}
-            >
+              }}>
               취소
             </Button>
             <Button
@@ -373,8 +371,7 @@ export const CardViewer = ({
                 }
                 setShowDeleteConfirmDialog(false);
                 setPendingDeleteSnapshotId(null);
-              }}
-            >
+              }}>
               삭제
             </Button>
           </DialogFooter>

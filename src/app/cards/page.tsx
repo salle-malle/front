@@ -393,8 +393,7 @@ export default function CardsPage() {
               top: "50%",
               transform: "translateY(-50%)",
             }}
-            disabled={isLoading}
-          >
+            disabled={isLoading}>
             <svg
               width="20"
               height="20"
@@ -402,8 +401,7 @@ export default function CardsPage() {
               stroke="currentColor"
               strokeWidth="2"
               viewBox="0 0 24 24"
-              className="text-gray-600"
-            >
+              className="text-gray-600">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -434,8 +432,7 @@ export default function CardsPage() {
               top: "50%",
               transform: "translateY(-50%)",
             }}
-            disabled={isLoading}
-          >
+            disabled={isLoading}>
             <svg
               width="20"
               height="20"
@@ -443,8 +440,7 @@ export default function CardsPage() {
               stroke="currentColor"
               strokeWidth="2"
               viewBox="0 0 24 24"
-              className="text-gray-600"
-            >
+              className="text-gray-600">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

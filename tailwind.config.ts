@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import typography from "@tailwindcss/typography";
 
 // all in fixtures is set to tailwind v3 as interims solutions
 
@@ -13,6 +14,17 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      typography: {
+        sm: {
+          css: {
+            fontSize: "0.8rem",
+            h1: { fontSize: "1.1rem" },
+            h2: { fontSize: "1rem" },
+            h3: { fontSize: "0.95rem", marginBottom: "0.1em" },
+            p: { marginTop: "0.5em", marginBottom: "0.5em" },
+          },
+        },
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -94,6 +106,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), typography],
 };
 export default config;
