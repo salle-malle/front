@@ -47,7 +47,9 @@ export default function DisclosureDetail() {
         return null;
       }
       if (!response.ok) {
-        throw new Error(jsonResponse?.message || "공시 정보를 불러오지 못했습니다.");
+        throw new Error(
+          jsonResponse?.message || "공시 정보를 불러오지 못했습니다."
+        );
       }
       return jsonResponse.data;
     } catch (e) {
@@ -105,7 +107,10 @@ export default function DisclosureDetail() {
       <div className="fixed top-0 left-0 w-full z-30">
         <TopNavigation showBackButton={true} title="공시정보" />
       </div>
-      <div className="flex-1 flex flex-col items-center max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2 mt-10 mb-5 overflow-y-auto pt-[56px]" style={{ paddingBottom: 100 }}>
+      <div
+        className="flex-1 flex flex-col items-center max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2 mt-10 mb-5 overflow-y-auto pt-[56px]"
+        style={{ paddingBottom: 100 }}
+      >
         <div
           className="w-full bg-white rounded-lg p-6 flex flex-col"
           style={{
@@ -120,7 +125,13 @@ export default function DisclosureDetail() {
             <div className="flex items-center">
               <br />
               {disclosure.stockId && (
-                <span style={{ display: "inline-block", verticalAlign: "middle", marginTop: "6px" }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    verticalAlign: "middle",
+                    marginTop: "6px",
+                  }}
+                >
                   <Image
                     src={`/ticker-icon/${disclosure.stockId}.png`}
                     alt="종목 아이콘"
@@ -129,16 +140,21 @@ export default function DisclosureDetail() {
                     unoptimized
                     className="mr-2"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/ticker-icon/default.png";
+                      (e.target as HTMLImageElement).src =
+                        "/ticker-icon/default.png";
                     }}
                   />
                 </span>
               )}
-              <div className="text-sm text-gray-500 ml-1">{disclosure.stockName} ({disclosure.stockId})</div>
+              <div className="text-sm text-gray-500 ml-1">
+                {disclosure.stockName} ({disclosure.stockId})
+              </div>
             </div>
             <div style={{ minWidth: 40 }} />
           </div>
-          <h3 className="text-xl font-bold text-left mt-6 mb-2 w-full leading-relaxed">{disclosure.disclosureTitle}</h3>
+          <h3 className="text-xl font-bold text-left mt-6 mb-2 w-full leading-relaxed">
+            {disclosure.disclosureTitle}
+          </h3>
           {/* 발표일을 제목 바로 아래로 이동 */}
           <p className="text-sm text-gray-500 text-left mb-4 leading-relaxed">
             <span className="mr-2">발표일</span>
