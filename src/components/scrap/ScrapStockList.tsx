@@ -53,14 +53,10 @@ export const ScrapStockList = ({
   }
 
   return (
-    <div className="w-full h-[80%] overflow-y-auto px-4 py-2">
-      <div className="mb-4">
-        {/* <h2 className="text-lg font-semibold text-gray-800 mb-2">보유 종목</h2>
-        <div className="text-sm text-gray-600 mb-4">
-          총 {unifiedStocks.summary?.total_stock_count || 0}개 종목
-        </div> */}
-      </div>
-      <div className="space-y-3">
+    <div className="w-full h-full overflow-y-auto px-4">
+      {/* <div className="mb-[1%]">
+      </div> */}
+      <div className="space-y-3 mb-[18%]">
         {unifiedStocks.stocks.map((stock) => (
           <div
             key={stock.pdno}
