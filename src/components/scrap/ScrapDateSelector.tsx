@@ -16,10 +16,6 @@ export const ScrapDateSelector = ({
   allowedDates = [],
   disabled = false,
 }: ScrapDateSelectorProps) => {
-  console.log("=== ScrapDateSelector ===");
-  console.log("selectedDate:", selectedDate);
-  console.log("disabled:", disabled);
-  console.log("allowedDates:", allowedDates);
   const [displayDate, setDisplayDate] = useState(new Date(selectedDate));
   const [weekDates, setWeekDates] = useState<Date[]>([]);
   const weekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];

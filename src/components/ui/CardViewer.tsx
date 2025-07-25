@@ -234,18 +234,14 @@ export const CardViewer = ({
                         },
                       });
                       console.log("Toast should be displayed");
-
-                      // 테스트용 토스트도 추가
-                      setTimeout(() => {
-                        console.log("Showing test toast...");
-                        toast("테스트 토스트입니다.");
-                      }, 1000);
                     }
                   } catch (error) {
                     // API 실패 시 로컬 상태 변경하지 않음
                     console.error("Scrap/Unscrap failed:", error);
                   }
-                }}>
+
+                }}
+              >
                 {card.isScrap || localScrapStates[card.snapshotId] ? (
                   <FaHeartCircleMinus
                     size={36}
@@ -327,7 +323,8 @@ export const CardViewer = ({
       {/* 스크랩 삭제 확인 다이얼로그 */}
       <Dialog
         open={showDeleteConfirmDialog}
-        onOpenChange={setShowDeleteConfirmDialog}>
+        onOpenChange={setShowDeleteConfirmDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>스크랩 삭제</DialogTitle>
