@@ -186,9 +186,6 @@ export const ScrapStockSelector = ({
             <p className="text-sm font-semibold text-gray-800 truncate">
               {evaluationAmount}
             </p>
-            <p className="text-xs text-gray-500 truncate">
-              카드 종목
-            </p>
           </div>
           <div className="text-right">
             {/* 손익금액 표시 */}
