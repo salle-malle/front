@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { Calendar } from "lucide-react";
+import { MdOutlineEventAvailable } from "react-icons/md";
 import { EarningCall } from "@/src/types/ApiResponse";
 
 interface UpcomingEvent {
@@ -47,12 +47,10 @@ export function UpcomingEvents({ stockCode }: UpcomingEventsProps) {
           const data = await response.json();
           const earningCalls: EarningCall[] = data.data || [];
 
-          // 현재 종목의 어닝콜만 필터링
           const currentStockCalls = earningCalls.filter(
             (call) => call.stockId === stockCode
           );
 
-          // 날짜별로 정렬하고 가장 가까운 2개만 선택
           const sortedCalls = currentStockCalls
             .sort(
               (a, b) =>
@@ -61,7 +59,6 @@ export function UpcomingEvents({ stockCode }: UpcomingEventsProps) {
             )
             .slice(0, 2);
 
-          // UpcomingEvent 형태로 변환
           const upcomingEvents: UpcomingEvent[] = sortedCalls.map((call) => {
             const eventDate = new Date(call.earningCallDate);
             const today = new Date();
@@ -93,30 +90,12 @@ export function UpcomingEvents({ stockCode }: UpcomingEventsProps) {
     }
   }, [stockCode]);
 
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case "earnings":
-        return "📊";
-      default:
-        return "📅";
-    }
-  };
-
-  const getEventColor = (type: string) => {
-    switch (type) {
-      case "earnings":
-        return "bg-blue-50 border-blue-200 text-blue-800";
-      default:
-        return "bg-gray-50 border-gray-200 text-gray-800";
-    }
-  };
-
   if (loading) {
     return (
       <Card className="mx-4 mt-4 shadow-sm border-0 bg-white">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center text-gray-900">
-            <Calendar className="h-5 w-5 mr-2" />
+            {/* <MdOutlineEventAvailable className="h-5 w-5 mr-2" /> */}
             다가올 주요 이벤트
           </CardTitle>
         </CardHeader>
@@ -137,7 +116,7 @@ export function UpcomingEvents({ stockCode }: UpcomingEventsProps) {
       <Card className="mx-4 mt-4 shadow-sm border-0 bg-white">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center text-gray-900">
-            <Calendar className="h-5 w-5 mr-2" />
+            {/* <MdOutlineEventAvailable className="h-5 w-5 mr-2" /> */}
             다가올 주요 이벤트
           </CardTitle>
         </CardHeader>
@@ -154,34 +133,32 @@ export function UpcomingEvents({ stockCode }: UpcomingEventsProps) {
     <Card className="mx-4 mt-4 shadow-sm border-0 bg-white">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center text-gray-900">
-          <Calendar className="h-5 w-5 mr-2" />
+          {/* <MdOutlineEventAvailable className="h-5 w-5 mr-2" /> */}
           다가올 주요 이벤트
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className={`flex items-center justify-between p-3 rounded-lg border ${getEventColor(
-                event.type
-              )} cursor-pointer hover:opacity-80 transition-opacity`}
-              onClick={() => router.push(`/calendar?date=${event.date}`)}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-lg">{getEventIcon(event.type)}</span>
-                <div>
-                  <p className="font-medium text-sm">{event.title}</p>
-                  <p className="text-xs opacity-75">{event.date}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-sm">D-{event.daysUntil}</p>
-                <p className="text-xs opacity-75">남음</p>
-              </div>
+
+      <CardContent className="space-y-4">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="flex items-center justify-between p-4 rounded-lg border border-gray-100 bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
+            onClick={() => router.push(`/calendar?date=${event.date}`)}>
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-gray-900">
+                {event.title}
+              </p>
+              <p className="text-xs text-gray-500">{event.date}</p>
             </div>
-          ))}
-        </div>
+
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-bold text-blue-600">
+                D-{event.daysUntil}
+              </span>
+              <span className="text-xs text-gray-400">남음</span>
+            </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

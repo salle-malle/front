@@ -7,9 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { Newspaper, ExternalLink, Clock, RefreshCw } from "lucide-react";
+import { ExternalLink, Clock, RefreshCw } from "lucide-react";
+import { IoNewspaperOutline } from "react-icons/io5";
 
 interface NewsSectionProps {
   stockCode: string;
@@ -213,7 +213,7 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between text-gray-900">
           <div className="flex items-center">
-            <Newspaper className="h-5 w-5 mr-2" />
+            {/* <IoNewspaperOutline className="h-5 w-5 mr-2" /> */}
             관련 뉴스
           </div>
           <Button

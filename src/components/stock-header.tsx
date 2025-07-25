@@ -20,7 +20,6 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
   const formatLargeNumber = (value: string) => {
     const num = Number.parseFloat(value);
     if (isNaN(num)) return "0";
-
     if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
     if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
@@ -59,19 +58,16 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
     <Card className="mx-4 mt-4 shadow-sm border-0 bg-white">
       <CardContent className="p-6">
         {/* 종목명과 코드 */}
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            <h1 className="text-xl font-semibold text-gray-900 mb-1">
               {stockData.etyp_nm || stockCode}
             </h1>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+            <p className="text-xs font-normal text-gray-500 tracking-wider">
               {stockCode}
             </p>
           </div>
-          <Badge
-            variant="secondary"
-            className="text-xs font-medium whitespace-nowrap"
-          >
+          <Badge variant="secondary" className="text-xs font-medium">
             {stockData.eicod || "해외주식"}
           </Badge>
         </div>
@@ -79,39 +75,37 @@ export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
         {/* 현재가와 등락 정보 */}
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
+            <p className="text-2xl font-semibold text-gray-900 mb-1">
               {formatCurrency(stockData.last || stockData.txprc)}
             </p>
-            <p className="text-sm text-gray-500">현재가</p>
+            <p className="text-sm text-gray-400">현재가</p>
           </div>
 
           <div
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${priceChange.bgColorClass}`}
-          >
+            className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${priceChange.bgColorClass}`}>
             <div
-              className={`flex items-center space-x-1 ${priceChange.colorClass}`}
-            >
+              className={`flex items-center space-x-1 ${priceChange.colorClass}`}>
               {priceChange.icon}
-              <span className="font-semibold text-lg">
+              <span className="text-base font-medium">
                 {priceChange.changePercent}
               </span>
             </div>
           </div>
         </div>
 
-        {/* 등락폭과 거래량 */}
+        {/* 등락폭과 시가총액 */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-4">
             <div>
               <p className="text-xs text-gray-500 mb-1">등락폭</p>
-              <p className={`font-semibold ${priceChange.colorClass}`}>
+              <p className={`text-sm font-medium ${priceChange.colorClass}`}>
                 {priceChange.changeAmount}
               </p>
             </div>
-            <div className="h-8 w-px bg-gray-200"></div>
+            <div className="h-8 w-px bg-gray-200" />
             <div>
-              <p className="text-xs text-gray-500 mb-1">자본금</p>
-              <p className="font-semibold text-gray-900">
+              <p className="text-xs text-gray-500 mb-1">시가총액</p>
+              <p className="text-sm font-medium text-gray-700">
                 {formatLargeNumber(stockData.mcap)}
               </p>
             </div>

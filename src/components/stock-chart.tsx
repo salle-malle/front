@@ -17,6 +17,7 @@ import {
   ColorType,
   CandlestickSeries,
 } from "lightweight-charts";
+import { IoStatsChartOutline } from "react-icons/io5";
 
 interface StockChartProps {
   stockCode: string;
@@ -445,7 +446,7 @@ export function StockChart({ stockCode }: StockChartProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between text-gray-900">
           <div className="flex items-center">
-            <BarChart3 className="h-5 w-5 mr-2" />
+            {/* <IoStatsChartOutline className="h-5 w-5 mr-2" /> */}
             주가 차트
           </div>
           <div className="flex items-center space-x-2">
@@ -453,24 +454,21 @@ export function StockChart({ stockCode }: StockChartProps) {
               variant="outline"
               size="sm"
               onClick={handleZoomOut}
-              className="h-8 w-8 p-0"
-            >
+              className="h-8 w-8 p-0">
               <ZoomOut className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleZoomIn}
-              className="h-8 w-8 p-0"
-            >
+              className="h-8 w-8 p-0">
               <ZoomIn className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleResetZoom}
-              className="text-xs px-2"
-            >
+              className="text-xs px-2">
               리셋
             </Button>
           </div>
@@ -485,8 +483,7 @@ export function StockChart({ stockCode }: StockChartProps) {
               variant={selectedPeriod === period.value ? "default" : "ghost"}
               size="sm"
               className="flex-1 text-xs"
-              onClick={() => handlePeriodChange(period.value)}
-            >
+              onClick={() => handlePeriodChange(period.value)}>
               {period.label}
             </Button>
           ))}
@@ -495,8 +492,7 @@ export function StockChart({ stockCode }: StockChartProps) {
         {/* 차트 영역 */}
         <div
           ref={chartContainerRef}
-          className="h-80 bg-white rounded-lg border border-gray-200"
-        >
+          className="h-80 bg-white rounded-lg border border-gray-200">
           {loading ? (
             <div className="h-full flex items-center justify-center">
               <div className="flex flex-col items-center space-y-2">
