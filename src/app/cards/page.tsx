@@ -53,29 +53,32 @@ export default function CardsPage() {
     [stockCode: string]: UnifiedStockItem;
   }>({});
 
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+
   const allowedDates = useMemo(
-    () => Object.keys(snapshotsByDate).sort(),
-    [snapshotsByDate]
+    () => {
+      const allDates = new Set<string>([
+        ...Object.keys(snapshotsByDate),
+        ...availableDates
+      ]);
+      return Array.from(allDates).sort();
+    },
+    [snapshotsByDate, availableDates]
   );
 
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
 
-  // 뷰 순서 정의 (scrap 페이지와 유사하게)
   const viewOrder = ["date", "stock"] as const;
   const currentViewIndex = viewOrder.indexOf(activeView);
 
-  // CardsPage.tsx
-
-  // 최초 진입 시 스냅샷과 보유 주식 정보를 함께 패칭합니다.
   useEffect(() => {
     const fetchAllSnapshots = async () => {
       setIsLoading(true);
       try {
-        // 스냅샷 목록과 보유 주식 정보를 동시에 요청하여 로딩 시간을 단축합니다.
         const [snapshotsResponse, portfolioResponse] = await Promise.all([
           fetchWithAuthCheck(
-            `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots?sort=createdAt,asc`,
+            `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots`,
             {
               method: "GET",
               headers: { "Content-Type": "application/json" },
@@ -106,23 +109,43 @@ export default function CardsPage() {
         }
 
         // 2. 스냅샷(카드) 데이터 처리
-        // 응답 구조: data.data.content -> data.content
+        // 응답 구조 확인: data.data.content 또는 data.content
+        let fetchedData: SnapshotCard[] = [];
+        
         if (
           snapshotsResponse &&
           snapshotsResponse.status &&
-          snapshotsResponse.data &&
-          Array.isArray(snapshotsResponse.data.content)
+          snapshotsResponse.data
         ) {
-          const fetchedData: SnapshotCard[] = snapshotsResponse.data.content;
+          // API 응답 구조에 따라 데이터 추출
+          if (Array.isArray(snapshotsResponse.data)) {
+            // 직접 배열인 경우
+            fetchedData = snapshotsResponse.data;
+          } else if (snapshotsResponse.data.content && Array.isArray(snapshotsResponse.data.content)) {
+            // content 필드에 배열이 있는 경우
+            fetchedData = snapshotsResponse.data.content;
+          }
+        }
+        
+        if (fetchedData.length > 0) {
 
           // 날짜별로 그룹화
           const byDate: { [date: string]: SnapshotCard[] } = {};
+          const datesFromAPI: string[] = [];
+          
           fetchedData.forEach((snap) => {
             const date = snap.snapshotCreatedAt.split("T")[0];
             if (!byDate[date]) byDate[date] = [];
             byDate[date].push(snap);
+            
+            // API에서 받은 날짜들을 저장
+            if (!datesFromAPI.includes(date)) {
+              datesFromAPI.push(date);
+            }
           });
+          
           setSnapshotsByDate(byDate);
+          setAvailableDates(datesFromAPI);
 
           // 기본 선택 날짜 설정 및 이미지 사전 로딩
           const dates = Object.keys(byDate).sort();
@@ -141,11 +164,13 @@ export default function CardsPage() {
           }
         } else {
           setSnapshotsByDate({});
+          setAvailableDates([]);
         }
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
         setSnapshotsByDate({});
         setPortfolio({});
+        setAvailableDates([]);
       } finally {
         setIsLoading(false);
       }

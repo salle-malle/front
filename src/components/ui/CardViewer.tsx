@@ -6,7 +6,15 @@ import { useDrag } from "react-use-gesture";
 import { Card, CardContent } from "./card";
 import { SnapshotCard } from "@/src/types/SnapshotCard";
 import { Button } from "./button";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogHeader, DialogDescription, DialogFooter } from "./dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+  DialogHeader,
+  DialogDescription,
+  DialogFooter,
+} from "./dialog";
 import { MessageSquare } from "lucide-react";
 import { ScrollArea } from "./scroll-area";
 import { FaHeartCirclePlus, FaHeartCircleMinus } from "react-icons/fa6";
@@ -31,12 +39,21 @@ export const CardViewer = ({
   onScrap,
   onUnscrap,
 }: CardViewerProps) => {
-  const [localScrapStates, setLocalScrapStates] = React.useState<{ [key: number]: boolean }>({});
+  const [localScrapStates, setLocalScrapStates] = React.useState<{
+    [key: number]: boolean;
+  }>({});
   const [showGroupDialog, setShowGroupDialog] = React.useState(false);
-  const [currentSnapshotId, setCurrentSnapshotId] = React.useState<number | null>(null);
-  const [currentScrapId, setCurrentScrapId] = React.useState<number | null>(null);
-  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = React.useState(false);
-  const [pendingDeleteSnapshotId, setPendingDeleteSnapshotId] = React.useState<number | null>(null);
+  const [currentSnapshotId, setCurrentSnapshotId] = React.useState<
+    number | null
+  >(null);
+  const [currentScrapId, setCurrentScrapId] = React.useState<number | null>(
+    null
+  );
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] =
+    React.useState(false);
+  const [pendingDeleteSnapshotId, setPendingDeleteSnapshotId] = React.useState<
+    number | null
+  >(null);
   const [springs, api] = useSprings(cards.length, (i) => ({
     x: (i - currentIndex) * (CARD_WIDTH + 40),
     scale: i === currentIndex ? 1 : 0.85,
@@ -64,11 +81,11 @@ export const CardViewer = ({
       // 버튼 클릭 감지 - 이벤트 타겟이 버튼이면 드래그 무시
       if (event && event.target) {
         const target = event.target as HTMLElement;
-        if (target.closest('button')) {
+        if (target.closest("button")) {
           return;
         }
       }
-      
+
       const isCurrentCard = originalIndex === currentIndex;
       if (!isCurrentCard) return;
 
@@ -159,16 +176,23 @@ export const CardViewer = ({
                 className="absolute bottom-[75%] right-[4%] h-8 w-8 p-0 z-10 backdrop-blur-sm rounded-full p-2 transition-all duration-200 bg-blue-500 hover:bg-blue-600"
                 onClick={async (e) => {
                   console.log("=== Scrap/Unscrap Button Click Debug ===");
-                  console.log("Button clicked for snapshotId:", card.snapshotId);
+                  console.log(
+                    "Button clicked for snapshotId:",
+                    card.snapshotId
+                  );
                   console.log("Current index:", currentIndex);
-                  console.log("Is scraped:", card.isScrap || localScrapStates[card.snapshotId]);
-                  
+                  console.log(
+                    "Is scraped:",
+                    card.isScrap || localScrapStates[card.snapshotId]
+                  );
+
                   e.preventDefault();
                   e.stopPropagation();
                   console.log("preventDefault and stopPropagation called");
-                  
-                  const isCurrentlyScraped = card.isScrap || localScrapStates[card.snapshotId];
-                  
+
+                  const isCurrentlyScraped =
+                    card.isScrap || localScrapStates[card.snapshotId];
+
                   try {
                     if (isCurrentlyScraped && onUnscrap) {
                       // 스크랩 삭제 확인 다이얼로그 표시
@@ -178,24 +202,32 @@ export const CardViewer = ({
                       // 스크랩 추가
                       console.log("Calling onScrap...");
                       const scrapId = await onScrap(card.snapshotId);
-                      console.log("onScrap completed successfully, scrapId:", scrapId);
-                      
+                      console.log(
+                        "onScrap completed successfully, scrapId:",
+                        scrapId
+                      );
+
                       // API 성공 시 로컬 상태 업데이트
-                      setLocalScrapStates(prev => {
-                        console.log("Updating local scrap state for:", card.snapshotId);
+                      setLocalScrapStates((prev) => {
+                        console.log(
+                          "Updating local scrap state for:",
+                          card.snapshotId
+                        );
                         return {
                           ...prev,
-                          [card.snapshotId]: true
+                          [card.snapshotId]: true,
                         };
                       });
-                      
+
                       console.log("Showing toast...");
                       // 그룹 추가 확인 토스트
                       toast.success("스크랩에 추가되었습니다.", {
                         action: {
                           label: "그룹에도 추가",
                           onClick: () => {
-                            console.log("Toast action clicked, opening group dialog");
+                            console.log(
+                              "Toast action clicked, opening group dialog"
+                            );
                             setCurrentSnapshotId(card.snapshotId);
                             setCurrentScrapId(scrapId);
                             setShowGroupDialog(true);
@@ -203,27 +235,21 @@ export const CardViewer = ({
                         },
                       });
                       console.log("Toast should be displayed");
-                      
-                      // 테스트용 토스트도 추가
-                      setTimeout(() => {
-                        console.log("Showing test toast...");
-                        toast("테스트 토스트입니다.");
-                      }, 1000);
                     }
                   } catch (error) {
                     // API 실패 시 로컬 상태 변경하지 않음
                     console.error("Scrap/Unscrap failed:", error);
                   }
                 }}
-                              >
+              >
                 {card.isScrap || localScrapStates[card.snapshotId] ? (
-                  <FaHeartCircleMinus 
-                    size={36} 
+                  <FaHeartCircleMinus
+                    size={36}
                     className="text-red-500 hover:text-white transition-all duration-200"
                   />
                 ) : (
-                  <FaHeartCirclePlus 
-                    size={36} 
+                  <FaHeartCirclePlus
+                    size={36}
                     className="text-white hover:text-red-500 transition-all duration-200"
                   />
                 )}
@@ -276,7 +302,7 @@ export const CardViewer = ({
           </animated.div>
         );
       })}
-      
+
       {/* 그룹 선택 다이얼로그 */}
       {currentSnapshotId && (
         <ScrapGroupDialog
@@ -296,7 +322,10 @@ export const CardViewer = ({
       )}
 
       {/* 스크랩 삭제 확인 다이얼로그 */}
-      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+      <Dialog
+        open={showDeleteConfirmDialog}
+        onOpenChange={setShowDeleteConfirmDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>스크랩 삭제</DialogTitle>
@@ -322,16 +351,20 @@ export const CardViewer = ({
                     console.log("Calling onUnscrap...");
                     await onUnscrap(pendingDeleteSnapshotId);
                     console.log("onUnscrap completed successfully");
-                    
+
                     // 로컬 상태 업데이트
-                    setLocalScrapStates(prev => {
-                      console.log("Updating local scrap state for:", pendingDeleteSnapshotId, "to false");
+                    setLocalScrapStates((prev) => {
+                      console.log(
+                        "Updating local scrap state for:",
+                        pendingDeleteSnapshotId,
+                        "to false"
+                      );
                       return {
                         ...prev,
-                        [pendingDeleteSnapshotId]: false
+                        [pendingDeleteSnapshotId]: false,
                       };
                     });
-                    
+
                     toast.success("스크랩에서 제거되었습니다.");
                   } catch (error) {
                     console.error("Unscrap failed:", error);
