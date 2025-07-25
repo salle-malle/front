@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import { Card } from "@/src/components/ui/card";
 import AssetChart from "@/src/components/ui/asset-chart";
 import NewsSlider from "@/src/components/ui/news-slider";
 import StockList from "@/src/components/ui/stock-list";
@@ -24,24 +23,25 @@ export type StockItem = {
   profit_loss_amount: number;
   profit_loss_rate: number;
   quantity: number;
+  currentPrice: number;
 };
-export type AssetTrendPoint = number;
-
-export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
-export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId : string; stockName : string};
+export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId: string; stockName: string };
 export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
-export type NewsListResponse = { news: NewsItem[]; };
+export type NewsListResponse = { news: NewsItem[] };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
-export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
-export type DisclosureListResponse = { data: DisclosureItem[]; };
+export type DisclosureListResponse = { data: DisclosureItem[] };
+export type MemberResponse = { memberName: string; memberNickname: string };
 export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
 
+// 상대 시간 변환 함수
 function getRelativeTime(dateString: string) {
   return dayjs(dateString).fromNow();
 }
 
+// 로그인 리다이렉트 중복 방지 변수
 let hasRedirectedToLogin = false;
 
+// 인증 체크 fetch 함수
 async function fetchWithAuthCheck<T>(
   input: RequestInfo,
   init: RequestInit = {},
@@ -65,6 +65,19 @@ async function fetchWithAuthCheck<T>(
   }
   return jsonResponse;
 }
+
+// API 호출 함수들
+const fetchMember = async (router: ReturnType<typeof useRouter>): Promise<MemberResponse> => {
+  const jsonResponse = await fetchWithAuthCheck<any>(
+    `${process.env.NEXT_PUBLIC_BACK_API_URL}/member/info`,
+    {
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    },
+    router
+  );
+  return { memberName: jsonResponse.data.memberName, memberNickname: jsonResponse.data.memberNickname };
+};
 
 export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promise<NewsListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
@@ -107,6 +120,7 @@ export async function fetchStockList(router: ReturnType<typeof useRouter>): Prom
       100,
     profit_loss_rate:
       Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
+    currentPrice: item.current_price,
   }));
 
   return {
@@ -114,15 +128,6 @@ export async function fetchStockList(router: ReturnType<typeof useRouter>): Prom
     companyLogos,
     summary,
   };
-}
-
-export async function fetchAssetTrend(router: ReturnType<typeof useRouter>): Promise<AssetTrendResponse> {
-  const jsonResponse = await fetchWithAuthCheck<any>(
-    "/api/asset-trend",
-    {},
-    router
-  );
-  return jsonResponse;
 }
 
 const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promise<DisclosureListResponse> => {
@@ -164,12 +169,7 @@ export async function fetchEarningCallList(router: ReturnType<typeof useRouter>)
   };
 }
 
-// 색상 상수
-const BLUE_MAIN = "#5B9DF9";
-const BLUE_GRADIENT_FROM = "#5B9DF9";
-const BLUE_GRADIENT_TO = "#B3D8FD";
-const BLUE_LINE = "#3B82F6";
-
+// 티커별 로고 생성 함수
 function getCompanyLogosByTicker(stocks: StockItem[]): Record<string, string> {
   const logos: Record<string, string> = {};
   stocks.forEach((stock) => {
@@ -178,15 +178,13 @@ function getCompanyLogosByTicker(stocks: StockItem[]): Record<string, string> {
   return logos;
 }
 
+// 초기값 정의
 const initialNews: NewsItem[] = [];
 const initialStocks: StockItem[] = [];
-const initialAssetTrend: AssetTrendData = {
-  series: [{ name: "자산", data: [] }],
-  options: {},
-};
 const initialDisclosures: DisclosureItem[] = [];
 const initialEarningCalls: EarningCallItem[] = [];
 
+// 섹션별 staggered mount 효과
 function useStaggeredMount(count: number, delay: number = 60) {
   const [mountedIndexes, setMountedIndexes] = useState<number[]>([]);
   useEffect(() => {
@@ -211,13 +209,13 @@ export default function HomePage() {
   const [assetAmount, setAssetAmount] = useState(0);
   const [stocks, setStocks] = useState(initialStocks);
   const [logos, setLogos] = useState<Record<string, string>>({});
-  const [assetTrendData, setAssetTrendData] = useState(initialAssetTrend);
   const [disclosureData, setDisclosureData] = useState(initialDisclosures);
   const [earningCallData, setEarningCallData] = useState(initialEarningCalls);
   const [newsIndex, setNewsIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tab, setTab] = useState<"공시" | "어닝콜">("공시");
+  const [name, setName] = useState("");
 
   const hasFetched = useRef(false);
 
@@ -253,51 +251,6 @@ export default function HomePage() {
         setAssetAmount(0);
       });
 
-    fetchAssetTrend(router)
-      .then((res) => setAssetTrendData(res.assetTrendData))
-      .catch(() =>
-        setAssetTrendData({
-          series: [
-            { name: "자산", data: [1000, 1200, 1300, 1250, 1400, 1500, 1600] },
-          ],
-          options: {
-            chart: {
-              type: "line",
-              height: 120,
-              toolbar: { show: false },
-              sparkline: { enabled: true },
-            },
-            stroke: { curve: "smooth", width: 3, colors: [BLUE_LINE] },
-            xaxis: {
-              categories: ["월", "화", "수", "목", "금", "토", "일"],
-              labels: { show: false },
-              axisBorder: { show: false },
-              axisTicks: { show: false },
-            },
-            yaxis: { show: false },
-            grid: { show: false },
-            dataLabels: { enabled: false },
-            tooltip: { enabled: false },
-            fill: {
-              type: "gradient",
-              gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.3,
-                opacityTo: 0.07,
-                stops: [0, 100],
-                colorStops: [
-                  [
-                    { offset: 0, color: BLUE_GRADIENT_FROM, opacity: 0.3 },
-                    { offset: 100, color: BLUE_GRADIENT_TO, opacity: 0.07 },
-                  ],
-                ],
-              },
-            },
-            colors: [BLUE_MAIN],
-          },
-        })
-      );
-
     fetchDisclosureList(router)
       .then((res) => setDisclosureData(Array.isArray(res.data) ? res.data : []))
       .catch(() => setDisclosureData([]));
@@ -309,16 +262,25 @@ export default function HomePage() {
       .catch(() => {
         setEarningCallData([]);
       });
+
+    fetchMember(router)
+      .then((res) => {
+        setName(res.memberName);
+      })
+      .catch(() => {
+        setName("");
+      });
   }, [router]);
 
   useEffect(() => {
     if (newsItems.length === 0) return;
-    timeoutRef.current = setTimeout(() => handleSlide("up"), 2200); // 2000ms -> 2200ms로 약간 여유를 줌
+    timeoutRef.current = setTimeout(() => handleSlide("up"), 2200);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [newsIndex, newsItems.length]);
 
+  // 슬라이드 핸들러
   const handleSlide = (dir: "up" | "down" | "left" | "right") => {
     if (newsItems.length === 0) return;
     setIsAnimating(true);
@@ -336,6 +298,7 @@ export default function HomePage() {
     }, 450);
   };
 
+  // 섹션 스타일 반환
   const getSectionStyle = (idx: number) => ({
     opacity: mountedIndexes.includes(idx) ? 1 : 0,
     transform: mountedIndexes.includes(idx)
@@ -364,11 +327,10 @@ export default function HomePage() {
           <StockList stocks={stocks} companyLogos={logos} />
         </div>
         <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(3)}>
-          <AssetChart assetTrendData={assetTrendData} />
-          <Card
-            className="mb-2 rounded-xl border-0 w-full"
-            style={{ maxWidth: "800px", margin: "0 auto" }}
-          />
+          <div className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 text-semibold text-gray-800" style={getSectionStyle(2)}>
+            {name}님을 위한 오늘의 코멘트예요
+          </div>
+          <AssetChart stocks={stocks} />
         </div>
         <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(4)}>
           <InfoTabs
@@ -376,13 +338,11 @@ export default function HomePage() {
             setTab={setTab}
             disclosureData={disclosureData
               .slice(0, 3)
-              .map((item) => {
-                return {
-                  id: item.id,
-                  title: item.disclosureTitle,
-                  date: getRelativeTime(item.disclosureDate),
-                };
-              })
+              .map((item) => ({
+                id: item.id,
+                title: item.disclosureTitle,
+                date: getRelativeTime(item.disclosureDate),
+              }))
             }
             earningCallData={earningCallData
               .slice(0, 3)
