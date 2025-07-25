@@ -44,8 +44,6 @@ export const DualSelector = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
 
-
-
   const transitions = useTransition(activeView, {
     from: { y: dragDirection.current * SELECTOR_HEIGHT, opacity: 0 },
     enter: { y: 0, opacity: 1 },
@@ -54,7 +52,6 @@ export const DualSelector = ({
   });
 
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
-    // 버튼 클릭 시 드래그 방지
     const target = e.target as HTMLElement;
     if (target.closest('button')) {
       return;
@@ -76,7 +73,7 @@ export const DualSelector = ({
     const deltaY = clientY - startY;
     
     if (Math.abs(deltaY) > 30) {
-      if (deltaY > 0) {
+      if (deltaY < 0) {
         // 아래로 드래그: 다음 뷰로
         if (onNextView) {
           onNextView();

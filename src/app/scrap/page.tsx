@@ -6,7 +6,7 @@ import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { TrebleSelector } from "@/src/components/scrap/TrebleSelector";
 import { ScrapGroupSelector } from "@/src/components/scrap/ScrapGroupSelector";
 import { SelectedDateDisplay } from "@/src/components/ui/SelectedDateDisplay";
-import { CardViewer } from "@/src/components/ui/CardViewer";
+import { ScrapCardViewer } from "@/src/components/scrap/ScrapCardViewer";
 import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
 import { ScrapGroup } from "@/src/types/ScrapGroup";
 import { preloadImage } from "@/src/lib/image-preloader";
@@ -20,6 +20,24 @@ import {
 } from "@/src/types/MemberStock";
 import { ApiResponse, UnifiedStockResponse } from "@/src/types/ApiResponse";
 import { ScrapGroupedResponseDto } from "@/src/types/ScrapGroup";
+
+// 그룹 상세 정보를 위한 새로운 타입
+interface GroupDetailResponseDto {
+  snapshotId: number;
+  snapshotCreatedAt: string;
+  personalizedComment: string;
+  stockCode: string;
+  stockName: string;
+  newsContent: string;
+  newsImage: string;
+  scrapGroupId: number;
+  scrapGroupName: string;
+  scrap: boolean;
+  scrapGroupedId?: number; // 그룹에서 삭제할 때 사용하는 ID
+}
+import { StockLogo } from "@/src/components/ui/StockLogo";
+import { AddGroupDialog } from "@/src/components/ui/AddGroupDialog";
+import { ScrapStockList } from "@/src/components/scrap/ScrapStockList";
 
 // 중복 로그인 리다이렉트 방지 ref
 let hasRedirectedToLogin = false;
@@ -47,8 +65,8 @@ async function fetchWithAuthCheck(
 }
 
 export default function ScrapPage() {
-  const [activeView, setActiveView] = useState<"date" | "stock" | "group">(
-    "date"
+  const [activeView, setActiveView] = useState<"date" | "stock" | "stocklist">(
+    "stocklist"
   );
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -63,10 +81,13 @@ export default function ScrapPage() {
   const [groups, setGroups] = useState<ScrapGroup[]>([]);
   const router = useRouter();
 
-  const allowedDates = useMemo(
-    () => Object.keys(snapshotsByDate).sort(),
-    [snapshotsByDate]
-  );
+  const [stockAllowedDates, setStockAllowedDates] = useState<string[]>([]);
+
+  const allowedDates = useMemo(() => {
+    const baseDates = Object.keys(snapshotsByDate).sort();
+    const combinedDates = [...new Set([...baseDates, ...stockAllowedDates])];
+    return combinedDates.sort();
+  }, [snapshotsByDate, stockAllowedDates]);
 
   const [portfolio, setPortfolio] = useState<
     { [stockCode: string]: UnifiedStockItem } | undefined
@@ -92,10 +113,52 @@ export default function ScrapPage() {
   const [currentGroupedSnapshotIndex, setCurrentGroupedSnapshotIndex] =
     useState(0);
 
+  // 그룹 상세 정보 관련 상태
+  const [groupDetailSnapshots, setGroupDetailSnapshots] = useState<GroupDetailResponseDto[]>([]);
+  const [isGroupDetailLoading, setIsGroupDetailLoading] = useState(false);
+  const [currentGroupDetailIndex, setCurrentGroupDetailIndex] = useState(0);
+
+  // 그룹 추가 관련 상태
+  const [isAddGroupDialogOpen, setIsAddGroupDialogOpen] = useState(false);
+  const [isAddingGroup, setIsAddingGroup] = useState(false);
+
+  // 종목 선택 상태 (그룹 선택과 별도로 관리)
+  const [selectedStockCode, setSelectedStockCode] = useState<string | null>(
+    null
+  );
+
+  // 종목별 스크랩을 선택된 날짜로 필터링
+  const filteredStockSnapshots = selectedStockSnapshots.filter(
+    (snapshot) => snapshot.snapshotCreatedAt.split("T")[0] === selectedDate
+  );
+
+  // 그룹 상세 정보에서 날짜별로 스냅샷 분류
+  const groupDetailSnapshotsByDate = useMemo(() => {
+    const snapshotsByDate: { [date: string]: GroupDetailResponseDto[] } = {};
+    groupDetailSnapshots.forEach((snapshot) => {
+      const date = snapshot.snapshotCreatedAt.split("T")[0];
+      if (!snapshotsByDate[date]) {
+        snapshotsByDate[date] = [];
+      }
+      snapshotsByDate[date].push(snapshot);
+    });
+    return snapshotsByDate;
+  }, [groupDetailSnapshots]);
+
+  // 그룹 상세 정보의 날짜 목록
+  const groupDetailAllowedDates = useMemo(() => {
+    return Object.keys(groupDetailSnapshotsByDate).sort();
+  }, [groupDetailSnapshotsByDate]);
+
+  // 현재 선택된 날짜의 그룹 상세 스냅샷
+  const currentGroupDetailSnapshots = useMemo(() => {
+    return groupDetailSnapshotsByDate[selectedDate] || [];
+  }, [groupDetailSnapshotsByDate, selectedDate]);
+
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
   const currentStockSnapshot =
-    selectedStockSnapshots[currentStockSnapshotIndex];
+    filteredStockSnapshots[currentStockSnapshotIndex];
   const currentGroupedSnapshot = groupedSnapshots[currentGroupedSnapshotIndex];
 
   const fetchAllPortfolio = async () => {
@@ -223,6 +286,11 @@ export default function ScrapPage() {
         setSelectedStockSnapshots(snapshots);
         setCurrentStockSnapshotIndex(0);
 
+        // 종목별 스크랩 데이터에서 날짜 추출
+        const stockDates = snapshots
+          .map((snapshot) => snapshot.snapshotCreatedAt.split("T")[0])
+          .sort();
+
         // 이미지 프리로드
         snapshots.forEach((snapshot) => {
           preloadImage(snapshot.newsImage);
@@ -230,12 +298,19 @@ export default function ScrapPage() {
             preloadImage(`/ticker-icon/${snapshot.stockCode}.png`);
           }
         });
+
+        // 종목별 스크랩 날짜를 stockAllowedDates에 추가
+        setStockAllowedDates(stockDates);
+        
+        return snapshots;
       } else {
         setSelectedStockSnapshots([]);
+        return [];
       }
     } catch (error) {
       console.error("Failed to fetch stock snapshots:", error);
       setSelectedStockSnapshots([]);
+      return [];
     } finally {
       setIsStockSnapshotsLoading(false);
     }
@@ -257,6 +332,9 @@ export default function ScrapPage() {
     // 종목별 스크랩 조회
     await fetchStockSnapshots(stockCode);
 
+    // 종목 선택 상태 업데이트 (그룹 선택은 유지)
+    setSelectedStockCode(stockCode);
+
     // activeView를 "stock"으로 변경하여 CardViewer가 표시되도록 함
     console.log("Setting activeView to stock");
     setActiveView("stock");
@@ -266,7 +344,7 @@ export default function ScrapPage() {
     setIsGroupedSnapshotsLoading(true);
     try {
       const response = await fetchWithAuthCheck(
-        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgroup/${groupId}`,
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgrouped/${groupId}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -290,6 +368,43 @@ export default function ScrapPage() {
     }
   };
 
+  // 그룹 상세 정보 가져오기
+  const fetchGroupDetail = async (groupId: number) => {
+    setIsGroupDetailLoading(true);
+    try {
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgrouped/detail/${groupId}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        },
+        router
+      );
+
+      if (response?.status && response.data) {
+        const snapshots: GroupDetailResponseDto[] = response.data;
+        setGroupDetailSnapshots(snapshots);
+        setCurrentGroupDetailIndex(0);
+
+        // 이미지 프리로드
+        snapshots.forEach((snapshot) => {
+          preloadImage(snapshot.newsImage);
+          if (snapshot.stockCode) {
+            preloadImage(`/ticker-icon/${snapshot.stockCode}.png`);
+          }
+        });
+      } else {
+        setGroupDetailSnapshots([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch group detail:", error);
+      setGroupDetailSnapshots([]);
+    } finally {
+      setIsGroupDetailLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchInitialData = async () => {
       console.log("=== Scrap Page Initial Load ===");
@@ -305,8 +420,8 @@ export default function ScrapPage() {
       // 페이지 접근 시 '전체'가 클릭 상태가 되도록 설정
       console.log("Setting selectedGroupId to null");
       setSelectedGroupId(null);
-      console.log("Setting activeView to date");
-      setActiveView("date");
+      console.log("Setting activeView to stocklist");
+      setActiveView("stocklist");
 
       setIsLoading(false);
       console.log("Initial data fetch completed");
@@ -315,82 +430,23 @@ export default function ScrapPage() {
     fetchInitialData();
   }, [router]);
 
-  const fetchScrapSnapshots = async (groupId: number | null, date?: string) => {
-    setIsLoading(true);
-    try {
-      let url = `${process.env.NEXT_PUBLIC_BACK_API_URL}/member-stock-snapshots/scraps`;
-      const params = new URLSearchParams();
-
-      if (groupId !== null) {
-        params.append("groupId", groupId.toString());
-      }
-      if (date) {
-        params.append("date", date);
-      }
-
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-
-      const data = await fetchWithAuthCheck(
-        url,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        },
-        router
-      );
-
-      if (data && data.status && data.data && Array.isArray(data.data)) {
-        const fetchedData: SnapshotCard[] = data.data;
-        fetchedData.forEach((snap) => {
-          preloadImage(snap.newsImage);
-          if (snap.stockCode) {
-            preloadImage(`/ticker-icon/${snap.stockCode}.png`);
-          }
-        });
-
-        if (date) {
-          setSnapshotsByDate((prev) => ({ ...prev, [date]: fetchedData }));
-        } else {
-          const byDate: { [date: string]: SnapshotCard[] } = {};
-          fetchedData.forEach((snap) => {
-            const date = snap.snapshotCreatedAt.split("T")[0];
-            if (!byDate[date]) byDate[date] = [];
-            byDate[date].push(snap);
-          });
-          setSnapshotsByDate(byDate);
-          const dates = Object.keys(byDate).sort();
-          if (dates.length > 0) {
-            setSelectedDate(dates[dates.length - 1]);
-            setCurrentSnapshotIndex(0);
-            setActiveView("date");
-          }
-        }
-      } else {
-        setSnapshotsByDate({});
-      }
-    } catch (error) {
-      console.error("Failed to fetch scrap snapshots:", error);
-      setSnapshotsByDate({});
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleGroupChange = async (groupId: number | null) => {
     console.log("=== handleGroupChange ===");
     console.log("groupId:", groupId);
     console.log("current selectedGroupId:", selectedGroupId);
     console.log("current activeView:", activeView);
 
+    // 종목 선택 해제
+    setSelectedStockCode(null);
+    setStockAllowedDates([]); // 종목별 날짜 초기화
+
     setSelectedGroupId(groupId);
 
     if (groupId !== null) {
-      // 특정 그룹이 선택된 경우 해당 그룹의 스크랩 조회
-      console.log("Fetching grouped snapshots for groupId:", groupId);
-      await fetchGroupedSnapshots(groupId);
+      // 특정 그룹이 선택된 경우 해당 그룹의 상세 정보 조회
+      console.log("Fetching group detail for groupId:", groupId);
+      await fetchGroupDetail(groupId);
+      setActiveView("stock");
     } else {
       // 전체가 선택된 경우 오늘 날짜 유지
       console.log("Setting today's date for '전체' selection");
@@ -399,28 +455,19 @@ export default function ScrapPage() {
       console.log("Clearing stock snapshots and grouped snapshots");
       setSelectedStockSnapshots([]);
       setGroupedSnapshots([]);
-      console.log("Setting activeView to date");
-      setActiveView("date");
+      setGroupDetailSnapshots([]);
+      console.log("Setting activeView to stocklist");
+      setActiveView("stocklist");
     }
   };
 
   const handleDateChange = async (date: string) => {
     if (date === selectedDate) return;
 
-    if (!snapshotsByDate[date]) {
-      await fetchScrapSnapshots(selectedGroupId, date);
-    }
-
-    const newSnapshots = snapshotsByDate[date] || [];
-    newSnapshots.forEach((snap) => {
-      preloadImage(snap.newsImage);
-      if (snap.stockCode) {
-        preloadImage(`/ticker-icon/${snap.stockCode}.png`);
-      }
-    });
-
     setSelectedDate(date);
     setCurrentSnapshotIndex(0);
+    setCurrentStockSnapshotIndex(0); // 종목 스크랩 인덱스도 초기화
+    setCurrentGroupDetailIndex(0); // 그룹 상세 정보 인덱스도 초기화
     setActiveView("stock");
   };
 
@@ -442,6 +489,37 @@ export default function ScrapPage() {
     }
   }, [activeView, currentSnapshots.length]);
 
+  // 종목별 스크랩 데이터가 로드되면 가장 최근 날짜로 이동
+  useEffect(() => {
+    if (selectedStockSnapshots.length > 0 && selectedStockCode) {
+      const dates = selectedStockSnapshots
+        .map((snapshot) => snapshot.snapshotCreatedAt.split("T")[0])
+        .sort();
+      
+      if (dates.length > 0) {
+        const mostRecentDate = dates[dates.length - 1]; // 가장 최근 날짜
+        console.log("Moving to most recent date:", mostRecentDate);
+        setSelectedDate(mostRecentDate);
+      }
+    }
+  }, [selectedStockSnapshots, selectedStockCode]);
+
+  // 그룹 상세 정보가 로드되면 가장 최근 날짜로 이동
+  useEffect(() => {
+    if (groupDetailSnapshots.length > 0 && selectedGroupId !== null) {
+      const dates = groupDetailSnapshots
+        .map((snapshot) => snapshot.snapshotCreatedAt.split("T")[0])
+        .sort();
+      
+      if (dates.length > 0) {
+        const mostRecentDate = dates[dates.length - 1]; // 가장 최근 날짜
+        console.log("Moving to most recent group detail date:", mostRecentDate);
+        setSelectedDate(mostRecentDate);
+        setCurrentGroupDetailIndex(0); // 인덱스도 초기화
+      }
+    }
+  }, [groupDetailSnapshots, selectedGroupId]);
+
   useEffect(() => {
     if (activeView === "date") {
       setCurrentSnapshotIndex(0);
@@ -458,36 +536,107 @@ export default function ScrapPage() {
     const nextDate =
       direction === "left" ? allowedDates[idx - 1] : allowedDates[idx + 1];
     if (!nextDate) return;
-    if (!snapshotsByDate[nextDate]) {
-      await fetchScrapSnapshots(selectedGroupId, nextDate);
-    }
     await handleDateChange(nextDate);
     setSelectedDate(nextDate);
-    setActiveView("date");
+    setActiveView("stocklist");
     setCurrentSnapshotIndex(0);
   };
 
-  const handleSwipe = async (direction: number) => {
-    const newIndex = currentSnapshotIndex + direction;
-    if (newIndex >= 0 && newIndex < currentSnapshots.length) {
-      setCurrentSnapshotIndex(newIndex);
-      if (activeView === "date") setActiveView("stock");
-    } else {
-      await handleStockEdge(direction < 0 ? "left" : "right");
+  const handleStockSnapshotIndexChange = (newIndex: number) => {
+    setCurrentStockSnapshotIndex(newIndex);
+  };
+
+  const handleGroupedSnapshotIndexChange = (newIndex: number) => {
+    setCurrentGroupedSnapshotIndex(newIndex);
+  };
+
+  const handleGroupDetailIndexChange = (newIndex: number) => {
+    setCurrentGroupDetailIndex(newIndex);
+  };
+
+  const handleGroupDetailDelete = async (snapshotId: number) => {
+    try {
+      // 해당 스냅샷의 scrapGroupedId 찾기
+      const snapshot = groupDetailSnapshots.find(s => s.snapshotId === snapshotId);
+      if (!snapshot || !snapshot.scrapGroupedId) {
+        console.error("scrapGroupedId not found for snapshotId:", snapshotId);
+        toast.error("삭제할 수 없습니다.");
+        return;
+      }
+
+      // 그룹에서 스크랩 삭제 API 호출
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgrouped/delete`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ scrapGroupedId: snapshot.scrapGroupedId }),
+        },
+        router
+      );
+
+      if (response.status) {
+        console.log("Group scrap deleted successfully");
+        toast.success("그룹에서 제거되었습니다.");
+        
+        // 삭제된 카드를 목록에서 제거
+        setGroupDetailSnapshots((prev) =>
+          prev.filter((snapshot) => snapshot.snapshotId !== snapshotId)
+        );
+        // 현재 인덱스 조정
+        setCurrentGroupDetailIndex((prev) => {
+          const newIndex = Math.max(0, prev - 1);
+          return newIndex;
+        });
+      } else {
+        console.error("Group scrap delete failed:", response.message);
+        toast.error(response.message || "그룹에서 제거에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to delete from group:", error);
+      toast.error("그룹에서 제거 중 오류가 발생했습니다.");
     }
   };
 
-  const handleStockSnapshotSwipe = (direction: number) => {
-    const newIndex = currentStockSnapshotIndex + direction;
-    if (newIndex >= 0 && newIndex < selectedStockSnapshots.length) {
-      setCurrentStockSnapshotIndex(newIndex);
+  const handleStockSnapshotDelete = (snapshotId: number) => {
+    // 삭제된 카드를 목록에서 제거
+    setSelectedStockSnapshots((prev) =>
+      prev.filter((snapshot) => snapshot.snapshotId !== snapshotId)
+    );
+    // 현재 인덱스 조정
+    setCurrentStockSnapshotIndex((prev) => {
+      const newIndex = Math.max(0, prev - 1);
+      return newIndex;
+    });
+  };
+
+  const handleStockSnapshotDateChange = (direction: "prev" | "next") => {
+    const currentDateIndex = allowedDates.indexOf(selectedDate);
+    if (direction === "prev" && currentDateIndex > 0) {
+      const prevDate = allowedDates[currentDateIndex - 1];
+      handleDateChange(prevDate);
+    } else if (
+      direction === "next" &&
+      currentDateIndex < allowedDates.length - 1
+    ) {
+      const nextDate = allowedDates[currentDateIndex + 1];
+      handleDateChange(nextDate);
     }
   };
 
-  const handleGroupedSnapshotSwipe = (direction: number) => {
-    const newIndex = currentGroupedSnapshotIndex + direction;
-    if (newIndex >= 0 && newIndex < groupedSnapshots.length) {
-      setCurrentGroupedSnapshotIndex(newIndex);
+  // 그룹 상세 정보용 날짜 변경 함수
+  const handleGroupDetailDateChange = (direction: "prev" | "next") => {
+    const currentDateIndex = groupDetailAllowedDates.indexOf(selectedDate);
+    if (direction === "prev" && currentDateIndex > 0) {
+      const prevDate = groupDetailAllowedDates[currentDateIndex - 1];
+      handleDateChange(prevDate);
+    } else if (
+      direction === "next" &&
+      currentDateIndex < groupDetailAllowedDates.length - 1
+    ) {
+      const nextDate = groupDetailAllowedDates[currentDateIndex + 1];
+      handleDateChange(nextDate);
     }
   };
 
@@ -521,9 +670,61 @@ export default function ScrapPage() {
     };
   };
 
+  // GroupDetailResponseDto를 SnapshotCard 형식으로 변환
+  const convertGroupDetailToSnapshotCard = (
+    groupDetail: GroupDetailResponseDto
+  ): SnapshotCard => {
+    return {
+      snapshotId: groupDetail.snapshotId,
+      snapshotCreatedAt: groupDetail.snapshotCreatedAt,
+      personalizedComment: groupDetail.personalizedComment,
+      stockCode: groupDetail.stockCode,
+      stockName: groupDetail.stockName,
+      newsContent: groupDetail.newsContent,
+      newsImage: groupDetail.newsImage,
+    };
+  };
+
   const handleAddGroup = () => {
-    // 그룹 추가 로직 (나중에 구현)
-    toast.info("그룹 추가 기능은 추후 구현 예정입니다.");
+    console.log("=== handleAddGroup Debug ===");
+    console.log("handleAddGroup called");
+    setIsAddGroupDialogOpen(true);
+  };
+
+  const handleCreateGroup = async (groupName: string) => {
+    console.log("=== handleCreateGroup Debug ===");
+    console.log("Creating group with name:", groupName);
+
+    setIsAddingGroup(true);
+    try {
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgroup/push`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ scrapGroupName: groupName }),
+        },
+        router
+      );
+
+      console.log("Create group response:", response);
+
+      if (response.status) {
+        toast.success("그룹이 성공적으로 추가되었습니다.");
+        setIsAddGroupDialogOpen(false);
+
+        // 그룹 목록 새로고침
+        await fetchGroups();
+      } else {
+        toast.error(response.message || "그룹 추가에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to create group:", error);
+      toast.error("그룹 추가 중 오류가 발생했습니다.");
+    } finally {
+      setIsAddingGroup(false);
+    }
   };
 
   if (isLoading || !portfolio) {
@@ -650,153 +851,30 @@ export default function ScrapPage() {
           onAddGroup={handleAddGroup}
           unifiedStocks={unifiedStocks}
           onStockClick={handleStockClick}
+          selectedStockCode={selectedStockCode}
         />
       </div>
 
       <div className="relative flex-1">
-        <main className="absolute inset-0 top-[5px] flex items-center justify-center">
+        <main 
+          className={`absolute inset-0 flex items-center justify-center ${
+            selectedGroupId === null && activeView === "stocklist" && unifiedStocks && unifiedStocks?.stocks 
+              ? "top-0" 
+              : "top-[5px]"
+          }`}
+        >
           {/* 보유 종목 리스트 표시 */}
-          {(() => {
-            console.log("=== Rendering stock list condition ===");
-            console.log("selectedGroupId:", selectedGroupId);
-            console.log("activeView:", activeView);
-            console.log(
-              "selectedStockSnapshots.length:",
-              selectedStockSnapshots.length
-            );
-            console.log("groupedSnapshots.length:", groupedSnapshots.length);
-            console.log("unifiedStocks:", unifiedStocks);
-            console.log("unifiedStocks.stocks:", unifiedStocks?.stocks);
-            console.log(
-              "Should show stock list:",
-              selectedGroupId === null &&
-                activeView === "date" &&
-                unifiedStocks &&
-                unifiedStocks?.stocks
-            );
-            return (
-              selectedGroupId === null &&
-              activeView === "date" &&
-              unifiedStocks &&
-              unifiedStocks?.stocks
-            );
-          })() && (
-            <div className="w-full h-[80%] overflow-y-auto px-4 py-2">
-              <div className="mb-4">
-                {/* <h2 className="text-lg font-semibold text-gray-800 mb-2">보유 종목</h2>
-              <div className="text-sm text-gray-600 mb-4">
-                총 {unifiedStocks.summary?.total_stock_count || 0}개 종목
-              </div> */}
-              </div>
-              <div className="space-y-3">
-                {unifiedStocks?.stocks?.map((stock) => (
-                  <div
-                    key={stock.pdno}
-                    className="bg-white rounded-lg p-4 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleStockClick(stock.pdno)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">
-                            {stock.pdno.slice(0, 2)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-semibold text-sm truncate">
-                              {stock.prdt_name}
-                            </h3>
-                            {/* <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {stock.stock_type === "REGULAR" ? "일반" : "소수점"}
-                          </span> */}
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {stock.pdno} • {stock.exchange}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-sm font-medium">
-                          {parseFloat(stock.current_price).toLocaleString()}
-                        </div>
-                        <div
-                          className={`text-xs ${
-                            parseFloat(stock.profit_loss_rate) > 0
-                              ? "text-red-500"
-                              : parseFloat(stock.profit_loss_rate) < 0
-                              ? "text-blue-500"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {parseFloat(stock.profit_loss_rate) > 0 ? "+" : ""}
-                          {parseFloat(stock.profit_loss_rate).toFixed(2)}%
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                      <div>
-                        <div className="text-gray-400">보유수량</div>
-                        <div className="font-medium">
-                          {parseFloat(stock.quantity).toLocaleString()}주
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">평균단가</div>
-                        <div className="font-medium">
-                          {parseFloat(stock.avg_price).toLocaleString()}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">평가금액</div>
-                        <div className="font-medium">
-                          {parseFloat(stock.evaluation_amount).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 좌우 스와이프 버튼 - 항상 표시 */}
-          {
+          {selectedGroupId === null &&
+          activeView === "stocklist" &&
+          unifiedStocks &&
+          unifiedStocks?.stocks ? (
+            <ScrapStockList
+              unifiedStocks={unifiedStocks}
+              onStockClick={handleStockClick}
+              selectedStockCode={selectedStockCode}
+            />
+          ) : (
             <>
-              <button
-                onClick={async () => await handleSwipe(-1)}
-                className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
-                aria-label="이전 카드"
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-                disabled={
-                  isLoading ||
-                  isStockSnapshotsLoading ||
-                  isGroupedSnapshotsLoading
-                }
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  className="text-gray-600"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
               {isLoading ? (
                 <div className="h-full flex items-center justify-center">
                   <p>Loading...</p>
@@ -809,99 +887,99 @@ export default function ScrapPage() {
                 <div className="h-full flex items-center justify-center">
                   <p>그룹 스크랩 로딩 중...</p>
                 </div>
-              ) : selectedStockSnapshots.length > 0 ? (
-                <CardViewer
-                  cards={selectedStockSnapshots.map(convertToSnapshotCard)}
-                  currentIndex={currentStockSnapshotIndex}
-                  onSwipe={handleStockSnapshotSwipe}
+              ) : isGroupDetailLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>그룹 상세 정보 로딩 중...</p>
+                </div>
+              ) : filteredStockSnapshots.length > 0 ? (
+                <ScrapCardViewer
+                  cards={filteredStockSnapshots.map(convertToSnapshotCard)}
                   onScrap={handleScrapClick}
                   onUnscrap={handleUnscrapClick}
+                  onDateChange={handleStockSnapshotDateChange}
+                  onIndexChange={handleStockSnapshotIndexChange}
+                  onCardDelete={handleStockSnapshotDelete}
+                />
+              ) : groupDetailSnapshots.length > 0 ? (
+                <ScrapCardViewer
+                  cards={currentGroupDetailSnapshots.map(convertGroupDetailToSnapshotCard)}
+                  onScrap={handleScrapClick}
+                  onUnscrap={handleGroupDetailDelete}
+                  onDateChange={handleGroupDetailDateChange}
+                  onIndexChange={handleGroupDetailIndexChange}
+                  onCardDelete={handleGroupDetailDelete}
+                  isGroupDetail={true}
                 />
               ) : groupedSnapshots.length > 0 ? (
-                <CardViewer
+                <ScrapCardViewer
                   cards={groupedSnapshots.map(convertGroupedToSnapshotCard)}
-                  currentIndex={currentGroupedSnapshotIndex}
-                  onSwipe={handleGroupedSnapshotSwipe}
                   onScrap={handleScrapClick}
                   onUnscrap={handleUnscrapClick}
+                  onIndexChange={handleGroupedSnapshotIndexChange}
                 />
               ) : currentSnapshot ? (
-                <CardViewer
+                <ScrapCardViewer
                   cards={currentSnapshots}
-                  currentIndex={currentSnapshotIndex}
-                  onSwipe={handleSwipe}
                   onScrap={handleScrapClick}
                   onUnscrap={handleUnscrapClick}
+                  onIndexChange={handleGroupedSnapshotIndexChange}
                 />
+              ) : activeView === "stock" &&
+                selectedStockCode &&
+                filteredStockSnapshots.length === 0 &&
+                !isStockSnapshotsLoading &&
+                !isLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>해당 날짜의 스크랩이 없습니다.</p>
+                </div>
+              ) : selectedGroupId !== null &&
+                groupDetailSnapshots.length > 0 &&
+                currentGroupDetailSnapshots.length === 0 &&
+                !isGroupDetailLoading &&
+                !isLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>해당 날짜의 그룹 스크랩이 없습니다.</p>
+                </div>
+              ) : selectedGroupId !== null &&
+                !isGroupDetailLoading &&
+                !isGroupedSnapshotsLoading &&
+                !isLoading &&
+                groupDetailSnapshots.length === 0 &&
+                groupedSnapshots.length === 0 ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>해당 그룹의 스크랩이 없습니다.</p>
+                </div>
+              ) : activeView === "stock" &&
+                !currentSnapshot &&
+                !isLoading &&
+                selectedStockSnapshots.length === 0 ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>스크랩이 없습니다.</p>
+                </div>
+              ) : (!unifiedStocks ||
+                !unifiedStocks.stocks ||
+                unifiedStocks.stocks.length === 0) &&
+                !isLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <p>보유 종목이 없습니다.</p>
+                </div>
               ) : null}
-              <button
-                onClick={async () => await handleSwipe(1)}
-                className="p-1 rounded-full hover:bg-gray-200 transition-colors z-20 mx-2"
-                aria-label="다음 카드"
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-                disabled={
-                  isLoading ||
-                  isStockSnapshotsLoading ||
-                  isGroupedSnapshotsLoading
-                }
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  className="text-gray-600"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
             </>
-          }
-          {activeView === "stock" &&
-            !currentSnapshot &&
-            !isLoading &&
-            selectedStockSnapshots.length === 0 && (
-              <div className="h-full flex items-center justify-center">
-                <p>스크랩이 없습니다.</p>
-              </div>
-            )}
-          {selectedStockSnapshots.length === 0 &&
-            !isStockSnapshotsLoading &&
-            !isLoading &&
-            selectedGroupId !== null && (
-              <div className="h-full flex items-center justify-center">
-                <p>해당 종목의 스크랩이 없습니다.</p>
-              </div>
-            )}
-          {groupedSnapshots.length === 0 &&
-            !isGroupedSnapshotsLoading &&
-            !isLoading &&
-            selectedGroupId !== null && (
-              <div className="h-full flex items-center justify-center">
-                <p>해당 그룹의 스크랩이 없습니다.</p>
-              </div>
-            )}
-          {(!unifiedStocks ||
-            !unifiedStocks.stocks ||
-            unifiedStocks.stocks.length === 0) &&
-            !isLoading && (
-              <div className="h-full flex items-center justify-center">
-                <p>보유 종목이 없습니다.</p>
-              </div>
-            )}
+          )}
         </main>
-        <div className="relative z-20">
+        {/* TrebleSelector - 보유 종목이 보일 때는 숨김 */}
+        <div
+          className="relative z-40"
+          style={{
+            display:
+              selectedGroupId === null &&
+              activeView === "stocklist" &&
+              unifiedStocks &&
+              unifiedStocks?.stocks
+                ? "none"
+                : "block",
+          }}
+        >
           <TrebleSelector
             activeView={activeView as "date" | "stock"}
             onViewChange={setActiveView}
@@ -911,19 +989,45 @@ export default function ScrapPage() {
             onAddGroup={handleAddGroup}
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
-            snapshotsForDate={currentSnapshots}
-            selectedSnapshotId={currentSnapshot?.snapshotId}
+            snapshotsForDate={
+              groupDetailSnapshots.length > 0
+                ? currentGroupDetailSnapshots.map(convertGroupDetailToSnapshotCard)
+                : currentSnapshots
+            }
+            selectedSnapshotId={
+              groupDetailSnapshots.length > 0
+                ? currentGroupDetailSnapshots[currentGroupDetailIndex]?.snapshotId
+                : currentSnapshot?.snapshotId
+            }
             onStockChange={handleStockChange}
-            allowedDates={allowedDates}
+            allowedDates={
+              groupDetailSnapshots.length > 0
+                ? groupDetailAllowedDates
+                : allowedDates
+            }
             onStockEdge={handleStockEdge}
             portfolio={portfolio}
             onScrap={handleScrapClick}
             onStockClick={handleStockClick}
             unifiedStocks={unifiedStocks}
+            hasStockSnapshots={
+              groupDetailSnapshots.length > 0
+                ? groupDetailSnapshots.length > 0
+                : selectedStockSnapshots.length > 0
+            }
+            selectedStockCode={selectedStockCode}
           />
         </div>
       </div>
       <BottomNavigation />
+
+      {/* 그룹 추가 다이얼로그 */}
+      <AddGroupDialog
+        isOpen={isAddGroupDialogOpen}
+        onClose={() => setIsAddGroupDialogOpen(false)}
+        onSubmit={handleCreateGroup}
+        isLoading={isAddingGroup}
+      />
     </div>
   );
 }

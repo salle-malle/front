@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Plus } from "lucide-react";
 
 import { ScrapGroup } from "@/src/types/ScrapGroup";
@@ -13,20 +13,18 @@ interface ScrapGroupSelectorProps {
   onAddGroup?: () => void;
   unifiedStocks?: UnifiedStockResponse | null;
   onStockClick?: (stockCode: string) => void;
+  selectedStockCode?: string | null; // 선택된 종목 코드 추가
 }
 
-export const ScrapGroupSelector = ({
+export const ScrapGroupSelector = memo(({
   groups,
   selectedGroupId,
   onGroupSelect,
   onAddGroup,
   unifiedStocks,
   onStockClick,
+  selectedStockCode,
 }: ScrapGroupSelectorProps) => {
-  console.log("ScrapGroupSelector unifiedStocks:", unifiedStocks);
-  console.log("ScrapGroupSelector selectedGroupId:", selectedGroupId);
-  console.log("ScrapGroupSelector groups:", groups);
-  
   return (
     <div className="flex items-center space-x-2 h-full rounded-xl select-none">
       {/* <div className="flex-1 bg-white p-1.5 rounded-xl shadow-sm"> */}
@@ -35,7 +33,7 @@ export const ScrapGroupSelector = ({
           <button
             onClick={() => onGroupSelect(null)}
             className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${
-              selectedGroupId === null
+              selectedGroupId === null || selectedStockCode !== null
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
@@ -71,4 +69,4 @@ export const ScrapGroupSelector = ({
       {/* </div> */}
     </div>
   );
-};
+});

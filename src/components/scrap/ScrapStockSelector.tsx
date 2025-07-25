@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
+import { StockLogo } from "@/src/components/ui/StockLogo";
 import Image from "next/image";
 
 interface ScrapStockSelectorProps {
@@ -11,6 +12,8 @@ interface ScrapStockSelectorProps {
   onStockSelect: (snapshotId: number) => void;
   onEdge?: (direction: "left" | "right") => void;
   portfolio?: { [pdno: string]: UnifiedStockItem };
+  selectedStockCode?: string | null; // 선택된 종목 코드 추가
+  selectedStockName?: string | null; // 선택된 종목 이름 추가
 }
 
 export const ScrapStockSelector = ({
@@ -19,6 +22,8 @@ export const ScrapStockSelector = ({
   onStockSelect,
   onEdge,
   portfolio,
+  selectedStockCode = null, // 기본값 추가
+  selectedStockName = null, // 기본값 추가
 }: ScrapStockSelectorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
@@ -58,14 +63,76 @@ export const ScrapStockSelector = ({
     onStockSelect(snapshots[newIndex].snapshotId);
   };
 
-  if (!snapshots || snapshots.length === 0) {
+  // if (!snapshots || snapshots.length === 0) {
+  //   return (
+  //     <div className="bg-gray-100 p-2 flex items-center justify-center h-full rounded-xl shadow-sm">
+  //       <p className="text-sm text-gray-500">해당 날짜의 스크랩이 없습니다.</p>
+  //     </div>
+  //   );
+  // }
+
+  // 종목이 선택된 경우 해당 종목의 정보를 직접 표시
+  if (selectedStockCode && selectedStockName) {
+    const stockInfo = portfolio && selectedStockCode
+      ? portfolio[selectedStockCode.trim().toString()]
+      : undefined;
+
+    const evaluationAmount = stockInfo?.evaluation_amount || "---";
+    const profitLossAmount = stockInfo?.profit_loss_amount || "---";
+    const rateStr = stockInfo?.profit_loss_rate;
+    const profitLossRate =
+      rateStr && !isNaN(+rateStr) ? Math.floor(+rateStr * 100) / 100 : "---";
+
+    const getProfitColor = (value: string) => {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue) || numValue === 0) return "text-gray-500";
+      return numValue > 0 ? "text-red-600" : "text-blue-600";
+    };
+    const profitColor = getProfitColor(profitLossAmount);
+
     return (
-      <div className="bg-gray-100 p-2 flex items-center justify-center h-full rounded-xl shadow-sm">
-        <p className="text-sm text-gray-500">해당 날짜의 스크랩이 없습니다.</p>
+      <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm select-none">
+        <div className="flex-1 bg-white p-2.5 rounded-xl shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 relative flex-shrink-0">
+              {selectedStockCode ? (
+                <StockLogo
+                  stockId={selectedStockCode}
+                  stockName={selectedStockName}
+                  size={36}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">
+                  {selectedStockName?.charAt(0) || "?"}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 text-left overflow-hidden">
+              <p className="font-bold text-base truncate">
+                {selectedStockName || "Unknown Stock"}
+              </p>
+              <p className="text-sm font-semibold text-gray-800 truncate">
+                {evaluationAmount}
+              </p>
+            </div>
+            <div className="text-right">
+              {/* 손익금액 표시 */}
+              <p
+                className={`font-semibold text-base whitespace-nowrap ${profitColor}`}
+              >
+                {profitLossAmount}
+              </p>
+              {/* 손익률 표시 */}
+              <p className={`text-sm ${profitColor}`}>({profitLossRate}%)</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // 기존 로직: 스냅샷 기반 표시
   const currentSnapshot = snapshots[currentIndex];
   if (!currentSnapshot) return null;
 
@@ -99,29 +166,26 @@ export const ScrapStockSelector = ({
       <div className="flex-1 bg-white p-2.5 rounded-xl shadow-sm">
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 relative flex-shrink-0">
-            {!logoError && currentSnapshot.stockCode ? (
-              <Image
-                src={`/ticker-icon/${currentSnapshot.stockCode}.png`}
-                alt={`${currentSnapshot.stockName} logo`}
-                fill
-                style={{ objectFit: "contain" }}
-                onError={() => setLogoError(true)}
+            {currentSnapshot.stockCode ? (
+              <StockLogo
+                stockId={currentSnapshot.stockCode}
+                stockName={currentSnapshot.stockName || currentSnapshot.stockCode}
+                size={36}
               />
             ) : (
               <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">
-                {/* {currentSnapshot.stockName.charAt(0)} */}
+                {currentSnapshot.stockName?.charAt(0) || "?"}
               </div>
             )}
           </div>
 
           <div className="flex-1 text-left overflow-hidden">
             <p className="font-bold text-base truncate">
-              {currentSnapshot.stockName}
+              {currentSnapshot.stockName || "Unknown Stock"}
             </p>
             <p className="text-sm font-semibold text-gray-800 truncate">
               {evaluationAmount}
             </p>
-            <p className="text-xs text-gray-500 truncate"></p>
           </div>
           <div className="text-right">
             {/* 손익금액 표시 */}
