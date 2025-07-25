@@ -221,8 +221,7 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
-            className="h-8 w-8 p-0"
-          >
+            className="h-8 w-8 p-0">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </CardTitle>
@@ -252,14 +251,13 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
           newsData.map((news) => (
             <div
               key={news.id}
-              className="border-b border-gray-100 last:border-b-0 pb-4 last:pb-0"
-            >
+              className="border-b border-gray-100 last:border-b-0 pb-4 last:pb-0">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 pr-2">
                   <h4 className="font-medium text-gray-900 text-sm leading-tight mb-1">
                     {news.newsTitle}
                   </h4>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-2">
+                  <p className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-3">
                     {news.newsContent}
                   </p>
                   {news.newsImage && (
@@ -289,8 +287,7 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
                   href={news.newsUri}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-800"
-                >
+                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
                   <span>읽기</span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
@@ -299,13 +296,13 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
           ))
         )}
 
-        {newsData.length > 0 && (
+        {/* {newsData.length > 0 && (
           <div className="pt-2 text-center">
             <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
               더 많은 뉴스 보기
             </button>
           </div>
-        )}
+        )} */}
       </CardContent>
     </Card>
   );
