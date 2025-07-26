@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
@@ -31,17 +31,14 @@ export type NewsListResponse = { news: NewsItem[] };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
 export type DisclosureListResponse = { data: DisclosureItem[] };
 export type MemberResponse = { memberName: string; memberNickname: string };
-export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
+export type EarningCallListResponse = { earningCalls: EarningCallItem[] };
 
-// 상대 시간 변환 함수
 function getRelativeTime(dateString: string) {
   return dayjs(dateString).fromNow();
 }
 
-// 로그인 리다이렉트 중복 방지 변수
 let hasRedirectedToLogin = false;
 
-// 인증 체크 fetch 함수
 async function fetchWithAuthCheck<T>(
   input: RequestInfo,
   init: RequestInit = {},
@@ -66,7 +63,6 @@ async function fetchWithAuthCheck<T>(
   return jsonResponse;
 }
 
-// API 호출 함수들
 const fetchMember = async (router: ReturnType<typeof useRouter>): Promise<MemberResponse> => {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/member/info`,
@@ -110,7 +106,8 @@ export async function fetchStockList(router: ReturnType<typeof useRouter>): Prom
   const companyLogos = jsonResponse.data?.companyLogos || {};
   const summary = jsonResponse.data?.summary || undefined;
 
-  const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
+  // 여기서 stocks는 전체를 반환
+  const stocks: StockItem[] = stocksRaw.map((item: any) => ({
     ticker: item.pdno,
     name: item.prdt_name,
     quantity: item.quantity,
@@ -144,6 +141,7 @@ const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promis
   return jsonResponse;
 };
 
+// fetchEarningCallList 함수 반환값을 earningCalls로 맞춤
 export async function fetchEarningCallList(router: ReturnType<typeof useRouter>): Promise<EarningCallListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`,
@@ -153,23 +151,22 @@ export async function fetchEarningCallList(router: ReturnType<typeof useRouter>)
     },
     router
   );
-  if (jsonResponse.code !== "EARNING-014") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
 
+  if (jsonResponse.code !== "EARNING-004") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
   const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
     earningCallId: item.id,
     ticker: item.stockId,
     date: item.earningCallDate,
-    name: item.stockName
+    name: item.ovrsItemName
   }));
-
-  return {
-    data: {
-      earningCalls: mappedData
-    }
-  };
+  return { earningCalls: mappedData };
 }
 
-// 티커별 로고 생성 함수
+const BLUE_MAIN = "#5B9DF9";
+const BLUE_GRADIENT_FROM = "#5B9DF9";
+const BLUE_GRADIENT_TO = "#B3D8FD";
+const BLUE_LINE = "#3B82F6";
+
 function getCompanyLogosByTicker(stocks: StockItem[]): Record<string, string> {
   const logos: Record<string, string> = {};
   stocks.forEach((stock) => {
@@ -178,13 +175,11 @@ function getCompanyLogosByTicker(stocks: StockItem[]): Record<string, string> {
   return logos;
 }
 
-// 초기값 정의
 const initialNews: NewsItem[] = [];
 const initialStocks: StockItem[] = [];
 const initialDisclosures: DisclosureItem[] = [];
 const initialEarningCalls: EarningCallItem[] = [];
 
-// 섹션별 staggered mount 효과
 function useStaggeredMount(count: number, delay: number = 60) {
   const [mountedIndexes, setMountedIndexes] = useState<number[]>([]);
   useEffect(() => {
@@ -228,7 +223,6 @@ export default function HomePage() {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
-    // 로그인 리다이렉트 중복 방지 초기화
     hasRedirectedToLogin = false;
 
     fetchNewsList(router)
@@ -257,7 +251,7 @@ export default function HomePage() {
 
     fetchEarningCallList(router)
       .then((res) => {
-        setEarningCallData(Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []);
+        setEarningCallData(Array.isArray(res.earningCalls) ? res.earningCalls : []);
       })
       .catch(() => {
         setEarningCallData([]);
@@ -280,7 +274,6 @@ export default function HomePage() {
     };
   }, [newsIndex, newsItems.length]);
 
-  // 슬라이드 핸들러
   const handleSlide = (dir: "up" | "down" | "left" | "right") => {
     if (newsItems.length === 0) return;
     setIsAnimating(true);
@@ -298,7 +291,6 @@ export default function HomePage() {
     }, 450);
   };
 
-  // 섹션 스타일 반환
   const getSectionStyle = (idx: number) => ({
     opacity: mountedIndexes.includes(idx) ? 1 : 0,
     transform: mountedIndexes.includes(idx)
@@ -307,6 +299,18 @@ export default function HomePage() {
     transition: "all 0.7s cubic-bezier(0.19, 1, 0.22, 1)",
     willChange: "opacity, transform",
   });
+
+  const stocksForStockList = stocks.slice(0, 6);
+
+  const assetChartStocks = useMemo(() => {
+    if (!stocks || !Array.isArray(stocks)) return [];
+    return stocks.filter(
+      (item) =>
+        item &&
+        typeof item.ticker !== "undefined" &&
+        typeof item.name === "string"
+    );
+  }, [stocks]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -324,13 +328,13 @@ export default function HomePage() {
           <AssetSummary assetAmount={assetAmount} />
         </div>
         <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(2)}>
-          <StockList stocks={stocks} companyLogos={logos} />
+          <StockList stocks={stocksForStockList} companyLogos={logos} />
         </div>
         <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(3)}>
-          <div className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 text-semibold text-gray-800" style={getSectionStyle(2)}>
+          <div className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 font-medium text-gray-800" style={getSectionStyle(2)}>
             {name}님을 위한 오늘의 코멘트예요
           </div>
-          <AssetChart stocks={stocks} />
+          <AssetChart />
         </div>
         <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(4)}>
           <InfoTabs

@@ -69,9 +69,31 @@ export default function InfoTabs({
                   onClick={() => router.push(getDetailUrl(item))}
                   style={{ userSelect: "none" }}
                 >
-                  <div className="flex flex-col">
-                    <span className="font-medium text-[15px] truncate">{item.title}</span>
-                    <span className="text-[12px] text-gray-400">{item.date}</span>
+                  <div className="flex flex-row items-center w-full">
+                    <span
+                      className="font-medium text-[15px] truncate"
+                      style={{
+                        flex: "0 0 75%",
+                        minWidth: 0,
+                        maxWidth: "75%",
+                        textAlign: "left",
+                      }}
+                    >
+                      {item.title}
+                    </span>
+                    <span
+                      className="text-[12px] text-gray-400"
+                      style={{
+                        flex: "0 0 25%",
+                        minWidth: 0,
+                        maxWidth: "25%",
+                        textAlign: "right",
+                        marginLeft: "auto",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {item.date}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -90,4 +112,3 @@ export default function InfoTabs({
   );
 }
 
-// 배열로 받는 게 더 확장성 있고, 여러 개의 데이터를 보여줄 때도 유리합니다.

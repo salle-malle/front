@@ -1,53 +1,64 @@
 import { Card, CardContent } from "@/src/components/ui/card";
-import dynamic from "next/dynamic";
-import { StockItem } from "@/src/app/home/page";
+import { StockItem, fetchStockList } from "@/src/app/home/page";
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
-const ApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
-
-interface AssetChartProps {
-  stocks: StockItem[];
-}
-
-const CHART_GRADIENT_COLORS = [
-  { from: "#2563eb", to: "#60a5fa" },
-  { from: "#3b82f6", to: "#93c5fd" },
-  { from: "#1e40af", to: "#38bdf8" },
-  { from: "#0ea5e9", to: "#bae6fd" },
-  { from: "#60a5fa", to: "#dbeafe" },
-  { from: "#2563eb", to: "#60a5fa" },
-  { from: "#3b82f6", to: "#93c5fd" }
+const COLORS = [
+  "#A7C7E7", 
+  "#B5D0EB",
+  "#CFE2F3",
+  "#D6EAF8", 
+  "#B3E0FF", 
+  "#B6D4FA", 
+  "#7DA7D9",
+  "#5B8DB8", 
+  "#3B6FA1",
+  "#3498FF",
+  "#0074D9", 
+  "#1E90FF", 
+  "#0099FF",
 ];
-
-const CHART_SHADOW = {
-  enabled: true,
-  top: 4,
-  left: 0,
-  blur: 12,
-  color: "#1e293b",
-  opacity: 0.25
-};
 
 const fetchTodayComment = async (): Promise<string> => {
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_BACK_API_URL}/total-summary/today-summary`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      }
+      { method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include" }
     );
     const jsonResponse = await response.json();
     return jsonResponse?.data?.totalSummary ?? "";
-  } catch (e) {
+  } catch {
     return "";
   }
 };
 
-const useSummaryString = () => {
-  const [summary, setSummary] = useState<string>("");
+const useStocks = () => {
+  const [stocks, setStocks] = useState<StockItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchStockList(router)
+      .then((res) => {
+        if (mounted) setStocks(res.stocks ?? []);
+      })
+      .catch(() => {
+        if (mounted) setStocks([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [router]);
+
+  return { stocks, loading };
+};
+
+const useSummaryString = () => {
+  const [summary, setSummary] = useState("");
   useEffect(() => {
     let mounted = true;
     fetchTodayComment().then((result) => {
@@ -55,154 +66,40 @@ const useSummaryString = () => {
     });
     return () => { mounted = false; };
   }, []);
-
   return summary;
 };
 
 const useFilteredStocks = (stocks: StockItem[]) => {
   return useMemo(() => {
-    const stockAmounts = stocks.map(stock => stock.currentPrice * stock.quantity);
-    const filteredStocks = stocks.filter((_, idx) => stockAmounts[idx] > 0);
-    const filteredAmounts = stockAmounts.filter(amount => amount > 0);
+    if (!stocks || !Array.isArray(stocks)) return { filteredStocks: [], filteredAmounts: [] };
+
+    const filteredStocks = stocks
+      .map(stock => {
+        const quantity = parseFloat(stock.quantity as unknown as string) || 0;
+        const currentPrice = parseFloat(stock.currentPrice as any) || 0;
+        const amount = parseFloat((quantity * currentPrice).toFixed(2)); // 소숫점 둘째자리까지 반영
+        return { ...stock, quantity, amount };
+      })
+      .filter(stock => stock.amount > 0);
+
+    const filteredAmounts = filteredStocks.map(stock => stock.amount);
     return { filteredStocks, filteredAmounts };
   }, [stocks]);
 };
 
-const getChartOptions = (
-  labels: string[],
-  filteredAmounts: number[]
-) => {
-  const fill = {
-    type: "gradient",
-    gradient: {
-      shade: "light",
-      type: "vertical",
-      shadeIntensity: 0.95,
-      gradientToColors: filteredAmounts.map(
-        (_, idx) => CHART_GRADIENT_COLORS[idx % CHART_GRADIENT_COLORS.length].to
-      ),
-      inverseColors: false,
-      opacityFrom: 1,
-      opacityTo: 0.7,
-      stops: [0, 60, 100]
-    }
-  };
-
-  return {
-    chart: {
-      type: "donut",
-      toolbar: { show: false },
-      height: "100%",
-      width: "100%",
-      background: "transparent",
-      dropShadow: CHART_SHADOW
-    },
-    legend: {
-      show: false
-    },
-    dataLabels: { enabled: false },
-    tooltip: {
-      y: {
-        formatter: (val: number) => `${val.toLocaleString()}원`
-      }
-    },
-    colors: filteredAmounts.map(
-      (_, idx) => CHART_GRADIENT_COLORS[idx % CHART_GRADIENT_COLORS.length].from
-    ),
-    fill,
-    stroke: { width: 1, colors: ["#e3e8f0"] },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "68%",
-          labels: { show: false }
-        }
-      }
-    }
-  };
-};
-
-const CHART_MIN_HEIGHT = "80px";
-const CHART_MAX_HEIGHT = "140px";
-
-const ChartSection = React.memo(
-  ({
-    filteredAmounts,
-    options
-  }: {
-    filteredAmounts: number[];
-    options: any;
-  }) => {
-    if (filteredAmounts.length === 0) {
-      return (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            minHeight: CHART_MIN_HEIGHT,
-            maxHeight: CHART_MAX_HEIGHT,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#888",
-            fontSize: "16px",
-            zIndex: 2,
-            position: "relative",
-          }}
-        >
-          보유한 주식이 없습니다.
-        </div>
-      );
-    }
-    return (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          minHeight: CHART_MIN_HEIGHT,
-          maxHeight: CHART_MAX_HEIGHT,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-        }}
-      >
-        <ApexChart
-          type="donut"
-          width="100%"
-          height="100%"
-          series={filteredAmounts}
-          options={options}
-          style={{
-            width: "100%",
-            height: "100%",
-            minHeight: CHART_MIN_HEIGHT,
-            maxHeight: CHART_MAX_HEIGHT,
-            display: "block",
-            background: "transparent",
-          }}
-        />
-      </div>
-    );
-  }
-);
-
-export default function AssetChart({ stocks }: AssetChartProps) {
+export default function AssetChart() {
+  const { stocks, loading } = useStocks();
   const summaryString = useSummaryString();
   const { filteredStocks, filteredAmounts } = useFilteredStocks(stocks);
 
-  const labels = useMemo(
-    () => filteredStocks.map(stock => stock.name),
-    [filteredStocks]
-  );
-
-  const options = useMemo(
-    () => getChartOptions(labels, filteredAmounts),
-    [labels, filteredAmounts]
-  );
-
-  // flex-row로 항상 양 옆 50:50 배치, 모바일에서도 동일하게
-  // 좌: 그래프, 우: 오늘의 요약
+  // Recharts용 데이터 포맷팅
+  const chartData = useMemo(() => {
+    return filteredStocks.map((stock, idx) => ({
+      name: stock.name,
+      value: stock.amount,
+      color: COLORS[idx % COLORS.length],
+    }));
+  }, [filteredStocks]);
 
   return (
     <Card
@@ -212,59 +109,90 @@ export default function AssetChart({ stocks }: AssetChartProps) {
         width: "100%",
         marginLeft: "auto",
         marginRight: "auto",
-        background: "#fff",
         boxShadow: "0 4px 24px 0 rgba(180, 210, 255, 0.18)",
-        border: "1px solid #e3e8f0",
+        // background: "#fff", // 배경 제거
+        // border: "1px solid #e3e8f0", // 테두리 제거
       }}
     >
       <CardContent className="rounded-xl p-0">
-        <div
-          className="flex flex-row items-stretch justify-center w-full"
-          style={{
-            height: "140px",
-            minHeight: CHART_MIN_HEIGHT,
-            maxHeight: "180px",
-            padding: 0,
-            overflow: "hidden",
-            width: "100%",
-            position: "relative",
-            display: "flex",
-            gap: "0px"
-          }}
-        >
-          <div
-            className="w-1/2 h-full flex flex-col items-center justify-center p-0 m-0"
-            style={{
-              width: "50%",
-              height: "100%",
-              minHeight: CHART_MIN_HEIGHT,
-              maxHeight: CHART_MAX_HEIGHT,
-            }}
-          >
-            <ChartSection filteredAmounts={filteredAmounts} options={options} />
+        <div style={{ display: "flex", width: "100%", gap: 8, minHeight: 140, maxHeight: 180 }}>
+          <div style={{ width: "50%", minWidth: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            {/* 도넛 뒤 그림자 */}
+            <div style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              width: 120,
+              height: 120,
+              transform: "translate(-50%, -50%)",
+              borderRadius: "50%",
+              boxShadow: "0 8px 32px 0 rgba(100,150,255,0.10)",
+              background: "transparent",
+              zIndex: 0,
+            }} />
+            {/* 차트 */}
+            <div style={{ width: "100%", zIndex: 1 }}>
+              {loading ? (
+                <div style={{ color: "#888", fontSize: 16 }}>주식 데이터를 불러오는 중입니다...</div>
+              ) : filteredAmounts.length === 0 ? (
+                <div style={{ color: "#888", fontSize: 16 }}>보유한 주식이 없습니다.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={140}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius="50%"
+                      outerRadius="85%"
+                      paddingAngle={0}
+                      labelLine={false}
+                      isAnimationActive={false}
+                      focusable={false} 
+                      tabIndex={-1}               
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value.toLocaleString()}$`, name]}
+                      contentStyle={{ fontSize: 14 }}
+                    />
+                    <style jsx global>{`
+                      .recharts-pie-sector:focus {
+                        outline: none !important;
+                        stroke: #e3e8f0 !important;   /* 아주 연한 회색 */
+                        stroke-width: 1 !important;   /* 얇게 */
+                      }
+                      .recharts-pie-sector:hover {
+                        filter: brightness(1.08);
+                        transition: filter 0.2s;
+                      }
+                    `}</style>
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
           <div
-            className="w-1/2 h-full flex flex-col justify-center items-start"
             style={{
-              width: "50%",
-              height: "100%",
-              minHeight: CHART_MIN_HEIGHT,
-              maxHeight: CHART_MAX_HEIGHT,
+              flex: 1,
               padding: "0 20px",
               boxSizing: "border-box",
               borderLeft: "1px solid #e3e8f0",
               background: "#f8fafc",
-              fontSize: "16px",
+              fontSize: 16,
               color: "#334155",
               overflowY: "auto",
-              borderTopRightRadius: "16px",
-              borderBottomRightRadius: "16px"
+              borderTopRightRadius: 16,
+              borderBottomRightRadius: 16,
+              display: "flex",
+              alignItems: "center",
             }}
           >
-            <div style={{ whiteSpace: "pre-line", wordBreak: "break-all", fontSize: "16px" }}>
-              {summaryString
-                ? summaryString
-                : "오늘의 요약 정보를 불러오는 중입니다."}
+            <div style={{ whiteSpace: "pre-line", wordBreak: "break-word" }}>
+              {summaryString || "오늘의 요약 정보를 불러오는 중입니다."}
             </div>
           </div>
         </div>
