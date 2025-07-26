@@ -15,8 +15,6 @@ import {
   Target,
 } from "lucide-react";
 import type { OverseasStockDetail } from "@/src/types/ApiResponse";
-import { MdDataExploration } from "react-icons/md";
-import { MdOutlineDataExploration } from "react-icons/md";
 
 interface KeyStatsProps {
   stockData: OverseasStockDetail;
@@ -87,7 +85,6 @@ export function KeyStats({ stockData }: KeyStatsProps) {
     },
   ];
 
-  // 투자 비율
   const investmentRatios = [
     {
       label: "P/E Ratio",
