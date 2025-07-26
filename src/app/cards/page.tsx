@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
 import { DualSelector } from "@/src/components/ui/DualSelector";
@@ -48,12 +48,19 @@ export default function CardsPage() {
   }>({});
   const [currentSnapshotIndex, setCurrentSnapshotIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isViewTransitioning, setIsViewTransitioning] = useState(false);
+  const [isFromStockEdge, setIsFromStockEdge] = useState(false);
   const router = useRouter();
   const [portfolio, setPortfolio] = useState<{
     [stockCode: string]: UnifiedStockItem;
   }>({});
 
   const [availableDates, setAvailableDates] = useState<string[]>([]);
+  
+  // 이전 selectedDate를 추적하기 위한 ref
+  const prevSelectedDateRef = useRef(selectedDate);
+  // 이전 activeView를 추적하기 위한 ref
+  const prevActiveViewRef = useRef(activeView);
 
   const allowedDates = useMemo(
     () => {
@@ -68,6 +75,16 @@ export default function CardsPage() {
 
   const currentSnapshots = snapshotsByDate[selectedDate] || [];
   const currentSnapshot = currentSnapshots[currentSnapshotIndex];
+  
+  // 디버깅을 위한 로그
+  console.log("=== currentSnapshot 계산 디버그 ===");
+  console.log("selectedDate:", selectedDate);
+  console.log("snapshotsByDate keys:", Object.keys(snapshotsByDate));
+  console.log("currentSnapshots:", currentSnapshots);
+  console.log("currentSnapshotIndex:", currentSnapshotIndex);
+  console.log("currentSnapshot:", currentSnapshot);
+  
+
 
   const viewOrder = ["date", "stock"] as const;
   const currentViewIndex = viewOrder.indexOf(activeView);
@@ -167,7 +184,6 @@ export default function CardsPage() {
           setAvailableDates([]);
         }
       } catch (error) {
-        console.error("Failed to fetch initial data:", error);
         setSnapshotsByDate({});
         setPortfolio({});
         setAvailableDates([]);
@@ -200,6 +216,7 @@ export default function CardsPage() {
   };
 
   const handleDateChange = async (date: string) => {
+    
     // 이미 선택된 날짜라면 무시 (선택적)
     if (date === selectedDate) return;
 
@@ -216,6 +233,7 @@ export default function CardsPage() {
     });
 
     setSelectedDate(date);
+    // 날짜 변경 시 카드 인덱스를 즉시 설정
     setCurrentSnapshotIndex(0);
     setActiveView("stock");
   };
@@ -227,22 +245,44 @@ export default function CardsPage() {
   }, [selectedDate, currentSnapshots.length]);
 
   useEffect(() => {
-    setCurrentSnapshotIndex(0);
-  }, [selectedDate]);
+    
+    // selectedDate가 실제로 변경되었고, 뷰 전환 중이 아닐 때만 첫 번째 카드로 이동
+    // 단, handleStockEdge에서 호출된 경우는 제외 (이미 올바른 인덱스가 설정됨)
+    if (selectedDate !== prevSelectedDateRef.current && !isViewTransitioning && !isFromStockEdge) {
+      setCurrentSnapshotIndex(0);
+    } else if (selectedDate !== prevSelectedDateRef.current && isViewTransitioning) {
+      // 뷰 전환 중이므로 첫 번째 카드로 이동하지 않음
+    } else {
+      // selectedDate가 변경되지 않았거나 뷰 전환 중이므로 첫 번째 카드로 이동하지 않음
+    }
+    
+    // 현재 selectedDate를 이전 값으로 저장
+    prevSelectedDateRef.current = selectedDate;
+  }, [selectedDate, isViewTransitioning, isFromStockEdge]);
 
   useEffect(() => {
     if (activeView === "stock" && currentSnapshots.length > 0) {
-      setCurrentSnapshotIndex((prev) =>
-        prev >= currentSnapshots.length ? 0 : prev
-      );
+      // currentIndex가 유효한 범위를 벗어났을 때만 조정
+      if (currentSnapshotIndex >= currentSnapshots.length) {
+        setCurrentSnapshotIndex(0);
+      }
     }
-  }, [activeView, currentSnapshots.length]);
+  }, [activeView, currentSnapshots.length, currentSnapshotIndex]);
 
   useEffect(() => {
-    if (activeView === "date") {
+    
+    // activeView가 date로 변경되었을 때만 첫 번째 카드로 이동 (드래그로 인한 stock 전환은 무시)
+    if (activeView === "date" && activeView !== prevActiveViewRef.current && !isViewTransitioning) {
       setCurrentSnapshotIndex(0);
+    } else if (activeView === "date" && activeView !== prevActiveViewRef.current && isViewTransitioning) {
+      // 뷰 전환 중이므로 첫 번째 카드로 이동하지 않음
+    } else {
+      // activeView가 변경되지 않았거나 뷰 전환 중이므로 첫 번째 카드로 이동하지 않음
     }
-  }, [activeView, currentSnapshots.length]);
+    
+    // 현재 activeView를 이전 값으로 저장
+    prevActiveViewRef.current = activeView;
+  }, [activeView, isViewTransitioning]);
 
   const handleStockChange = (snapshotId: number) => {
     const idx = currentSnapshots.findIndex((s) => s.snapshotId === snapshotId);
@@ -250,37 +290,78 @@ export default function CardsPage() {
   };
 
   const handleStockEdge = async (direction: "left" | "right") => {
+    console.log("=== handleStockEdge 디버그 ===");
+    console.log("direction:", direction);
+    console.log("selectedDate:", selectedDate);
+    console.log("allowedDates:", allowedDates);
+    
     const idx = allowedDates.indexOf(selectedDate);
+    console.log("current idx:", idx);
+    
     const nextDate =
       direction === "left" ? allowedDates[idx - 1] : allowedDates[idx + 1];
-    if (!nextDate) return;
+    console.log("nextDate:", nextDate);
+    
+    if (!nextDate) {
+      console.log("다음 날짜가 없음");
+      return;
+    }
+    
     if (!snapshotsByDate[nextDate]) {
+      console.log("다음 날짜 데이터 없음, fetchSnapshotsByDate 호출");
       await fetchSnapshotsByDate(nextDate);
     }
-    await handleDateChange(nextDate);
-    setSelectedDate(nextDate);
-    setActiveView("date");
-    setCurrentSnapshotIndex(0);
+    
+    // 다음 날짜의 카드 배열 가져오기
+    const nextDateSnapshots = snapshotsByDate[nextDate] || [];
+    console.log("nextDateSnapshots:", nextDateSnapshots);
+    console.log("nextDateSnapshots.length:", nextDateSnapshots.length);
+    
+    // 왼쪽으로 이동할 때는 이전 날짜의 마지막 카드, 오른쪽으로 이동할 때는 다음 날짜의 첫 번째 카드
+    const targetIndex = direction === "left" ? nextDateSnapshots.length - 1 : 0;
+    console.log("targetIndex:", targetIndex);
+    
+    console.log("상태 변경 시작");
+    // 먼저 플래그를 설정하고, 그 다음에 상태를 변경
+    setIsFromStockEdge(true);
+    setCurrentSnapshotIndex(Math.max(0, targetIndex));
+    
+    // 약간의 지연 후 날짜 변경 (useEffect가 실행되지 않도록)
+    setTimeout(() => {
+      setSelectedDate(nextDate);
+      // 플래그 리셋을 지연시킴
+      setTimeout(() => {
+        setIsFromStockEdge(false);
+      }, 100);
+    }, 50);
+    console.log("상태 변경 완료");
   };
 
   // 뷰 전환 함수들 (scrap 페이지와 유사하게)
   const handleNextView = () => {
+    setIsViewTransitioning(true);
     const nextIndex = (currentViewIndex + 1) % viewOrder.length;
     setActiveView(viewOrder[nextIndex]);
+    // 뷰 전환 완료 후 상태 리셋
+    setTimeout(() => {
+      setIsViewTransitioning(false);
+    }, 500);
   };
 
   const handlePrevView = () => {
+    setIsViewTransitioning(true);
     const prevIndex =
       (currentViewIndex - 1 + viewOrder.length) % viewOrder.length;
     setActiveView(viewOrder[prevIndex]);
+    // 뷰 전환 완료 후 상태 리셋
+    setTimeout(() => {
+      setIsViewTransitioning(false);
+    }, 500);
   };
 
   const handleScrap = async (snapshotId: number): Promise<number | null> => {
-    console.log("=== Cards Page handleScrap Debug ===");
-    console.log("handleScrap called with snapshotId:", snapshotId);
 
     try {
-      console.log("Making API request to /scrap");
       const response = await fetchWithAuthCheck(
         `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap`,
         {
@@ -292,29 +373,21 @@ export default function CardsPage() {
         router
       );
 
-      console.log("API response:", response);
-
       if (response.status) {
-        console.log("스크랩에 추가되었습니다.");
         // 스크랩 ID 반환 (실제 응답 구조에 따라 조정 필요)
         return response.data?.id || response.data?.scrapId || null;
       } else {
-        console.error(response.message || "스크랩 추가에 실패했습니다.");
         throw new Error(response.message || "스크랩 추가에 실패했습니다.");
       }
     } catch (error) {
-      console.error("Scrap request failed:", error);
       throw error;
     }
   };
 
   const handleUnscrap = async (snapshotId: number): Promise<void> => {
-    console.log("=== Cards Page handleUnscrap Debug ===");
-    console.log("handleUnscrap called with snapshotId:", snapshotId);
 
     try {
       // 먼저 스크랩 상태를 확인
-      console.log("Checking scrap status for snapshotId:", snapshotId);
       const statusResponse = await fetchWithAuthCheck(
         `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap/status/${snapshotId}`,
         {
@@ -325,18 +398,12 @@ export default function CardsPage() {
         router
       );
 
-      console.log("Status response:", statusResponse);
-
       if (!statusResponse.status) {
         throw new Error("스크랩 상태를 확인할 수 없습니다.");
       }
 
       // 스크랩 상태가 true이고 scrapId가 있는 경우에만 삭제 시도
       if (statusResponse.data?.scrapped && statusResponse.data?.scrapId) {
-        console.log(
-          "Snapshot is scraped, attempting to delete scrap with ID:",
-          statusResponse.data.scrapId
-        );
 
         // scrapId로 스크랩 삭제
         const deleteResponse = await fetchWithAuthCheck(
@@ -350,27 +417,49 @@ export default function CardsPage() {
         );
 
         if (deleteResponse.status) {
-          console.log("스크랩에서 제거되었습니다.");
         } else {
           throw new Error(
             deleteResponse.message || "스크랩 제거에 실패했습니다."
           );
         }
       } else {
-        console.log("Snapshot is not scraped, no need to delete");
       }
     } catch (error) {
-      console.error("Unscrap request failed:", error);
       throw error;
     }
   };
 
+  // 스크랩 삭제 성공 시 로컬 상태 업데이트
+  const handleUnscrapSuccess = (snapshotId: number) => {
+    setSnapshotsByDate(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(date => {
+        updated[date] = updated[date].map(card => {
+          if (card.snapshotId === snapshotId) {
+            return { ...card, isScrap: false };
+          }
+          return card;
+        });
+      });
+      return updated;
+    });
+  };
+
   const handleSwipe = async (direction: number) => {
+    console.log("=== handleSwipe 디버그 ===");
+    console.log("direction:", direction);
+    console.log("currentSnapshotIndex:", currentSnapshotIndex);
+    console.log("currentSnapshots.length:", currentSnapshots.length);
+    
     const newIndex = currentSnapshotIndex + direction;
+    console.log("newIndex:", newIndex);
+    
     if (newIndex >= 0 && newIndex < currentSnapshots.length) {
+      console.log("일반 카드 이동");
       setCurrentSnapshotIndex(newIndex);
       if (activeView === "date") setActiveView("stock");
     } else {
+      console.log("엣지 도달, handleStockEdge 호출");
       await handleStockEdge(direction < 0 ? "left" : "right");
     }
   };
@@ -418,8 +507,13 @@ export default function CardsPage() {
               cards={currentSnapshots}
               currentIndex={currentSnapshotIndex}
               onSwipe={handleSwipe}
+              onCardClick={(index) => {
+                setCurrentSnapshotIndex(index);
+                setActiveView("stock");
+              }}
               onScrap={handleScrap}
               onUnscrap={handleUnscrap}
+              onUnscrapSuccess={handleUnscrapSuccess}
             />
           ) : null}
           <button
@@ -469,6 +563,7 @@ export default function CardsPage() {
             onScrap={handleScrap}
             onNextView={handleNextView}
             onPrevView={handlePrevView}
+            isViewTransitioning={isViewTransitioning}
           />
         </div>
       </div>

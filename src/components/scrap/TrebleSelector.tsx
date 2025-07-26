@@ -1,15 +1,16 @@
 "use client";
 
 import { useTransition, animated } from "react-spring";
-import { ScrapGroupSelector } from "./ScrapGroupSelector";
 import { ScrapDateSelector } from "./ScrapDateSelector";
 import { ScrapStockSelector } from "./ScrapStockSelector";
-import { ScrapStockList } from "./ScrapStockList";
+import { ScrapGroupSelector } from "./ScrapGroupSelector";
 import { MoreHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard";
 import { ScrapGroup } from "@/src/types/ScrapGroup";
 import { UnifiedStockResponse } from "@/src/types/ApiResponse";
+
+const SELECTOR_HEIGHT = 85;
 
 interface TrebleSelectorProps {
   activeView: "date" | "stock";
@@ -31,9 +32,9 @@ interface TrebleSelectorProps {
   onStockClick?: (stockCode: string) => void;
   hasStockSnapshots?: boolean; // 종목 스크랩이 있는지 확인하는 prop 추가
   selectedStockCode?: string | null; // 선택된 종목 코드 추가
+  onIndexChange?: (newIndex: number) => void; // 추가: 인덱스 변경 콜백
+  isStockDetail?: boolean; // 추가: 종목별 카드인지 구분
 }
-
-const SELECTOR_HEIGHT = 90;
 
 export const TrebleSelector = ({
   activeView,
@@ -55,6 +56,8 @@ export const TrebleSelector = ({
   onStockClick,
   hasStockSnapshots = false, // 기본값 false
   selectedStockCode = null, // 기본값 null
+  onIndexChange,
+  isStockDetail = false,
 }: TrebleSelectorProps) => {
   const dragDirection = useRef(1);
 
@@ -105,14 +108,16 @@ export const TrebleSelector = ({
       // 종목이 선택된 상태에서는 ScrapDateSelector와 ScrapStockSelector만 번갈아가며 전환
       if (selectedStockCode !== null) {
         if (deltaY > 0) {
-          // 아래로 드래그: 이전 뷰로
+          // 아래로 드래그: 이전 뷰로 (위에서 아래로 내려옴)
+          dragDirection.current = 1;
           if (activeView === "stock") {
             onViewChange("date");
           } else if (activeView === "date") {
             onViewChange("stock");
           }
         } else {
-          // 위로 드래그: 다음 뷰로
+          // 위로 드래그: 다음 뷰로 (아래에서 위로 올라옴)
+          dragDirection.current = -1;
           if (activeView === "date") {
             onViewChange("stock");
           } else if (activeView === "stock") {
@@ -122,14 +127,16 @@ export const TrebleSelector = ({
       } else {
         // 종목이 선택되지 않은 상태에서는 date와 stock만 번갈아가며 전환
         if (deltaY > 0) {
-          // 아래로 드래그: 이전 뷰로 (순환)
+          // 아래로 드래그: 이전 뷰로 (위에서 아래로 내려옴)
+          dragDirection.current = 1;
           if (activeView === "stock") {
             onViewChange("date");
           } else if (activeView === "date") {
             onViewChange("stock"); // 순환
           }
         } else {
-          // 위로 드래그: 다음 뷰로 (순환)
+          // 위로 드래그: 다음 뷰로 (아래에서 위로 올라옴)
+          dragDirection.current = -1;
           if (activeView === "date") {
             onViewChange("stock");
           } else if (activeView === "stock") {
@@ -150,9 +157,9 @@ export const TrebleSelector = ({
   };
 
   return (
-    <div className="relative">
+    <div className="relative bg-gray-100 overflow-hidden cursor-grab active:cursor-grabbing select-none">
       {/* 뷰 전환 버튼 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 z-30">
+      <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-30">
         <button
           onClick={() => {
             if (isSelectorDisabled) {
@@ -186,15 +193,8 @@ export const TrebleSelector = ({
       </div>
       
       <div
-        className="relative overflow-hidden cursor-grab active:cursor-grabbing select-none"
-        style={{ 
-          height: SELECTOR_HEIGHT,
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          MozUserSelect: 'none',
-          msUserSelect: 'none'
-        }}
-        data-treble-selector="true"
+        className="relative bg-gray-100 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        style={{ height: SELECTOR_HEIGHT }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -215,7 +215,7 @@ export const TrebleSelector = ({
               ...style,
               position: "absolute",
               width: "100%",
-              height: "100%",
+              height: "90%",
             }}
           >
             {view === "date" ? (
@@ -237,6 +237,8 @@ export const TrebleSelector = ({
                   portfolio={portfolio}
                   selectedStockCode={selectedStockCode}
                   selectedStockName={selectedStockCode ? unifiedStocks?.stocks?.find(stock => stock.pdno === selectedStockCode)?.prdt_name || selectedStockCode : null}
+                  onIndexChange={onIndexChange}
+                  isStockDetail={isStockDetail}
                 />
               </div>
             )}

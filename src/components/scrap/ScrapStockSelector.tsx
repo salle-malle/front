@@ -14,6 +14,8 @@ interface ScrapStockSelectorProps {
   portfolio?: { [pdno: string]: UnifiedStockItem };
   selectedStockCode?: string | null; // 선택된 종목 코드 추가
   selectedStockName?: string | null; // 선택된 종목 이름 추가
+  onIndexChange?: (newIndex: number) => void; // 추가: 인덱스 변경 콜백
+  isStockDetail?: boolean; // 추가: 종목별 카드인지 구분
 }
 
 export const ScrapStockSelector = ({
@@ -22,8 +24,10 @@ export const ScrapStockSelector = ({
   onStockSelect,
   onEdge,
   portfolio,
-  selectedStockCode = null, // 기본값 추가
-  selectedStockName = null, // 기본값 추가
+  selectedStockCode = null,
+  selectedStockName = null,
+  onIndexChange,
+  isStockDetail = false,
 }: ScrapStockSelectorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
@@ -48,6 +52,9 @@ export const ScrapStockSelector = ({
 
   // 좌/우 버튼 클릭 시 이전/다음 스냅샷을 선택하는 함수
   const changeStock = (direction: "left" | "right") => {
+    // 종목별 카드일 때만 카드 넘기기 허용
+    if (!isStockDetail) return;
+    
     if (!snapshots || snapshots.length === 0) return;
 
     let newIndex = currentIndex + (direction === "left" ? -1 : 1);
@@ -61,15 +68,11 @@ export const ScrapStockSelector = ({
     }
 
     onStockSelect(snapshots[newIndex].snapshotId);
+    // 인덱스 변경도 함께 호출
+    if (onIndexChange) {
+      onIndexChange(newIndex);
+    }
   };
-
-  // if (!snapshots || snapshots.length === 0) {
-  //   return (
-  //     <div className="bg-gray-100 p-2 flex items-center justify-center h-full rounded-xl shadow-sm">
-  //       <p className="text-sm text-gray-500">해당 날짜의 스크랩이 없습니다.</p>
-  //     </div>
-  //   );
-  // }
 
   // 종목이 선택된 경우 해당 종목의 정보를 직접 표시
   if (selectedStockCode && selectedStockName) {
@@ -91,14 +94,27 @@ export const ScrapStockSelector = ({
     const profitColor = getProfitColor(profitLossAmount);
 
     return (
-      <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm select-none">
+      // <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full shadow-sm select-none">
+      <div className="p-2.5 flex items-center space-x-2 h-full select-none">
+        {/* 종목별 카드가 아닐 때만 좌우 버튼 표시, 종목별 카드일 때는 투명한 영역으로 레이아웃 유지 */}
+        {!isStockDetail ? (
+          <button
+            onClick={() => changeStock("left")}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors"
+          >
+            <ChevronLeft size={20} className="text-gray-600" />
+          </button>
+        ) : (
+          <div className="w-8 h-8"></div> // 투명한 영역으로 레이아웃 유지
+        )}
+
         <div className="flex-1 bg-white p-2.5 rounded-xl shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="w-9 h-9 relative flex-shrink-0">
               {selectedStockCode ? (
                 <StockLogo
                   stockId={selectedStockCode}
-                  stockName={selectedStockName}
+                  stockName={selectedStockName || selectedStockCode}
                   size={36}
                 />
               ) : (
@@ -110,7 +126,7 @@ export const ScrapStockSelector = ({
 
             <div className="flex-1 text-left overflow-hidden">
               <p className="font-bold text-base truncate">
-                {selectedStockName || "Unknown Stock"}
+                {selectedStockCode || "Unknown Stock"}
               </p>
               <p className="text-sm font-semibold text-gray-800 truncate">
                 {evaluationAmount}
@@ -128,6 +144,18 @@ export const ScrapStockSelector = ({
             </div>
           </div>
         </div>
+
+        {/* 종목별 카드가 아닐 때만 좌우 버튼 표시, 종목별 카드일 때는 투명한 영역으로 레이아웃 유지 */}
+        {!isStockDetail ? (
+          <button
+            onClick={() => changeStock("right")}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors"
+          >
+            <ChevronRight size={20} className="text-gray-600" />
+          </button>
+        ) : (
+          <div className="w-8 h-8"></div> // 투명한 영역으로 레이아웃 유지
+        )}
       </div>
     );
   }
@@ -155,7 +183,7 @@ export const ScrapStockSelector = ({
   const profitColor = getProfitColor(profitLossAmount);
 
   return (
-    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm select-none">
+    <div className="p-2.5 flex items-center space-x-2 h-full select-none">
       <button
         onClick={() => changeStock("left")}
         className="p-1 rounded-full hover:bg-gray-200 transition-colors"
