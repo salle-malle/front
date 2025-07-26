@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
 import { MdOutlineAddIcCall } from "react-icons/md";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { TfiAnnouncement } from "react-icons/tfi";
