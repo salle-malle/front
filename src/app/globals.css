@@ -57,3 +57,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+.recharts-pie-sector:focus {
+  outline: none !important;
+  stroke: #e3e8f0 !important;
+  stroke-width: 1 !important;
+  box-shadow: none !important;
+}
+.recharts-pie-sector:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+svg:focus, svg *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
