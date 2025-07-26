@@ -27,14 +27,34 @@ export type StockItem = {
 };
 export type AssetTrendPoint = number;
 
-export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
-export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId : string; stockName : string};
-export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
-export type NewsListResponse = { news: NewsItem[]; };
-export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
-export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
-export type DisclosureListResponse = { data: DisclosureItem[]; };
-export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
+export type AssetTrendData = {
+  series: { name: string; data: AssetTrendPoint[] }[];
+  options: any;
+};
+export type DisclosureItem = {
+  id: number;
+  disclosureTitle: string;
+  disclosureDate: string;
+  stockId: string;
+  stockName: string;
+};
+export type EarningCallItem = {
+  earningCallId: number;
+  ticker: string;
+  date: string;
+  name: string;
+};
+export type NewsListResponse = { news: NewsItem[] };
+export type StockListResponse = {
+  stocks: StockItem[];
+  companyLogos: Record<string, string>;
+  summary?: { total_purchase_amount: number };
+};
+export type AssetTrendResponse = { assetTrendData: AssetTrendData };
+export type DisclosureListResponse = { data: DisclosureItem[] };
+export type EarningCallListResponse = {
+  data: { earningCalls: EarningCallItem[] };
+};
 
 function getRelativeTime(dateString: string) {
   return dayjs(dateString).fromNow();
@@ -66,7 +86,9 @@ async function fetchWithAuthCheck<T>(
   return jsonResponse;
 }
 
-export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promise<NewsListResponse> {
+export async function fetchNewsList(
+  router: ReturnType<typeof useRouter>
+): Promise<NewsListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`,
     {},
@@ -80,7 +102,9 @@ export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promi
   return { news };
 }
 
-export async function fetchStockList(router: ReturnType<typeof useRouter>): Promise<StockListResponse> {
+export async function fetchStockList(
+  router: ReturnType<typeof useRouter>
+): Promise<StockListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
     {
@@ -116,7 +140,9 @@ export async function fetchStockList(router: ReturnType<typeof useRouter>): Prom
   };
 }
 
-export async function fetchAssetTrend(router: ReturnType<typeof useRouter>): Promise<AssetTrendResponse> {
+export async function fetchAssetTrend(
+  router: ReturnType<typeof useRouter>
+): Promise<AssetTrendResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     "/api/asset-trend",
     {},
@@ -125,7 +151,9 @@ export async function fetchAssetTrend(router: ReturnType<typeof useRouter>): Pro
   return jsonResponse;
 }
 
-const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promise<DisclosureListResponse> => {
+const fetchDisclosureList = async (
+  router: ReturnType<typeof useRouter>
+): Promise<DisclosureListResponse> => {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/disclosure/my-current-disclosure`,
     {
@@ -139,7 +167,9 @@ const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promis
   return jsonResponse;
 };
 
-export async function fetchEarningCallList(router: ReturnType<typeof useRouter>): Promise<EarningCallListResponse> {
+export async function fetchEarningCallList(
+  router: ReturnType<typeof useRouter>
+): Promise<EarningCallListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`,
     {
@@ -148,19 +178,22 @@ export async function fetchEarningCallList(router: ReturnType<typeof useRouter>)
     },
     router
   );
-  if (jsonResponse.code !== "EARNING-014") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
+  if (jsonResponse.code !== "EARNING-014")
+    throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
 
-  const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
-    earningCallId: item.id,
-    ticker: item.stockId,
-    date: item.earningCallDate,
-    name: item.stockName
-  }));
+  const mappedData: EarningCallItem[] = (jsonResponse.data || []).map(
+    (item: any) => ({
+      earningCallId: item.id,
+      ticker: item.stockId,
+      date: item.earningCallDate,
+      name: item.stockName,
+    })
+  );
 
   return {
     data: {
-      earningCalls: mappedData
-    }
+      earningCalls: mappedData,
+    },
   };
 }
 
@@ -304,7 +337,9 @@ export default function HomePage() {
 
     fetchEarningCallList(router)
       .then((res) => {
-        setEarningCallData(Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []);
+        setEarningCallData(
+          Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []
+        );
       })
       .catch(() => {
         setEarningCallData([]);
@@ -347,9 +382,12 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation title="" />
+      <TopNavigation />
       <main className="flex-1 overflow-y-auto pb-20 p-0">
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(0)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(0)}
+        >
           <NewsSlider
             newsItems={newsItems}
             newsIndex={newsIndex}
@@ -357,41 +395,47 @@ export default function HomePage() {
             onClick={() => handleSlide("up")}
           />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(1)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(1)}
+        >
           <AssetSummary assetAmount={assetAmount} />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(2)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(2)}
+        >
           <StockList stocks={stocks} companyLogos={logos} />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(3)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(3)}
+        >
           <AssetChart assetTrendData={assetTrendData} />
           <Card
             className="mb-2 rounded-xl border-0 w-full"
             style={{ maxWidth: "800px", margin: "0 auto" }}
           />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(4)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(4)}
+        >
           <InfoTabs
             tab={tab}
             setTab={setTab}
-            disclosureData={disclosureData
-              .slice(0, 3)
-              .map((item) => {
-                return {
-                  id: item.id,
-                  title: item.disclosureTitle,
-                  date: getRelativeTime(item.disclosureDate),
-                };
-              })
-            }
-            earningCallData={earningCallData
-              .slice(0, 3)
-              .map((item) => ({
-                id: item.earningCallId,
-                title: item.name,
-                date: getRelativeTime(item.date),
-              }))
-            }
+            disclosureData={disclosureData.slice(0, 3).map((item) => {
+              return {
+                id: item.id,
+                title: item.disclosureTitle,
+                date: getRelativeTime(item.disclosureDate),
+              };
+            })}
+            earningCallData={earningCallData.slice(0, 3).map((item) => ({
+              id: item.earningCallId,
+              title: item.name,
+              date: getRelativeTime(item.date),
+            }))}
           />
         </div>
       </main>

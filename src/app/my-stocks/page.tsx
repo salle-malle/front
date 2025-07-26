@@ -94,7 +94,7 @@ export default function MyStocksPage() {
 
   return (
     <div>
-      <TopNavigation showBackButton title="" />
+      <TopNavigation showBackButton />
       <div
         className="mb-2 border-0 w-full"
         style={{

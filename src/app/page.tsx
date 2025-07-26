@@ -16,9 +16,15 @@ export default function SplashPage() {
   // }, [router]);
 
   const [isMounted, setIsMounted] = useState(false);
+  const [typingDone, setTypingDone] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setTypingDone(true), 2000); // 타이핑 애니메이션 시간과 맞춤
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -55,10 +61,10 @@ export default function SplashPage() {
       }
     };
 
-    // 스플래시 화면을 최소 2초간 보여준 후 인증 상태를 확인합니다.
+    // 스플래시 화면을 최소 5초간 보여준 후 인증 상태를 확인합니다.
     const timer = setTimeout(() => {
       checkAuthStatus();
-    }, 2000);
+    }, 5000);
 
     // 페이지를 벗어날 경우 타이머를 정리합니다.
     return () => clearTimeout(timer);
@@ -67,27 +73,47 @@ export default function SplashPage() {
   return (
     <div className="h-screen w-full bg-gradient-to-b from-[#EAF2FF] to-white flex items-center justify-center">
       <div className="flex flex-col items-center">
-        <Image
-          src="/logo.png"
-          alt="logo"
-          width={150}
-          height={150}
-          style={{
-            animation: "bounce 1.6s ease-out infinite",
-          }}
-        />
+        {/* 로고 */}
         <div
           style={{
-            marginTop: "-10px",
+            opacity: typingDone ? 1 : 0,
+            transform: typingDone ? "translateY(0)" : "translateY(-40px)",
+            transition:
+              "opacity 0.6s cubic-bezier(.4,0,.2,1), transform 0.6s cubic-bezier(.4,0,.2,1)",
+            pointerEvents: typingDone ? "auto" : "none",
+          }}
+        >
+          <Image
+            src="/logo.png"
+            alt="logo"
+            width={150}
+            height={150}
+            style={{
+              animation: typingDone ? "bounce 1.6s ease-out infinite" : "none",
+            }}
+          />
+        </div>
+
+        {/* 텍스트 */}
+        <div
+          style={{
+            marginTop: "10px",
             fontSize: "19px",
             fontWeight: 650,
             letterSpacing: "-0.5px",
             color: "#0064FF",
             fontFamily: "'Poppins', sans-serif",
             textShadow: "0 2px 8px rgba(0, 100, 255, 0.08)",
+            animation:
+              "typing 2s steps(20) forwards, blink 0.5s step-end 0 alternate",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            borderRight: "2px solid #0064FF",
+            width: "0",
+            animationDelay: "0.1s",
           }}
         >
-          bolle malle !
+          밤사이 미국 증시, 한눈에
         </div>
       </div>
 
@@ -99,6 +125,21 @@ export default function SplashPage() {
           }
           50% {
             transform: translateY(-12px);
+          }
+        }
+
+        @keyframes typing {
+          0% {
+            width: 0;
+          }
+          100% {
+            width: 100%;
+          }
+        }
+
+        @keyframes blink {
+          50% {
+            border-color: transparent;
           }
         }
       `}</style>
