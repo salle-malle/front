@@ -2,6 +2,7 @@
 
 import { UnifiedStockResponse } from "@/src/types/ApiResponse";
 import { useState } from "react";
+import { ScrollArea } from "@/src/components/ui/scroll-area";
 
 interface ScrapStockListProps {
   unifiedStocks: UnifiedStockResponse | null;
@@ -53,10 +54,10 @@ export const ScrapStockList = ({
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto px-4">
+    <ScrollArea className="w-full h-full px-4 pb-20">
       {/* <div className="mb-[1%]">
       </div> */}
-      <div className="space-y-3 mb-[18%]">
+      <div className="space-y-3">
         {unifiedStocks.stocks.map((stock) => (
           <div
             key={stock.pdno}
@@ -88,7 +89,7 @@ export const ScrapStockList = ({
 
               <div className="text-right">
                 <div className="text-sm font-medium">
-                  {parseFloat(stock.current_price).toLocaleString()}
+                  {parseFloat(stock.current_price).toLocaleString()}$
                 </div>
                 <div
                   className={`text-xs ${
@@ -128,6 +129,6 @@ export const ScrapStockList = ({
           </div>
         ))}
       </div>
-    </div>
+    </ScrollArea>
   );
 }; 

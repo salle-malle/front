@@ -44,18 +44,28 @@ export const StockSelector = ({
 
   // 좌/우 버튼 클릭 시 이전/다음 스냅샷을 선택하는 함수
   const changeStock = (direction: "left" | "right") => {
+    console.log("=== StockSelector changeStock 디버그 ===");
+    console.log("direction:", direction);
+    console.log("currentIndex:", currentIndex);
+    console.log("snapshots.length:", snapshots.length);
+    
     if (!snapshots || snapshots.length === 0) return;
 
     let newIndex = currentIndex + (direction === "left" ? -1 : 1);
+    console.log("newIndex:", newIndex);
+    
     if (newIndex < 0) {
+      console.log("왼쪽 엣지 도달, onEdge('left') 호출");
       if (onEdge) onEdge("left");
       return;
     }
     if (newIndex >= snapshots.length) {
+      console.log("오른쪽 엣지 도달, onEdge('right') 호출");
       if (onEdge) onEdge("right");
       return;
     }
 
+    console.log("일반 스톡 변경");
     onStockSelect(snapshots[newIndex].snapshotId);
   };
 
@@ -89,7 +99,7 @@ export const StockSelector = ({
   const profitColor = getProfitColor(profitLossAmount);
 
   return (
-    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full select-none">
+    <div className="bg-gray-100 p-2.5 flex items-center space-x-2 h-full select-none">
       <button
         onClick={() => changeStock("left")}
         className="p-1 rounded-full hover:bg-gray-200 transition-colors"
