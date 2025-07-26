@@ -6,6 +6,7 @@ import { Button } from "@/src/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { HiBell } from "react-icons/hi";
 import { FaCalendar } from "react-icons/fa6";
+import Image from "next/image";
 
 interface TopNavigationProps {
   showBackButton?: boolean;
@@ -18,7 +19,7 @@ interface TopNavigationProps {
 export function TopNavigation({
   showBackButton = false,
   showRightIcons = true,
-  title = "BLML",
+  title,
   shadow = true,
   border = true,
 }: TopNavigationProps) {
@@ -63,7 +64,8 @@ export function TopNavigation({
   return (
     <nav
       className={`flex justify-between items-center p-4 bg-white ${borderClass} ${shadowClass}`}
-      style={{ minHeight: 56 }}>
+      style={{ minHeight: 56 }}
+    >
       <div className="flex items-center space-x-2">
         {showBackButton && (
           <Button
@@ -72,17 +74,32 @@ export function TopNavigation({
             onClick={() => router.back()}
             className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
-            tabIndex={0}>
+            tabIndex={0}
+          >
             <ArrowLeft width={24} height={24} className="text-gray-600" />
           </Button>
         )}
-        <div className="text-xl font-bold text-blue-600">{title}</div>
+        {title ? (
+          <div className="text-xl font-bold text-blue-600">{title}</div>
+        ) : (
+          <div className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="SumEarly"
+              width={96}
+              height={26}
+              className="h-6 w-auto"
+              priority
+            />
+          </div>
+        )}
       </div>
 
       {showRightIcons && (
         <div
           className="flex space-x-2 items-center"
-          style={{ marginRight: 12 }}>
+          style={{ marginRight: 12 }}
+        >
           {/* 캘린더 버튼 */}
           <Button
             variant="ghost"
@@ -90,7 +107,8 @@ export function TopNavigation({
             onClick={() => router.push("/calendar")}
             className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
-            tabIndex={0}>
+            tabIndex={0}
+          >
             <FaCalendar
               width={24}
               height={24}
@@ -113,7 +131,8 @@ export function TopNavigation({
             onClick={() => router.push("/notifications")}
             className="p-0 h-auto w-auto min-w-0 flex items-center justify-center !bg-transparent !text-inherit"
             style={{ lineHeight: 1, minWidth: 0, minHeight: 0 }}
-            tabIndex={0}>
+            tabIndex={0}
+          >
             <div className="relative">
               <HiBell
                 width={26}

@@ -31,8 +31,7 @@ export default function PhoneNumberPage() {
   const isValidPhoneNumber = (num: string) =>
     /^01[016789][0-9]{7,8}$/.test(num);
 
-  const isValidAuthCode = (code: string) =>
-    /^[0-9]{6}$/.test(code);
+  const isValidAuthCode = (code: string) => /^[0-9]{6}$/.test(code);
 
   // 인증번호 요청
   const fetchPhoneNumber = async () => {
@@ -110,12 +109,16 @@ export default function PhoneNumberPage() {
         setAuthCodeErrorMessage("인증번호가 일치하지 않습니다.");
         setAuthCodeSuccess(false);
       } else if (data.code === "AUTH-011") {
-        setAuthCodeErrorMessage("인증번호가 만료되었습니다. 다시 요청해주세요.");
+        setAuthCodeErrorMessage(
+          "인증번호가 만료되었습니다. 다시 요청해주세요."
+        );
         setAuthCodeSuccess(false);
         setCodeInputEnabled(false);
         setTimer(0);
       } else {
-        setAuthCodeErrorMessage(data.message || "인증번호 검증에 실패했습니다.");
+        setAuthCodeErrorMessage(
+          data.message || "인증번호 검증에 실패했습니다."
+        );
         setAuthCodeSuccess(false);
       }
     } catch (e) {
@@ -147,7 +150,9 @@ export default function PhoneNumberPage() {
       if (codeInputEnabled && timer === 0) {
         setCodeInputEnabled(false);
         setAuthCode("");
-        setAuthCodeErrorMessage("인증번호가 만료되었습니다. 다시 요청해주세요.");
+        setAuthCodeErrorMessage(
+          "인증번호가 만료되었습니다. 다시 요청해주세요."
+        );
       }
     }
     return () => {
@@ -157,7 +162,9 @@ export default function PhoneNumberPage() {
 
   // 시간 포맷
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, "0");
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (sec % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
@@ -183,7 +190,7 @@ export default function PhoneNumberPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TopNavigation showBackButton title="" />
+      <TopNavigation showBackButton />
 
       <div className="flex flex-col justify-between flex-1 px-12 py-8">
         <div>
@@ -213,7 +220,7 @@ export default function PhoneNumberPage() {
             <Input
               id="phoneNumber"
               value={phoneNumber}
-              onChange={e => {
+              onChange={(e) => {
                 setPhoneNumber(e.target.value.replace(/[^0-9]/g, "")); // 숫자만 입력
                 setErrorMessage("");
                 setAuthCodeSuccess(false);
@@ -222,7 +229,10 @@ export default function PhoneNumberPage() {
               }}
               onFocus={() => setFocusNumber(true)}
               onBlur={() => setFocusNumber(false)}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusNumber, phoneNumber)}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
+                focusNumber,
+                phoneNumber
+              )}`}
               inputMode="tel"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -263,7 +273,7 @@ export default function PhoneNumberPage() {
             <Input
               id="authCode"
               value={authCode}
-              onChange={e => {
+              onChange={(e) => {
                 setAuthCode(e.target.value.replace(/[^0-9]/g, "")); // 숫자만 입력
                 setAuthCodeErrorMessage("");
                 setAuthCodeSuccess(false);
@@ -271,13 +281,20 @@ export default function PhoneNumberPage() {
               }}
               onFocus={() => setFocusCode(true)}
               onBlur={() => setFocusCode(false)}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusCode, authCode)}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
+                focusCode,
+                authCode
+              )}`}
               inputMode="numeric"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
               autoComplete="one-time-code"
               disabled={!codeInputEnabled || isVerifying || authCodeSuccess}
-              placeholder={codeInputEnabled ? "인증번호를 입력해주세요" : "전송 버튼을 눌러주세요"}
+              placeholder={
+                codeInputEnabled
+                  ? "인증번호를 입력해주세요"
+                  : "전송 버튼을 눌러주세요"
+              }
               maxLength={6}
             />
             <Button

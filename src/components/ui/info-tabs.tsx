@@ -71,12 +71,14 @@ export default function InfoTabs({
                 >
                   <div className="flex flex-row items-center w-full">
                     <span
-                      className="font-medium text-[15px] truncate"
+                      className="truncate"
                       style={{
                         flex: "0 0 75%",
                         minWidth: 0,
                         maxWidth: "75%",
                         textAlign: "left",
+                        fontSize: "14px",
+                        fontWeight: "400",
                       }}
                     >
                       {item.title}

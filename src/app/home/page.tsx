@@ -26,7 +26,7 @@ export type StockItem = {
   currentPrice: number;
 };
 export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId: string; stockName: string };
-export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
+export type EarningCallItem = { earningCallId: number; ticker: string; date: string; ovrsItemName: string };
 export type NewsListResponse = { news: NewsItem[] };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
 export type DisclosureListResponse = { data: DisclosureItem[] };
@@ -89,7 +89,9 @@ export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promi
   return { news };
 }
 
-export async function fetchStockList(router: ReturnType<typeof useRouter>): Promise<StockListResponse> {
+export async function fetchStockList(
+  router: ReturnType<typeof useRouter>
+): Promise<StockListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
     {
@@ -141,7 +143,6 @@ const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promis
   return jsonResponse;
 };
 
-// fetchEarningCallList 함수 반환값을 earningCalls로 맞춤
 export async function fetchEarningCallList(router: ReturnType<typeof useRouter>): Promise<EarningCallListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`,
@@ -151,13 +152,12 @@ export async function fetchEarningCallList(router: ReturnType<typeof useRouter>)
     },
     router
   );
-
   if (jsonResponse.code !== "EARNING-004") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
   const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
     earningCallId: item.id,
     ticker: item.stockId,
     date: item.earningCallDate,
-    name: item.ovrsItemName
+    ovrsItemName: item.ovrsItemName
   }));
   return { earningCalls: mappedData };
 }
@@ -314,9 +314,12 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation title="" />
+      <TopNavigation />
       <main className="flex-1 overflow-y-auto pb-20 p-0">
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(0)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(0)}
+        >
           <NewsSlider
             newsItems={newsItems}
             newsIndex={newsIndex}
@@ -324,19 +327,31 @@ export default function HomePage() {
             onClick={() => handleSlide("up")}
           />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(1)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(1)}
+        >
           <AssetSummary assetAmount={assetAmount} />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(2)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(2)}
+        >
           <StockList stocks={stocksForStockList} companyLogos={logos} />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(3)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(3)}
+        >
           <div className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 font-medium text-gray-800" style={getSectionStyle(2)}>
             {name}님을 위한 오늘의 코멘트예요
           </div>
           <AssetChart />
         </div>
-        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(4)}>
+        <div
+          className="max-w-[700px] w-full mx-auto px-4"
+          style={getSectionStyle(4)}
+        >
           <InfoTabs
             tab={tab}
             setTab={setTab}
@@ -352,7 +367,7 @@ export default function HomePage() {
               .slice(0, 3)
               .map((item) => ({
                 id: item.earningCallId,
-                title: item.name,
+                title: item.ovrsItemName,
                 date: getRelativeTime(item.date),
               }))
             }
