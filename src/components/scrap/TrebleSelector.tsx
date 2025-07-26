@@ -1,6 +1,5 @@
 "use client";
 
-import { useDrag } from "react-use-gesture";
 import { useTransition, animated } from "react-spring";
 import { ScrapGroupSelector } from "./ScrapGroupSelector";
 import { ScrapDateSelector } from "./ScrapDateSelector";
@@ -70,58 +69,85 @@ export const TrebleSelector = ({
 
   // 셀렉터 비활성화 조건 - 종목이 선택되었거나 그룹이 선택되었으면 활성화
   const isSelectorDisabled = selectedGroupId === null && selectedStockCode === null;
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
 
-  const bind = useDrag(
-    ({ down, movement: [, my], direction: [, dy], cancel }) => {
-      // 드래그 비활성화 조건 확인
-      if (isSelectorDisabled) {
-        return;
-      }
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // 드래그 비활성화 조건 확인
+    if (isSelectorDisabled) {
+      return;
+    }
+    
+    // 버튼 클릭 시 드래그 방지
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      return;
+    }
+    
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setStartY(clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+    const clientY = 'touches' in e ? e.changedTouches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    
+    if (Math.abs(deltaY) > 30) {
+      dragDirection.current = deltaY > 0 ? 1 : -1;
       
-      // 드래그가 끝났고 충분한 거리를 이동했을 때만 뷰 전환
-      if (!down && Math.abs(my) > SELECTOR_HEIGHT / 3) {
-        dragDirection.current = dy > 0 ? 1 : -1;
-        
-        // 종목이 선택된 상태에서는 ScrapDateSelector와 ScrapStockSelector만 번갈아가며 전환
-        if (selectedStockCode !== null) {
-          if (dy > 0) {
-            // 아래로 드래그
-            if (activeView === "date") {
-              onViewChange("stock");
-            } else if (activeView === "stock") {
-              onViewChange("date");
-            }
-          } else {
-            // 위로 드래그
-            if (activeView === "stock") {
-              onViewChange("date");
-            } else if (activeView === "date") {
-              onViewChange("stock");
-            }
+      // 종목이 선택된 상태에서는 ScrapDateSelector와 ScrapStockSelector만 번갈아가며 전환
+      if (selectedStockCode !== null) {
+        if (deltaY > 0) {
+          // 아래로 드래그: 이전 뷰로
+          if (activeView === "stock") {
+            onViewChange("date");
+          } else if (activeView === "date") {
+            onViewChange("stock");
           }
         } else {
-          // 종목이 선택되지 않은 상태에서는 date와 stock만 번갈아가며 전환
-          if (dy > 0) {
-            // 아래로 드래그: 다음 뷰로 (순환)
-            if (activeView === "date") {
-              onViewChange("stock");
-            } else if (activeView === "stock") {
-              onViewChange("date"); // 순환
-            }
-          } else {
-            // 위로 드래그: 이전 뷰로 (순환)
-            if (activeView === "date") {
-              onViewChange("stock");
-            } else if (activeView === "stock") {
-              onViewChange("date");
-            }
+          // 위로 드래그: 다음 뷰로
+          if (activeView === "date") {
+            onViewChange("stock");
+          } else if (activeView === "stock") {
+            onViewChange("date");
           }
         }
-        if (cancel) cancel();
+      } else {
+        // 종목이 선택되지 않은 상태에서는 date와 stock만 번갈아가며 전환
+        if (deltaY > 0) {
+          // 아래로 드래그: 이전 뷰로 (순환)
+          if (activeView === "stock") {
+            onViewChange("date");
+          } else if (activeView === "date") {
+            onViewChange("stock"); // 순환
+          }
+        } else {
+          // 위로 드래그: 다음 뷰로 (순환)
+          if (activeView === "date") {
+            onViewChange("stock");
+          } else if (activeView === "stock") {
+            onViewChange("date");
+          }
+        }
       }
-    },
-    { filterTaps: true, taps: true }
-  );
+    }
+    setIsDragging(false);
+  };
+
+  // 드래그 중일 때 하위 컴포넌트 클릭 방지
+  const handleChildClick = (e: React.MouseEvent) => {
+    if (isDragging) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
 
   return (
     <div className="relative">
@@ -160,7 +186,7 @@ export const TrebleSelector = ({
       </div>
       
       <div
-        className="relative bg-gray-100 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+        className="relative overflow-hidden cursor-grab active:cursor-grabbing select-none"
         style={{ 
           height: SELECTOR_HEIGHT,
           userSelect: 'none',
@@ -169,7 +195,19 @@ export const TrebleSelector = ({
           msUserSelect: 'none'
         }}
         data-treble-selector="true"
-        {...bind()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleTouchStart}
+        onMouseMove={handleTouchMove}
+        onMouseUp={handleTouchEnd}
+        onClick={(e) => {
+          // 클릭 이벤트가 드래그 영역에서 발생했을 때만 처리
+          if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
       >
         {transitions((style, view) => (
           <animated.div
@@ -181,22 +219,26 @@ export const TrebleSelector = ({
             }}
           >
             {view === "date" ? (
-              <ScrapDateSelector
-                selectedDate={selectedDate}
-                onDateSelect={onDateChange}
-                allowedDates={allowedDates}
-                disabled={selectedGroupId === null}
-              />
+              <div onClick={handleChildClick}>
+                <ScrapDateSelector
+                  selectedDate={selectedDate}
+                  onDateSelect={onDateChange}
+                  allowedDates={allowedDates}
+                  disabled={selectedGroupId === null && selectedStockCode === null}
+                />
+              </div>
             ) : (
-              <ScrapStockSelector
-                snapshots={snapshotsForDate}
-                selectedSnapshotId={selectedSnapshotId}
-                onStockSelect={onStockChange}
-                onEdge={onStockEdge}
-                portfolio={portfolio}
-                selectedStockCode={selectedStockCode}
-                selectedStockName={selectedStockCode ? unifiedStocks?.stocks?.find(stock => stock.pdno === selectedStockCode)?.prdt_name || selectedStockCode : null}
-              />
+              <div onClick={handleChildClick}>
+                <ScrapStockSelector
+                  snapshots={snapshotsForDate}
+                  selectedSnapshotId={selectedSnapshotId}
+                  onStockSelect={onStockChange}
+                  onEdge={onStockEdge}
+                  portfolio={portfolio}
+                  selectedStockCode={selectedStockCode}
+                  selectedStockName={selectedStockCode ? unifiedStocks?.stocks?.find(stock => stock.pdno === selectedStockCode)?.prdt_name || selectedStockCode : null}
+                />
+              </div>
             )}
           </animated.div>
         ))}

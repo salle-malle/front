@@ -157,7 +157,11 @@ export default function CalendarPage() {
           setDisclosures(data.data);
           return data.data;
         } else {
-          console.error("공시 API 응답 오류:", response.status, response.statusText);
+          console.error(
+            "공시 API 응답 오류:",
+            response.status,
+            response.statusText
+          );
           return [];
         }
       } catch (error) {
@@ -204,8 +208,8 @@ export default function CalendarPage() {
         const merged: Array<MergedScheduleItem> = [];
 
         // Find stocks that have both earning and disclosure
-        const bothStockIds = Object.keys(earningStocks).filter((stockId) =>
-          disclosureStocks[stockId]
+        const bothStockIds = Object.keys(earningStocks).filter(
+          (stockId) => disclosureStocks[stockId]
         );
 
         // Add merged items for stocks with both
@@ -297,7 +301,8 @@ export default function CalendarPage() {
   const getDayTypes = (day: number) => {
     const dateStr = formatDate(day);
     const schedules = scheduleData[dateStr];
-    if (!schedules) return { hasEarning: false, hasDisclosure: false, hasBoth: false };
+    if (!schedules)
+      return { hasEarning: false, hasDisclosure: false, hasBoth: false };
     let hasEarning = false;
     let hasDisclosure = false;
     let hasBoth = false;
@@ -348,9 +353,9 @@ export default function CalendarPage() {
         border: `2px solid ${MIDDLE_BLUE}`,
         boxShadow: `0 0 0 2px ${MIDDLE_BLUE}33`,
         transition: "box-shadow 0.3s, background 0.3s",
-        minHeight: 80,
-        maxHeight: 80,
-        height: 80,
+        // minHeight: 80,
+        // maxHeight: 80,
+        // height: 80,
         padding: 0,
       };
     } else {
@@ -360,9 +365,9 @@ export default function CalendarPage() {
         fontWeight: 500,
         border: "1px solid #e5e7eb",
         transition: "box-shadow 0.3s, background 0.3s",
-        minHeight: 80,
-        maxHeight: 80,
-        height: 80,
+        // minHeight: 80,
+        // maxHeight: 80,
+        // height: 80,
         padding: 0,
       };
     }
@@ -507,17 +512,26 @@ export default function CalendarPage() {
       if (item.type === "earning") {
         grouped[item.stockId].earningCall = item.earningCall;
       } else if (item.type === "disclosure") {
-        if (item.disclosure) grouped[item.stockId].disclosures.push(item.disclosure);
+        if (item.disclosure)
+          grouped[item.stockId].disclosures.push(item.disclosure);
       } else if (item.type === "both") {
         // both는 earningCall, disclosure 둘 다 있음
-        if (item.earningCall) grouped[item.stockId].earningCall = item.earningCall;
-        if (item.disclosure) grouped[item.stockId].disclosures.push(item.disclosure);
+        if (item.earningCall)
+          grouped[item.stockId].earningCall = item.earningCall;
+        if (item.disclosure)
+          grouped[item.stockId].disclosures.push(item.disclosure);
       }
     });
     return Object.values(grouped);
   }
 
-  const ArrowRight = ({ size = 16, color = "#2563eb" }: { size?: number; color?: string }) => (
+  const ArrowRight = ({
+    size = 16,
+    color = "#2563eb",
+  }: {
+    size?: number;
+    color?: string;
+  }) => (
     <svg
       width={size}
       height={size}
@@ -546,10 +560,10 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation title="" showBackButton={true}/>
+      <TopNavigation showBackButton={true} />
       <main className="flex-1 overflow-y-auto pb-20">
         <div
-          className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2"
+          className="max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2"
           style={{
             maxWidth: "600px",
           }}
@@ -606,12 +620,12 @@ export default function CalendarPage() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-2">
                   <div className="grid grid-cols-7 gap-[2px] mb-1">
                     {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
                       <div
                         key={day}
-                        className="text-center text-xs font-medium text-gray-600 p-1"
+                        className="text-center text-xs font-medium text-gray-600 p-1 aspect-square flex items-center justify-center"
                       >
                         {day}
                       </div>
@@ -654,7 +668,8 @@ export default function CalendarPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {scheduleData[selectedDate] && scheduleData[selectedDate].length > 0 ? (
+                  {scheduleData[selectedDate] &&
+                  scheduleData[selectedDate].length > 0 ? (
                     <div className="space-y-3">
                       {groupSchedulesByStock(scheduleData[selectedDate]).map(
                         (group, idx) => (
@@ -686,7 +701,8 @@ export default function CalendarPage() {
                                     어닝콜
                                   </span>
                                   <span className="text-xs">
-                                    {group.earningCall.ovrsItemName} ({group.earningCall.stockId}) 실적 발표
+                                    {group.earningCall.ovrsItemName} (
+                                    {group.earningCall.stockId}) 실적 발표
                                   </span>
                                 </div>
                               )}
@@ -697,7 +713,9 @@ export default function CalendarPage() {
                                   style={{
                                     borderLeft: `4px solid ${DARK_BLUE}`,
                                   }}
-                                  onClick={() => handleDisclosureClick(disclosure.id)}
+                                  onClick={() =>
+                                    handleDisclosureClick(disclosure.id)
+                                  }
                                 >
                                   <span
                                     className="text-xs font-medium min-w-[48px] mr-2"

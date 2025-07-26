@@ -98,7 +98,7 @@ export default function EnhancedStockDetailPage() {
       />
 
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2">
+        <div className="max-w-[700px] w-full mx-auto px-4">
           {/* Stock Header - 종목명, 현재가, 등락률 */}
           <StockHeader stockData={stockData} stockCode={stockCode} />
 

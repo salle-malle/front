@@ -15,6 +15,8 @@ import {
   Target,
 } from "lucide-react";
 import type { OverseasStockDetail } from "@/src/types/ApiResponse";
+import { MdDataExploration } from "react-icons/md";
+import { MdOutlineDataExploration } from "react-icons/md";
 
 interface KeyStatsProps {
   stockData: OverseasStockDetail;
@@ -142,8 +144,7 @@ export function KeyStats({ stockData }: KeyStatsProps) {
                   <p
                     className={`text-lg font-bold ${
                       metric.valueColor || "text-gray-900"
-                    }`}
-                  >
+                    }`}>
                     {metric.value}
                   </p>
                   <p className="text-xs text-gray-500">{metric.subtitle}</p>
@@ -158,7 +159,7 @@ export function KeyStats({ stockData }: KeyStatsProps) {
       <Card className="shadow-sm border-0 bg-white">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center text-gray-900">
-            <Activity className="h-5 w-5 mr-2" />
+            {/* <MdOutlineDataExploration className="h-5 w-5 mr-2" /> */}
             투자 비율
           </CardTitle>
         </CardHeader>
@@ -167,8 +168,7 @@ export function KeyStats({ stockData }: KeyStatsProps) {
             {investmentRatios.map((ratio, index) => (
               <div
                 key={index}
-                className="text-center p-3 bg-gray-50 rounded-lg"
-              >
+                className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-center mb-2 text-gray-600">
                   {ratio.icon}
                 </div>
