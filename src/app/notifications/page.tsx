@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
-import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
+import { MdOutlineAddIcCall } from "react-icons/md";
+import { IoDocumentTextOutline } from "react-icons/io5";
+import { TfiAnnouncement } from "react-icons/tfi";
 import { motion } from "framer-motion";
 
 const iconMap: Record<string, any> = {
-  price: TrendingUp,
-  event: Calendar,
-  alert: AlertCircle,
+  SUMMARY_COMPLETE: IoDocumentTextOutline,
+  EARNINGS_CALL: MdOutlineAddIcCall,
+  DISCLOSURE: TfiAnnouncement,
 };
 
 type Notification = {
@@ -32,7 +34,7 @@ export default function NotificationsPage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACK_API_URL}/notifications`,
           {
-            credentials: "include", // 쿠키 전송 필요
+            credentials: "include",
           }
         );
         let data: any;
@@ -58,14 +60,14 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f9fafb]">
-      <TopNavigation />
+      <TopNavigation showBackButton={true} />
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="space-y-3 p-4">
+        <div className="space-y-3 p-4 max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mx-auto">
           {notifications
             .slice()
             .reverse()
             .map((notification, index) => {
-              const IconComponent = iconMap[notification.type ?? "alert"];
+              const IconComponent = iconMap[notification.type ?? "DISCLOSURE"];
               return (
                 <motion.div
                   key={notification.id}
@@ -98,11 +100,13 @@ export default function NotificationsPage() {
                   }}
                   className={`p-4 rounded-2xl shadow-lg bg-white flex items-start gap-3 relative transition-all transform-gpu hover:scale-[1.01] hover:shadow-xl ${
                     !notification.read ? "ring-2 ring-blue-100" : ""
-                  }`}>
+                  }`}
+                >
                   <div
                     className={`p-2 rounded-full ${
                       !notification.read ? "bg-blue-100" : "bg-gray-100"
-                    }`}>
+                    }`}
+                  >
                     <IconComponent
                       className={`h-5 w-5 ${
                         !notification.read ? "text-blue-600" : "text-gray-600"

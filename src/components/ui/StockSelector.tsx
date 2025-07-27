@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SnapshotCard } from "@/src/types/SnapshotCard"; // 공통 타입 import
+import { SnapshotCard, UnifiedStockItem } from "@/src/types/SnapshotCard"; // 공통 타입 import
 import { StockLogo } from "./StockLogo";
 import Image from "next/image";
 
-// StockLogo 컴포넌트는 별도로 구현되어 있다고 가정합니다.
-// import { StockLogo } from "./StockLogo";
-
 interface StockSelectorProps {
-  snapshots: SnapshotCard[]; // events -> snapshots로 이름 및 타입 변경
-  selectedSnapshotId?: number; // selectedStock -> selectedSnapshotId로 변경
-  onStockSelect: (snapshotId: number) => void; // onStockSelect -> onStockChange로 변경되어 전달될 수 있음
-  onEdge?: (direction: "left" | "right") => void; // 추가
+  snapshots: SnapshotCard[];
+  selectedSnapshotId?: number;
+  onStockSelect: (snapshotId: number) => void;
+  onEdge?: (direction: "left" | "right") => void;
+  portfolio?: { [pdno: string]: UnifiedStockItem };
 }
 
 export const StockSelector = ({
@@ -21,6 +19,7 @@ export const StockSelector = ({
   selectedSnapshotId,
   onStockSelect,
   onEdge,
+  portfolio,
 }: StockSelectorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
@@ -45,34 +44,62 @@ export const StockSelector = ({
 
   // 좌/우 버튼 클릭 시 이전/다음 스냅샷을 선택하는 함수
   const changeStock = (direction: "left" | "right") => {
+    console.log("=== StockSelector changeStock 디버그 ===");
+    console.log("direction:", direction);
+    console.log("currentIndex:", currentIndex);
+    console.log("snapshots.length:", snapshots.length);
+    
     if (!snapshots || snapshots.length === 0) return;
 
     let newIndex = currentIndex + (direction === "left" ? -1 : 1);
+    console.log("newIndex:", newIndex);
+    
     if (newIndex < 0) {
+      console.log("왼쪽 엣지 도달, onEdge('left') 호출");
       if (onEdge) onEdge("left");
       return;
     }
     if (newIndex >= snapshots.length) {
+      console.log("오른쪽 엣지 도달, onEdge('right') 호출");
       if (onEdge) onEdge("right");
       return;
     }
 
+    console.log("일반 스톡 변경");
     onStockSelect(snapshots[newIndex].snapshotId);
   };
 
   if (!snapshots || snapshots.length === 0) {
     return (
-      <div className="bg-gray-100 p-2 flex items-center justify-center h-full">
+      <div className="bg-gray-100 pt-9 flex items-center justify-center h-full">
         <p className="text-sm text-gray-500">해당 날짜의 종목이 없습니다.</p>
       </div>
     );
   }
 
   const currentSnapshot = snapshots[currentIndex];
-  if (!currentSnapshot) return null; // 데이터가 없는 경우 렌더링하지 않음
+  if (!currentSnapshot) return null;
+
+  const stockInfo =
+    portfolio && currentSnapshot.stockCode
+      ? portfolio[currentSnapshot.stockCode.trim().toString()]
+      : undefined;
+
+  const evaluationAmount = stockInfo?.evaluation_amount || "---";
+  const profitLossAmount = stockInfo?.profit_loss_amount || "---";
+  const rateStr = stockInfo?.profit_loss_rate;
+  const profitLossRate =
+    rateStr && !isNaN(+rateStr) ? Math.floor(+rateStr * 100) / 100 : "---";
+
+  const getProfitColor = (value: string) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue === 0) return "text-gray-500";
+    return numValue > 0 ? "text-red-600" : "text-blue-600";
+  };
+  const profitColor = getProfitColor(profitLossAmount);
 
   return (
-    <div className="bg-gray-100 p-2 flex items-center space-x-2 h-full">
+    <div className="bg-gray-100 p-2.5 flex items-center space-x-2 h-full select-none">
       <button
         onClick={() => changeStock("left")}
         className="p-1 rounded-full hover:bg-gray-200 transition-colors"
@@ -87,8 +114,8 @@ export const StockSelector = ({
               <Image
                 src={`/ticker-icon/${currentSnapshot.stockCode}.png`}
                 alt={`${currentSnapshot.stockName} logo`}
-                layout="fill"
-                objectFit="contain"
+                fill
+                style={{ objectFit: "contain" }}
                 onError={() => setLogoError(true)}
               />
             ) : (
@@ -102,12 +129,20 @@ export const StockSelector = ({
             <p className="font-bold text-base truncate">
               {currentSnapshot.stockName}
             </p>
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {evaluationAmount}
+            </p>
             <p className="text-xs text-gray-500 truncate"></p>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-base whitespace-nowrap">
-              {currentSnapshot.stockCode}
+            {/* 손익금액 표시 */}
+            <p
+              className={`font-semibold text-base whitespace-nowrap ${profitColor}`}
+            >
+              {profitLossAmount}
             </p>
+            {/* 손익률 표시 */}
+            <p className={`text-sm ${profitColor}`}>({profitLossRate}%)</p>
           </div>
         </div>
       </div>

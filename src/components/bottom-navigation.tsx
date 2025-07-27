@@ -17,7 +17,7 @@ export function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t rounded-t-lg border-gray-stroke-100">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full bg-white border-t rounded-t-lg border-gray-stroke-100 z-50">
       <div className="flex">
         {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
           const isActive =
