@@ -25,10 +25,25 @@ export type StockItem = {
   quantity: number;
   currentPrice: number;
 };
-export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId: string; stockName: string };
-export type EarningCallItem = { earningCallId: number; ticker: string; date: string; ovrsItemName: string };
+export type DisclosureItem = {
+  id: number;
+  disclosureTitle: string;
+  disclosureDate: string;
+  stockId: string;
+  stockName: string;
+};
+export type EarningCallItem = {
+  earningCallId: number;
+  ticker: string;
+  date: string;
+  ovrsItemName: string;
+};
 export type NewsListResponse = { news: NewsItem[] };
-export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
+export type StockListResponse = {
+  stocks: StockItem[];
+  companyLogos: Record<string, string>;
+  summary?: { total_purchase_amount: number };
+};
 export type DisclosureListResponse = { data: DisclosureItem[] };
 export type MemberResponse = { memberName: string; memberNickname: string };
 export type EarningCallListResponse = { earningCalls: EarningCallItem[] };
@@ -63,7 +78,9 @@ async function fetchWithAuthCheck<T>(
   return jsonResponse;
 }
 
-const fetchMember = async (router: ReturnType<typeof useRouter>): Promise<MemberResponse> => {
+const fetchMember = async (
+  router: ReturnType<typeof useRouter>
+): Promise<MemberResponse> => {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/member/info`,
     {
@@ -72,10 +89,15 @@ const fetchMember = async (router: ReturnType<typeof useRouter>): Promise<Member
     },
     router
   );
-  return { memberName: jsonResponse.data.memberName, memberNickname: jsonResponse.data.memberNickname };
+  return {
+    memberName: jsonResponse.data.memberName,
+    memberNickname: jsonResponse.data.memberNickname,
+  };
 };
 
-export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promise<NewsListResponse> {
+export async function fetchNewsList(
+  router: ReturnType<typeof useRouter>
+): Promise<NewsListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`,
     {},
@@ -129,7 +151,9 @@ export async function fetchStockList(
   };
 }
 
-const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promise<DisclosureListResponse> => {
+const fetchDisclosureList = async (
+  router: ReturnType<typeof useRouter>
+): Promise<DisclosureListResponse> => {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/disclosure/my-current-disclosure`,
     {
@@ -143,7 +167,9 @@ const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promis
   return jsonResponse;
 };
 
-export async function fetchEarningCallList(router: ReturnType<typeof useRouter>): Promise<EarningCallListResponse> {
+export async function fetchEarningCallList(
+  router: ReturnType<typeof useRouter>
+): Promise<EarningCallListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/earning-calls/member/upcoming`,
     {
@@ -152,13 +178,16 @@ export async function fetchEarningCallList(router: ReturnType<typeof useRouter>)
     },
     router
   );
-  if (jsonResponse.code !== "EARNING-004") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
-  const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
-    earningCallId: item.id,
-    ticker: item.stockId,
-    date: item.earningCallDate,
-    ovrsItemName: item.ovrsItemName
-  }));
+  if (jsonResponse.code !== "EARNING-004")
+    throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
+  const mappedData: EarningCallItem[] = (jsonResponse.data || []).map(
+    (item: any) => ({
+      earningCallId: item.id,
+      ticker: item.stockId,
+      date: item.earningCallDate,
+      ovrsItemName: item.ovrsItemName,
+    })
+  );
   return { earningCalls: mappedData };
 }
 
@@ -251,7 +280,9 @@ export default function HomePage() {
 
     fetchEarningCallList(router)
       .then((res) => {
-        setEarningCallData(Array.isArray(res.earningCalls) ? res.earningCalls : []);
+        setEarningCallData(
+          Array.isArray(res.earningCalls) ? res.earningCalls : []
+        );
       })
       .catch(() => {
         setEarningCallData([]);
@@ -318,8 +349,7 @@ export default function HomePage() {
       <main className="flex-1 overflow-y-auto pb-20 p-0">
         <div
           className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(0)}
-        >
+          style={getSectionStyle(0)}>
           <NewsSlider
             newsItems={newsItems}
             newsIndex={newsIndex}
@@ -329,48 +359,40 @@ export default function HomePage() {
         </div>
         <div
           className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(1)}
-        >
+          style={getSectionStyle(1)}>
           <AssetSummary assetAmount={assetAmount} />
         </div>
         <div
           className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(2)}
-        >
+          style={getSectionStyle(2)}>
           <StockList stocks={stocksForStockList} companyLogos={logos} />
         </div>
         <div
           className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(3)}
-        >
-          <div className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 font-medium text-gray-800" style={getSectionStyle(2)}>
+          style={getSectionStyle(3)}>
+          <div
+            className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 font-medium text-gray-800"
+            style={getSectionStyle(2)}>
             {name}님을 위한 오늘의 코멘트예요
           </div>
           <AssetChart />
         </div>
         <div
           className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(4)}
-        >
+          style={getSectionStyle(4)}>
           <InfoTabs
             tab={tab}
             setTab={setTab}
-            disclosureData={disclosureData
-              .slice(0, 3)
-              .map((item) => ({
-                id: item.id,
-                title: item.disclosureTitle,
-                date: getRelativeTime(item.disclosureDate),
-              }))
-            }
-            earningCallData={earningCallData
-              .slice(0, 3)
-              .map((item) => ({
-                id: item.earningCallId,
-                title: item.ovrsItemName,
-                date: getRelativeTime(item.date),
-              }))
-            }
+            disclosureData={disclosureData.slice(0, 3).map((item) => ({
+              id: item.id,
+              title: item.disclosureTitle,
+              date: getRelativeTime(item.disclosureDate),
+            }))}
+            earningCallData={earningCallData.slice(0, 3).map((item) => ({
+              id: item.earningCallId,
+              title: item.ovrsItemName,
+              date: getRelativeTime(item.date),
+            }))}
           />
         </div>
       </main>
