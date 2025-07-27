@@ -74,6 +74,8 @@ export const TrebleSelector = ({
   const isSelectorDisabled = selectedGroupId === null && selectedStockCode === null;
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
+  const [dragStartTime, setDragStartTime] = useState(0);
+  const [hasDragged, setHasDragged] = useState(false);
 
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     // 드래그 비활성화 조건 확인
@@ -89,20 +91,32 @@ export const TrebleSelector = ({
     
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     setStartY(clientY);
+    setDragStartTime(Date.now());
+    setHasDragged(false);
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
+    
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = Math.abs(clientY - startY);
+    
+    // 드래그 거리가 5px 이상이면 드래그로 간주
+    if (deltaY > 5) {
+      setHasDragged(true);
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isDragging) return;
     const clientY = 'touches' in e ? e.changedTouches[0].clientY : e.clientY;
     const deltaY = clientY - startY;
+    const dragDuration = Date.now() - dragStartTime;
     
-    if (Math.abs(deltaY) > 30) {
+    // 드래그 거리가 30px 이상이고, 드래그 시간이 100ms 이상이며, 실제로 드래그가 발생했을 때만 처리
+    if (Math.abs(deltaY) > 30 && dragDuration > 100 && hasDragged) {
       dragDirection.current = deltaY > 0 ? 1 : -1;
       
       // 종목이 선택된 상태에서는 ScrapDateSelector와 ScrapStockSelector만 번갈아가며 전환
@@ -146,11 +160,12 @@ export const TrebleSelector = ({
       }
     }
     setIsDragging(false);
+    setHasDragged(false);
   };
 
   // 드래그 중일 때 하위 컴포넌트 클릭 방지
   const handleChildClick = (e: React.MouseEvent) => {
-    if (isDragging) {
+    if (isDragging || hasDragged) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -201,9 +216,13 @@ export const TrebleSelector = ({
         onMouseDown={handleTouchStart}
         onMouseMove={handleTouchMove}
         onMouseUp={handleTouchEnd}
+        onMouseLeave={() => {
+          setIsDragging(false);
+          setHasDragged(false);
+        }}
         onClick={(e) => {
           // 클릭 이벤트가 드래그 영역에서 발생했을 때만 처리
-          if (isDragging) {
+          if (isDragging || hasDragged) {
             e.preventDefault();
             e.stopPropagation();
           }

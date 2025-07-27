@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
+import { Card } from "@/src/components/ui/card";
 import AssetChart from "@/src/components/ui/asset-chart";
 import NewsSlider from "@/src/components/ui/news-slider";
 import StockList from "@/src/components/ui/stock-list";
@@ -23,15 +24,17 @@ export type StockItem = {
   profit_loss_amount: number;
   profit_loss_rate: number;
   quantity: number;
-  currentPrice: number;
 };
-export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId: string; stockName: string };
-export type EarningCallItem = { earningCallId: number; ticker: string; date: string; ovrsItemName: string };
-export type NewsListResponse = { news: NewsItem[] };
+export type AssetTrendPoint = number;
+
+export type AssetTrendData = { series: { name: string; data: AssetTrendPoint[] }[]; options: any; };
+export type DisclosureItem = { id: number; disclosureTitle: string; disclosureDate: string; stockId : string; stockName : string};
+export type EarningCallItem = { earningCallId: number; ticker: string; date: string; name: string };
+export type NewsListResponse = { news: NewsItem[]; };
 export type StockListResponse = { stocks: StockItem[]; companyLogos: Record<string, string>; summary?: { total_purchase_amount: number } };
-export type DisclosureListResponse = { data: DisclosureItem[] };
-export type MemberResponse = { memberName: string; memberNickname: string };
-export type EarningCallListResponse = { earningCalls: EarningCallItem[] };
+export type AssetTrendResponse = { assetTrendData: AssetTrendData; };
+export type DisclosureListResponse = { data: DisclosureItem[]; };
+export type EarningCallListResponse = { data: { earningCalls: EarningCallItem[] } };
 
 function getRelativeTime(dateString: string) {
   return dayjs(dateString).fromNow();
@@ -63,18 +66,6 @@ async function fetchWithAuthCheck<T>(
   return jsonResponse;
 }
 
-const fetchMember = async (router: ReturnType<typeof useRouter>): Promise<MemberResponse> => {
-  const jsonResponse = await fetchWithAuthCheck<any>(
-    `${process.env.NEXT_PUBLIC_BACK_API_URL}/member/info`,
-    {
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    },
-    router
-  );
-  return { memberName: jsonResponse.data.memberName, memberNickname: jsonResponse.data.memberNickname };
-};
-
 export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promise<NewsListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/main-news/current`,
@@ -89,9 +80,7 @@ export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promi
   return { news };
 }
 
-export async function fetchStockList(
-  router: ReturnType<typeof useRouter>
-): Promise<StockListResponse> {
+export async function fetchStockList(router: ReturnType<typeof useRouter>): Promise<StockListResponse> {
   const jsonResponse = await fetchWithAuthCheck<any>(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
     {
@@ -108,8 +97,7 @@ export async function fetchStockList(
   const companyLogos = jsonResponse.data?.companyLogos || {};
   const summary = jsonResponse.data?.summary || undefined;
 
-  // 여기서 stocks는 전체를 반환
-  const stocks: StockItem[] = stocksRaw.map((item: any) => ({
+  const stocks: StockItem[] = stocksRaw.slice(0, 6).map((item: any) => ({
     ticker: item.pdno,
     name: item.prdt_name,
     quantity: item.quantity,
@@ -119,7 +107,6 @@ export async function fetchStockList(
       100,
     profit_loss_rate:
       Math.round((Number(item.profit_loss_rate) + Number.EPSILON) * 100) / 100,
-    currentPrice: item.current_price,
   }));
 
   return {
@@ -127,6 +114,15 @@ export async function fetchStockList(
     companyLogos,
     summary,
   };
+}
+
+export async function fetchAssetTrend(router: ReturnType<typeof useRouter>): Promise<AssetTrendResponse> {
+  const jsonResponse = await fetchWithAuthCheck<any>(
+    "/api/asset-trend",
+    {},
+    router
+  );
+  return jsonResponse;
 }
 
 const fetchDisclosureList = async (router: ReturnType<typeof useRouter>): Promise<DisclosureListResponse> => {
@@ -152,16 +148,23 @@ export async function fetchEarningCallList(router: ReturnType<typeof useRouter>)
     },
     router
   );
-  if (jsonResponse.code !== "EARNING-004") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
+  if (jsonResponse.code !== "EARNING-014") throw new Error("어닝콜 데이터를 불러오지 못했습니다.");
+
   const mappedData: EarningCallItem[] = (jsonResponse.data || []).map((item: any) => ({
     earningCallId: item.id,
     ticker: item.stockId,
     date: item.earningCallDate,
-    ovrsItemName: item.ovrsItemName
+    name: item.stockName
   }));
-  return { earningCalls: mappedData };
+
+  return {
+    data: {
+      earningCalls: mappedData
+    }
+  };
 }
 
+// 색상 상수
 const BLUE_MAIN = "#5B9DF9";
 const BLUE_GRADIENT_FROM = "#5B9DF9";
 const BLUE_GRADIENT_TO = "#B3D8FD";
@@ -177,6 +180,10 @@ function getCompanyLogosByTicker(stocks: StockItem[]): Record<string, string> {
 
 const initialNews: NewsItem[] = [];
 const initialStocks: StockItem[] = [];
+const initialAssetTrend: AssetTrendData = {
+  series: [{ name: "자산", data: [] }],
+  options: {},
+};
 const initialDisclosures: DisclosureItem[] = [];
 const initialEarningCalls: EarningCallItem[] = [];
 
@@ -204,13 +211,13 @@ export default function HomePage() {
   const [assetAmount, setAssetAmount] = useState(0);
   const [stocks, setStocks] = useState(initialStocks);
   const [logos, setLogos] = useState<Record<string, string>>({});
+  const [assetTrendData, setAssetTrendData] = useState(initialAssetTrend);
   const [disclosureData, setDisclosureData] = useState(initialDisclosures);
   const [earningCallData, setEarningCallData] = useState(initialEarningCalls);
   const [newsIndex, setNewsIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tab, setTab] = useState<"공시" | "어닝콜">("공시");
-  const [name, setName] = useState("");
 
   const hasFetched = useRef(false);
 
@@ -223,6 +230,7 @@ export default function HomePage() {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
+    // 로그인 리다이렉트 중복 방지 초기화
     hasRedirectedToLogin = false;
 
     fetchNewsList(router)
@@ -245,30 +253,67 @@ export default function HomePage() {
         setAssetAmount(0);
       });
 
+    fetchAssetTrend(router)
+      .then((res) => setAssetTrendData(res.assetTrendData))
+      .catch(() =>
+        setAssetTrendData({
+          series: [
+            { name: "자산", data: [1000, 1200, 1300, 1250, 1400, 1500, 1600] },
+          ],
+          options: {
+            chart: {
+              type: "line",
+              height: 120,
+              toolbar: { show: false },
+              sparkline: { enabled: true },
+            },
+            stroke: { curve: "smooth", width: 3, colors: [BLUE_LINE] },
+            xaxis: {
+              categories: ["월", "화", "수", "목", "금", "토", "일"],
+              labels: { show: false },
+              axisBorder: { show: false },
+              axisTicks: { show: false },
+            },
+            yaxis: { show: false },
+            grid: { show: false },
+            dataLabels: { enabled: false },
+            tooltip: { enabled: false },
+            fill: {
+              type: "gradient",
+              gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.3,
+                opacityTo: 0.07,
+                stops: [0, 100],
+                colorStops: [
+                  [
+                    { offset: 0, color: BLUE_GRADIENT_FROM, opacity: 0.3 },
+                    { offset: 100, color: BLUE_GRADIENT_TO, opacity: 0.07 },
+                  ],
+                ],
+              },
+            },
+            colors: [BLUE_MAIN],
+          },
+        })
+      );
+
     fetchDisclosureList(router)
       .then((res) => setDisclosureData(Array.isArray(res.data) ? res.data : []))
       .catch(() => setDisclosureData([]));
 
     fetchEarningCallList(router)
       .then((res) => {
-        setEarningCallData(Array.isArray(res.earningCalls) ? res.earningCalls : []);
+        setEarningCallData(Array.isArray(res.data.earningCalls) ? res.data.earningCalls : []);
       })
       .catch(() => {
         setEarningCallData([]);
-      });
-
-    fetchMember(router)
-      .then((res) => {
-        setName(res.memberName);
-      })
-      .catch(() => {
-        setName("");
       });
   }, [router]);
 
   useEffect(() => {
     if (newsItems.length === 0) return;
-    timeoutRef.current = setTimeout(() => handleSlide("up"), 2200);
+    timeoutRef.current = setTimeout(() => handleSlide("up"), 2200); // 2000ms -> 2200ms로 약간 여유를 줌
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
@@ -300,26 +345,11 @@ export default function HomePage() {
     willChange: "opacity, transform",
   });
 
-  const stocksForStockList = stocks.slice(0, 6);
-
-  const assetChartStocks = useMemo(() => {
-    if (!stocks || !Array.isArray(stocks)) return [];
-    return stocks.filter(
-      (item) =>
-        item &&
-        typeof item.ticker !== "undefined" &&
-        typeof item.name === "string"
-    );
-  }, [stocks]);
-
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation />
+      <TopNavigation title="" />
       <main className="flex-1 overflow-y-auto pb-20 p-0">
-        <div
-          className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(0)}
-        >
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(0)}>
           <NewsSlider
             newsItems={newsItems}
             newsIndex={newsIndex}
@@ -327,47 +357,38 @@ export default function HomePage() {
             onClick={() => handleSlide("up")}
           />
         </div>
-        <div
-          className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(1)}
-        >
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(1)}>
           <AssetSummary assetAmount={assetAmount} />
         </div>
-        <div
-          className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(2)}
-        >
-          <StockList stocks={stocksForStockList} companyLogos={logos} />
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(2)}>
+          <StockList stocks={stocks} companyLogos={logos} />
         </div>
-        <div
-          className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(3)}
-        >
-          <div className="max-w-[700px] w-full mx-auto px-4 mt-5 mb-2 font-medium text-gray-800" style={getSectionStyle(2)}>
-            {name}님을 위한 오늘의 코멘트예요
-          </div>
-          <AssetChart />
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(3)}>
+          <AssetChart assetTrendData={assetTrendData} />
+          <Card
+            className="mb-2 rounded-xl border-0 w-full"
+            style={{ maxWidth: "800px", margin: "0 auto" }}
+          />
         </div>
-        <div
-          className="max-w-[700px] w-full mx-auto px-4"
-          style={getSectionStyle(4)}
-        >
+        <div className="max-w-[700px] w-full mx-auto px-4" style={getSectionStyle(4)}>
           <InfoTabs
             tab={tab}
             setTab={setTab}
             disclosureData={disclosureData
               .slice(0, 3)
-              .map((item) => ({
-                id: item.id,
-                title: item.disclosureTitle,
-                date: getRelativeTime(item.disclosureDate),
-              }))
+              .map((item) => {
+                return {
+                  id: item.id,
+                  title: item.disclosureTitle,
+                  date: getRelativeTime(item.disclosureDate),
+                };
+              })
             }
             earningCallData={earningCallData
               .slice(0, 3)
               .map((item) => ({
                 id: item.earningCallId,
-                title: item.ovrsItemName,
+                title: item.name,
                 date: getRelativeTime(item.date),
               }))
             }

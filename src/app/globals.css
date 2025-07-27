@@ -58,17 +58,13 @@
   }
 }
 
-.recharts-pie-sector:focus {
-  outline: none !important;
-  stroke: #e3e8f0 !important;
-  stroke-width: 1 !important;
-  box-shadow: none !important;
-}
-.recharts-pie-sector:active {
-  outline: none !important;
-  box-shadow: none !important;
-}
-svg:focus, svg *:focus {
-  outline: none !important;
-  box-shadow: none !important;
+/* 스크롤바 숨김 유틸리티 */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+  }
 }

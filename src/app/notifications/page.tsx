@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNavigation } from "@/src/components/top-navigation";
 import { BottomNavigation } from "@/src/components/bottom-navigation";
+import { TrendingUp, Calendar, AlertCircle } from "lucide-react";
 import { MdOutlineAddIcCall } from "react-icons/md";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { TfiAnnouncement } from "react-icons/tfi";
@@ -60,7 +61,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f9fafb]">
-      <TopNavigation showBackButton={true} />
+      <TopNavigation />
       <main className="flex-1 overflow-y-auto pb-20">
         <div className="space-y-3 p-4 max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mx-auto">
           {notifications
@@ -100,13 +101,11 @@ export default function NotificationsPage() {
                   }}
                   className={`p-4 rounded-2xl shadow-lg bg-white flex items-start gap-3 relative transition-all transform-gpu hover:scale-[1.01] hover:shadow-xl ${
                     !notification.read ? "ring-2 ring-blue-100" : ""
-                  }`}
-                >
+                  }`}>
                   <div
                     className={`p-2 rounded-full ${
                       !notification.read ? "bg-blue-100" : "bg-gray-100"
-                    }`}
-                  >
+                    }`}>
                     <IconComponent
                       className={`h-5 w-5 ${
                         !notification.read ? "text-blue-600" : "text-gray-600"

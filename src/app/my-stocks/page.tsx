@@ -31,7 +31,6 @@ const getCompanyLogosByTicker = (
 async function fetchStockList(): Promise<{
   stocks: StockItem[];
   companyLogos: CompanyLogos;
-  authError?: boolean;
 }> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BACK_API_URL}/kis/unified-stocks`,
@@ -40,16 +39,10 @@ async function fetchStockList(): Promise<{
       credentials: "include",
     }
   );
-
   if (!res.ok) {
     return { stocks: [], companyLogos: {} };
   }
-
   const json = await res.json();
-  if (json.data.code === "AUTH-002") {
-    return { stocks: [], companyLogos: {}, authError: true };
-  }
-
   const stocksRaw =
     json.data?.stocks || json.data?.stockList || json.data || [];
   const companyLogos = json.data?.companyLogos || {};
@@ -75,14 +68,10 @@ export default function MyStocksPage() {
 
   useEffect(() => {
     fetchStockList().then((res) => {
-      if (res.authError) {
-        router.replace("/login");
-        return;
-      }
       setStocks(res.stocks);
       setCompanyLogos(getCompanyLogosByTicker(res.stocks));
     });
-  }, [router]);
+  }, []);
 
   const getProfitLossAmountString = (amount: number) => {
     if (amount > 0) return `+${amount.toLocaleString()}`;
@@ -104,27 +93,15 @@ export default function MyStocksPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-white">
+    <div>
+      <TopNavigation showBackButton title="" />
       <div
-        className="fixed top-0 left-0 right-0 z-30 bg-white"
-        style={{
-          maxWidth: "700px",
-          marginLeft: "auto",
-          marginRight: "auto",
-          width: "100%",
-        }}
-      >
-        <TopNavigation showBackButton />
-      </div>
-      <div
-        className="w-full"
+        className="mb-2 border-0 w-full"
         style={{
           maxWidth: "700px",
           width: "100%",
           marginLeft: "auto",
           marginRight: "auto",
-          paddingTop: "56px",
-          paddingBottom: "64px",
         }}
       >
         <div className="p-0">
@@ -231,17 +208,7 @@ export default function MyStocksPage() {
           </div>
         </div>
       </div>
-      <div
-        className="fixed bottom-0 left-0 right-0 z-30 bg-white"
-        style={{
-          maxWidth: "700px",
-          marginLeft: "auto",
-          marginRight: "auto",
-          width: "100%",
-        }}
-      >
-        <BottomNavigation />
-      </div>
+      <BottomNavigation />
     </div>
   );
 }
