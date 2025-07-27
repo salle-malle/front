@@ -18,7 +18,7 @@ export default function SummarySlider({ summaries }: SummarySliderProps) {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % summaries.length);
-    }, 2500);
+    }, 4000);
     return () => clearInterval(timer);
   }, [summaries.length]);
 

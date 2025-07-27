@@ -64,38 +64,17 @@ const useStocks = () => {
   return { stocks, loading };
 };
 
-// const useSummaryString = () => {
-//   const [summary, setSummary] = useState("");
-//   useEffect(() => {
-//     let mounted = true;
-//     fetchTodayComment().then((result) => {
-//       if (mounted) setSummary(result);
-//     });
-//     return () => {
-//       mounted = false;
-//     };
-//   }, []);
-//   return summary;
-// };
 const useSummaryString = () => {
-  // mock 마크다운 형식 총평
-  const mockSummary = `
-📉 테슬라 하락
-전기차 수요 둔화로 오늘 테슬라는 -4.2% 하락했습니다.
-
-📈 애플 어닝 서프라이즈
-예상치를 웃도는 실적으로 2.1% 상승세를 기록했습니다.
-
-💡 오늘의 투자 코멘트
-기술주 중심의 포트폴리오라면 단기 리밸런싱을 고려해보세요.
-  `;
-
   const [summary, setSummary] = useState("");
-
   useEffect(() => {
-    setSummary(mockSummary);
+    let mounted = true;
+    fetchTodayComment().then((result) => {
+      if (mounted) setSummary(result);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
-
   return summary;
 };
 
