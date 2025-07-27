@@ -103,7 +103,7 @@ export default function AssetChart() {
   const parsedSummaries = useMemo(() => {
     const parsed = summaryString
       .trim()
-      .split(/\n\s*\n/) // 줄 두 개 이상 + 공백 가능
+      .split(/\n\s*\n/)
       .map((block, idx) => {
         const lines = block
           .trim()
@@ -140,8 +140,6 @@ export default function AssetChart() {
         marginLeft: "auto",
         marginRight: "auto",
         boxShadow: "0 4px 24px 0 rgba(180, 210, 255, 0.18)",
-        // background: "#fff", // 배경 제거
-        // border: "1px solid #e3e8f0", // 테두리 제거
       }}>
       <CardContent className="rounded-xl p-0">
         <div
@@ -230,19 +228,25 @@ export default function AssetChart() {
           <div
             style={{
               flex: 1,
-              padding: "0 20px",
+              padding: "0 12px",
               boxSizing: "border-box",
               borderLeft: "1px solid #e3e8f0",
               background: "#f8fafc",
-              fontSize: 16,
+              fontSize: "14px",
               color: "#334155",
               overflowY: "auto",
               borderTopRightRadius: 16,
               borderBottomRightRadius: 16,
               display: "flex",
               alignItems: "center",
+              minHeight: "140px",
             }}>
-            <div style={{ whiteSpace: "pre-line", wordBreak: "break-word" }}>
+            <div style={{ 
+              whiteSpace: "pre-line", 
+              wordBreak: "break-word",
+              width: "100%",
+              fontSize: "clamp(12px, 2.5vw, 16px)",
+            }}>
               {parsedSummaries.length > 0 ? (
                 <SummarySlider summaries={parsedSummaries} />
               ) : (
