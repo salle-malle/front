@@ -4,19 +4,26 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import type { OverseasStockDetail } from "@/src/types/ApiResponse";
-import { FaCircleDot } from "react-icons/fa6";
 
 interface StockHeaderProps {
   stockData: OverseasStockDetail;
   stockCode: string;
-  earningCallDday?: string;
 }
 
-export function StockHeader({ stockData, stockCode, earningCallDday }: StockHeaderProps) {
+export function StockHeader({ stockData, stockCode }: StockHeaderProps) {
   const formatCurrency = (value: string) => {
     const num = Number.parseFloat(value);
     if (isNaN(num)) return "$0.00";
     return `$${num.toFixed(2)}`;
+  };
+
+  const formatLargeNumber = (value: string) => {
+    const num = Number.parseFloat(value);
+    if (isNaN(num)) return "0";
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toLocaleString()}`;
   };
 
   const getPriceChangeData = () => {
@@ -48,41 +55,60 @@ export function StockHeader({ stockData, stockCode, earningCallDday }: StockHead
   const priceChange = getPriceChangeData();
 
   return (
-    <Card className="w-full mt-4 shadow-sm border-0 border-none bg-white">
-      <CardContent className="p-6 w-full">
+    <Card className="mx-4 mt-4 shadow-sm border-0 bg-white">
+      <CardContent className="p-6">
+        {/* 종목명과 코드 */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            {earningCallDday && (
-              <div className="mb-2 flex items-center">
-                <span className="ml-[-4px] px-2 py-1.5 rounded-full bg-gray-100 text-gray-500 text-xs font-medium flex items-center gap-1">
-                  <FaCircleDot className="text-xs" />
-                  <span className="text-xs">{earningCallDday}</span>
-                </span>
-              </div>
-            )}
-            <div className="flex items-center mb-1">
-              <h1 className="text-xl font-semibold text-gray-900">
-                {stockData.etyp_nm || stockCode}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-normal text-gray-500 tracking-wider">
-                {stockCode}
-              </p>
-            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-1">
+              {stockData.etyp_nm || stockCode}
+            </h1>
+            <p className="text-xs font-normal text-gray-500 tracking-wider">
+              {stockCode}
+            </p>
           </div>
           <Badge variant="secondary" className="text-xs font-medium">
             {stockData.eicod || "해외주식"}
           </Badge>
         </div>
+
+        {/* 현재가와 등락 정보 */}
         <div className="flex items-end justify-between">
-          <div className="flex items-center gap-2">
+          <div>
             <p className="text-2xl font-semibold text-gray-900 mb-1">
               {formatCurrency(stockData.last || stockData.txprc)}
             </p>
-            <span className={`text-base font-medium ${priceChange.colorClass}`}>
-              {priceChange.changePercent}
-            </span>
+            <p className="text-sm text-gray-400">현재가</p>
+          </div>
+
+          <div
+            className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${priceChange.bgColorClass}`}>
+            <div
+              className={`flex items-center space-x-1 ${priceChange.colorClass}`}>
+              {priceChange.icon}
+              <span className="text-base font-medium">
+                {priceChange.changePercent}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 등락폭과 시가총액 */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center space-x-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">등락폭</p>
+              <p className={`text-sm font-medium ${priceChange.colorClass}`}>
+                {priceChange.changeAmount}
+              </p>
+            </div>
+            <div className="h-8 w-px bg-gray-200" />
+            <div>
+              <p className="text-xs text-gray-500 mb-1">시가총액</p>
+              <p className="text-sm font-medium text-gray-700">
+                {formatLargeNumber(stockData.mcap)}
+              </p>
+            </div>
           </div>
         </div>
       </CardContent>

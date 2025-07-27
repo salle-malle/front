@@ -86,10 +86,14 @@ export default function AccountRegisterPage() {
   };
 
   const getUnderlineClass = (isFocused: boolean, value: string) => {
-    return isFocused || value !== "" ? "border-[#2978EE]" : "border-gray-300";
+    return (isFocused || value !== "")
+      ? "border-[#2978EE]"
+      : "border-gray-300";
   };
   const getLabelColor = (isFocused: boolean, value: string) => {
-    return isFocused || value !== "" ? "#2978EE" : "#848A92";
+    return (isFocused || value !== "")
+      ? "#2978EE"
+      : "#848A92";
   };
 
   // 필수값이 모두 입력되어야 버튼 활성화
@@ -97,7 +101,7 @@ export default function AccountRegisterPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TopNavigation showBackButton />
+      <TopNavigation showBackButton title="" />
 
       <div className="flex flex-col justify-between flex-1 px-12 py-8">
         <div>
@@ -125,13 +129,10 @@ export default function AccountRegisterPage() {
             <Input
               id="accountNumber"
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
+              onChange={e => setAccountNumber(e.target.value)}
               onFocus={() => setFocusAccountNumber(true)}
               onBlur={() => setFocusAccountNumber(false)}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-                focusAccountNumber,
-                accountNumber
-              )}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusAccountNumber, accountNumber)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -151,13 +152,10 @@ export default function AccountRegisterPage() {
             <Input
               id="appKey"
               value={appKey}
-              onChange={(e) => setAppKey(e.target.value)}
+              onChange={e => setAppKey(e.target.value)}
               onFocus={() => setFocusAppKey(true)}
               onBlur={() => setFocusAppKey(false)}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-                focusAppKey,
-                appKey
-              )}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusAppKey, appKey)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -177,13 +175,10 @@ export default function AccountRegisterPage() {
             <Input
               id="appSecret"
               value={appSecret}
-              onChange={(e) => setAppSecret(e.target.value)}
+              onChange={e => setAppSecret(e.target.value)}
               onFocus={() => setFocusAppSecret(true)}
               onBlur={() => setFocusAppSecret(false)}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-                focusAppSecret,
-                appSecret
-              )}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusAppSecret, appSecret)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -193,9 +188,7 @@ export default function AccountRegisterPage() {
           </div>
         </div>
         {errorMessage && (
-          <div className="text-center text-red-500 text-sm mt-4">
-            {errorMessage}
-          </div>
+          <div className="text-center text-red-500 text-sm mt-4">{errorMessage}</div>
         )}
       </div>
 

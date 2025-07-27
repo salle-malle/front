@@ -52,9 +52,6 @@ export const AddGroupDialog = ({
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <Label htmlFor="groupName" className="text-sm font-medium">
-              그룹 이름
-            </Label>
             <Input
               id="groupName"
               type="text"
@@ -64,7 +61,11 @@ export const AddGroupDialog = ({
               className="mt-1"
               disabled={isLoading}
               autoFocus
+              maxLength={20}
             />
+            <div className="text-xs text-gray-500 mt-1 text-right">
+              {groupName.length}/20
+            </div>
           </div>
 
           <div className="flex space-x-2">
@@ -79,7 +80,7 @@ export const AddGroupDialog = ({
             </Button>
             <Button
               type="submit"
-              disabled={!groupName.trim() || isLoading}
+              disabled={!groupName.trim() || groupName.length > 20 || isLoading}
               className="flex-1"
             >
               {isLoading ? "추가 중..." : "추가"}

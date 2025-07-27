@@ -11,9 +11,7 @@ const validateUserId = (id: string) => {
   return /^[a-zA-Z0-9]{5,20}$/.test(id);
 };
 const validatePassword = (pw: string) => {
-  return /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,20}$/.test(
-    pw
-  );
+  return /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,20}$/.test(pw);
 };
 const validateNickname = (nick: string) => {
   return /^[가-힣a-zA-Z0-9]{2,12}$/.test(nick);
@@ -66,14 +64,11 @@ export default function UserAccountPage() {
       return;
     }
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_API_URL}/member/check/memberId`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId: userId }),
-        }
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACK_API_URL}/member/check/memberId`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: userId }),
+      });
       const data = await response.json();
       if (data.code === "SUCCESS-001") {
         setUserIdError("");
@@ -90,9 +85,7 @@ export default function UserAccountPage() {
 
   const handlePasswordBlur = () => {
     if (password && !validatePassword(password)) {
-      setPasswordError(
-        "비밀번호는 영문, 숫자, 특수문자 포함 8~20자여야 합니다."
-      );
+      setPasswordError("비밀번호는 영문, 숫자, 특수문자 포함 8~20자여야 합니다.");
     }
     if (!password) {
       setFocusPassword(false);
@@ -127,11 +120,7 @@ export default function UserAccountPage() {
     return "#848A92";
   };
 
-  const getUnderlineClass = (
-    isFocused: boolean,
-    value: string,
-    error: string
-  ) => {
+  const getUnderlineClass = (isFocused: boolean, value: string, error: string) => {
     if (error) return "border-red-500";
     if (isFocused) return "border-[#2978EE]";
     if (value !== "") return "border-[#2978EE]";
@@ -147,7 +136,7 @@ export default function UserAccountPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TopNavigation showBackButton />
+      <TopNavigation showBackButton title="" />
       <div className="flex flex-col justify-between flex-1 px-12 py-8">
         <div>
           <p
@@ -178,11 +167,7 @@ export default function UserAccountPage() {
               onChange={handleUserIdChange}
               onFocus={() => setFocusUserId(true)}
               onBlur={() => setFocusUserId(false)}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-                focusUserId,
-                userId,
-                userIdError
-              )}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusUserId, userId, userIdError)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -197,8 +182,7 @@ export default function UserAccountPage() {
                 height: "32px",
                 fontSize: "13px",
                 color: "#fff",
-                boxShadow:
-                  "0 4px 12px 0 rgba(130,130,130,0.15), 0 1.5px 4px 0 rgba(130,130,130,0.10)",
+                boxShadow: "0 4px 12px 0 rgba(130,130,130,0.15), 0 1.5px 4px 0 rgba(130,130,130,0.10)",
               }}
               tabIndex={-1}
               onClick={fetchUserId}
@@ -218,9 +202,7 @@ export default function UserAccountPage() {
 
           {/* 비밀번호 */}
           <label
-            style={{
-              color: getLabelColor(focusPassword, password, passwordError),
-            }}
+            style={{ color: getLabelColor(focusPassword, password, passwordError) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="password"
           >
@@ -234,11 +216,7 @@ export default function UserAccountPage() {
               onChange={handlePasswordChange}
               onFocus={() => setFocusPassword(true)}
               onBlur={handlePasswordBlur}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-                focusPassword,
-                password,
-                passwordError
-              )}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusPassword, password, passwordError)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -247,16 +225,12 @@ export default function UserAccountPage() {
             />
           </div>
           <div className="mt-1 text-xs min-h-[18px]">
-            {passwordError && (
-              <span className="text-red-500">{passwordError}</span>
-            )}
+            {passwordError && <span className="text-red-500">{passwordError}</span>}
           </div>
 
           {/* 닉네임 */}
           <label
-            style={{
-              color: getLabelColor(focusNickname, nickname, nicknameError),
-            }}
+            style={{ color: getLabelColor(focusNickname, nickname, nicknameError) }}
             className="block text-sm font-medium mt-10 mb-1"
             htmlFor="nickname"
           >
@@ -269,11 +243,7 @@ export default function UserAccountPage() {
               onChange={handleNicknameChange}
               onFocus={() => setFocusNickname(true)}
               onBlur={handleNicknameBlur}
-              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-                focusNickname,
-                nickname,
-                nicknameError
-              )}`}
+              className={`flex-1 h-9 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focusNickname, nickname, nicknameError)}`}
               inputMode="text"
               enterKeyHint="done"
               style={{ scrollMarginTop: 100 }}
@@ -282,9 +252,7 @@ export default function UserAccountPage() {
             />
           </div>
           <div className="mt-1 text-xs min-h-[18px]">
-            {nicknameError && (
-              <span className="text-red-500">{nicknameError}</span>
-            )}
+            {nicknameError && <span className="text-red-500">{nicknameError}</span>}
           </div>
         </div>
       </div>

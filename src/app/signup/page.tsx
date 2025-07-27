@@ -13,15 +13,19 @@ export default function SignupLandingPage() {
   const [focus, setFocus] = useState(false);
 
   const getUnderlineClass = (isFocused: boolean, value: string) => {
-    return isFocused || value !== "" ? "border-[#2978EE]" : "border-gray-300";
+    return (isFocused || value !== "")
+      ? "border-[#2978EE]"
+      : "border-gray-300";
   };
   const getLabelColor = (isFocused: boolean, value: string) => {
-    return isFocused || value !== "" ? "#2978EE" : "#848A92";
+    return (isFocused || value !== "")
+      ? "#2978EE"
+      : "#848A92";
   };
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TopNavigation showBackButton={true} />
+      <TopNavigation showBackButton={true} title="" />
 
       <div className="flex flex-col justify-between flex-1 px-12 py-8">
         <div>
@@ -42,10 +46,7 @@ export default function SignupLandingPage() {
             onChange={(e) => setName(e.target.value)}
             onFocus={() => setFocus(true)}
             onBlur={() => setFocus(false)}
-            className={`w-full h-10 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(
-              focus,
-              name
-            )}`}
+            className={`w-full h-10 pr-3 pl-0 bg-white border-0 border-b-2 rounded-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:ring-0 focus-visible:outline-none text-base ${getUnderlineClass(focus, name)}`}
             inputMode="text"
             enterKeyHint="done"
             style={{ scrollMarginTop: 100 }}
