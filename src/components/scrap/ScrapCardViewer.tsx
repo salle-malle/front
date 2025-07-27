@@ -48,7 +48,7 @@ const getCardDimensions = () => {
   // 화면 크기에 따른 카드 크기 조정
   if (screenWidth < 480) {
     // 모바일 세로 (세로 모드)
-    const availableHeight = screenHeight - 450; // 네비게이션, 헤더 등 제외
+    const availableHeight = screenHeight - 350; // 네비게이션, 헤더 등 제외
     return { 
       width: Math.min(screenWidth - 40, 280), 
       imageHeight: Math.min(screenHeight * 0.25, 140),
