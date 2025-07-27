@@ -47,7 +47,7 @@ const getCardDimensions = () => {
   // 화면 크기에 따른 카드 크기 조정
   if (screenWidth < 480) {
     // 모바일 세로 (세로 모드)
-    const availableHeight = screenHeight - 200; // 네비게이션, 헤더 등 제외
+    const availableHeight = screenHeight - 450; // 네비게이션, 헤더 등 제외
     return { 
       width: Math.min(screenWidth - 40, 280), 
       imageHeight: Math.min(screenHeight * 0.25, 140),
@@ -55,7 +55,7 @@ const getCardDimensions = () => {
     };
   } else if (screenWidth < 768) {
     // 모바일 가로 / 태블릿 세로
-    const availableHeight = screenHeight - 180;
+    const availableHeight = screenHeight - 350;
     return { 
       width: Math.min(screenWidth - 60, 320), 
       imageHeight: Math.min(screenHeight * 0.28, 160),
@@ -63,7 +63,7 @@ const getCardDimensions = () => {
     };
   } else if (screenWidth < 1024) {
     // 태블릿 가로
-    const availableHeight = screenHeight - 160;
+    const availableHeight = screenHeight - 300;
     return { 
       width: Math.min(screenWidth - 80, 400), 
       imageHeight: Math.min(screenHeight * 0.3, 200),
@@ -73,17 +73,25 @@ const getCardDimensions = () => {
     // 중간 데스크톱 (1024px ~ 1440px)
     const availableHeight = screenHeight - 140;
     return { 
-      width: Math.min(screenWidth - 100, 520), 
-      imageHeight: Math.min(screenHeight * 0.35, 280),
-      cardHeight: Math.min(availableHeight * 0.95, 1000) // 더 큰 카드 높이
+      width: Math.min(screenWidth - 100, 420), // 너비 제한
+      imageHeight: Math.min(screenHeight * 0.35, 210),
+      cardHeight: Math.min(availableHeight * 0.95, 756) // 420 * 1.8 = 756
+    };
+  } else if (screenWidth < 1920) {
+    // 대형 데스크톱 (1440px ~ 1920px)
+    const availableHeight = screenHeight - 250;
+    return { 
+      width: Math.min(screenWidth - 120, 460), // 너비 제한
+      imageHeight: Math.min(screenHeight * 0.35, 230),
+      cardHeight: Math.min(availableHeight * 0.95, 828) // 460 * 1.8 = 828
     };
   } else {
-    // 대형 데스크톱 (1440px 이상)
-    const availableHeight = screenHeight - 140;
+    // 초대형 데스크톱 (1920px 이상)
+    const availableHeight = screenHeight - 300;
     return { 
-      width: Math.min(screenWidth - 120, 600), 
-      imageHeight: Math.min(screenHeight * 0.38, 320),
-      cardHeight: Math.min(availableHeight * 0.95, 1200) // 더 큰 카드 높이
+      width: Math.min(screenWidth - 140, 500), // 너비 제한
+      imageHeight: Math.min(screenHeight * 0.35, 250),
+      cardHeight: Math.min(availableHeight * 0.95, 900) // 500 * 1.8 = 900
     };
   }
 };
@@ -250,6 +258,14 @@ export const CardViewer = ({
       const isCurrentCard = originalIndex === currentIndex;
       if (!isCurrentCard) return;
 
+      // 드래그 시작 시 길게 누르기 타이머 취소
+      if (down && longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+        setIsLongPressing(false);
+        setLongPressingCardIndex(null);
+      }
+
       // 드래그 범위 제한 (카드 너비의 50%로 제한)
       const maxDragDistance = cardDimensions.width * 0.5;
       const clampedMx = Math.max(-maxDragDistance, Math.min(maxDragDistance, mx));
@@ -287,12 +303,12 @@ export const CardViewer = ({
       );
       
       // 스크롤 영역에서는 더 민감한 스와이프 감지, 텍스트 영역에서는 중간 민감도
-      const swipeThreshold = isScrollArea ? cardDimensions.width * 0.05 : 
-                           isTextArea ? cardDimensions.width * 0.1 : 
-                           cardDimensions.width * 0.2;
-      const velocityThreshold = isScrollArea ? 0.05 : 
-                              isTextArea ? 0.1 : 
-                              0.2;
+      const swipeThreshold = isScrollArea ? cardDimensions.width * 0.08 : 
+                           isTextArea ? cardDimensions.width * 0.15 : 
+                           cardDimensions.width * 0.25;
+      const velocityThreshold = isScrollArea ? 0.08 : 
+                              isTextArea ? 0.15 : 
+                              0.25;
       const trigger = Math.abs(clampedMx) > swipeThreshold || Math.abs(vx) > velocityThreshold;
 
       if (!down) {
@@ -300,8 +316,12 @@ export const CardViewer = ({
           const direction = dx > 0 ? -1 : 1;
           onSwipe(direction);
         } else {
+          // 스와이프 취소 시 부드러운 애니메이션으로 원위치 복귀
           api.start((i) => ({
             x: (i - currentIndex) * (cardDimensions.width + cardSpacing),
+            scale: i === currentIndex ? 1 : 0.85,
+            opacity: Math.abs(i - currentIndex) > 1 ? 0 : 1,
+            config: { tension: 300, friction: 30 } // 부드러운 스프링 애니메이션
           }));
         }
       } else {
@@ -328,7 +348,17 @@ export const CardViewer = ({
             if (i !== originalIndex) return;
             // 가운데 카드의 경우 기본 위치(0)에 드래그 거리를 더함
             const baseX = (i - currentIndex) * (cardDimensions.width + cardSpacing);
-            return { x: baseX + clampedMx, immediate: true };
+            const newX = baseX + clampedMx;
+            
+            // 스와이프 진행률에 따른 스케일 조정 (피드백 개선)
+            const swipeProgress = Math.abs(clampedMx) / (cardDimensions.width * 0.5);
+            const scaleAdjustment = 1 - (swipeProgress * 0.05); // 최대 5% 축소
+            
+            return { 
+              x: newX, 
+              scale: scaleAdjustment,
+              immediate: true 
+            };
           });
         }
       }
@@ -353,12 +383,14 @@ export const CardViewer = ({
                 width: cardDimensions.width,
                 height: cardDimensions.cardHeight,
                 maxHeight: "85vh", // 뷰포트 높이의 85%로 제한
-                touchAction: "pan-y",
+                touchAction: "none", // 모바일에서 가로/세로 스와이프 모두 허용
                 cursor: "grab",
                 userSelect: "none", // 드래그 선택 방지
                 WebkitUserSelect: "none", // Safari 지원
                 MozUserSelect: "none", // Firefox 지원
                 msUserSelect: "none", // IE 지원
+                WebkitTouchCallout: "none", // iOS에서 컨텍스트 메뉴 방지
+                WebkitTapHighlightColor: "transparent", // 터치 하이라이트 제거
               }}>
             <Dialog>
               <Card 
@@ -414,7 +446,7 @@ export const CardViewer = ({
 
                   <ScrollArea 
                     style={{ 
-                      touchAction: "pan-y",
+                      touchAction: "pan-y", // 세로 스크롤만 허용 (텍스트 영역)
                       height: cardDimensions.cardHeight - cardDimensions.imageHeight- 12, // 이미지 높이와 패딩을 제외한 고정 높이
                       minHeight: "250px", // 최소 높이 보장 (100 * 1.8)
                       maxHeight: Math.min(cardDimensions.cardHeight * 1.2, 1440)
@@ -427,7 +459,7 @@ export const CardViewer = ({
                         WebkitUserSelect: "none",
                         MozUserSelect: "none",
                         msUserSelect: "none",
-                        touchAction: "pan-y",
+                        touchAction: "pan-y", // 세로 스크롤만 허용
                         fontSize: cardDimensions.width < 480 ? "14px" : 
                                 cardDimensions.width < 768 ? "15px" : 
                                 cardDimensions.width <= 1024 ? "20px" : 

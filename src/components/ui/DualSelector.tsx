@@ -45,6 +45,8 @@ export const DualSelector = ({
   const dragDirection = useRef(1);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
+  const [dragStartTime, setDragStartTime] = useState(0);
+  const [hasDragged, setHasDragged] = useState(false);
 
   const transitions = useTransition(activeView, {
     from: { y: dragDirection.current * SELECTOR_HEIGHT, opacity: 0 },
@@ -66,20 +68,32 @@ export const DualSelector = ({
     
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     setStartY(clientY);
+    setDragStartTime(Date.now());
+    setHasDragged(false);
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
+    
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = Math.abs(clientY - startY);
+    
+    // 드래그 거리가 10px 이상이면 드래그로 간주
+    if (deltaY > 5) {
+      setHasDragged(true);
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isDragging) return;
     const clientY = 'touches' in e ? e.changedTouches[0].clientY : e.clientY;
     const deltaY = clientY - startY;
+    const dragDuration = Date.now() - dragStartTime;
     
-    if (Math.abs(deltaY) > 30) {
+    // 드래그 거리가 30px 이상이고, 드래그 시간이 100ms 이상이면 드래그로 간주
+    if (Math.abs(deltaY) > 30 && dragDuration > 100 && hasDragged) {
       if (deltaY < 0) {
         // 위로 드래그: 다음 뷰로 (아래에서 위로 올라옴)
         dragDirection.current = -1; // 아래에서 위로
@@ -99,11 +113,12 @@ export const DualSelector = ({
       }
     }
     setIsDragging(false);
+    setHasDragged(false);
   };
 
   // 드래그 중일 때 하위 컴포넌트 클릭 방지
   const handleChildClick = (e: React.MouseEvent) => {
-    if (isDragging) {
+    if (isDragging || hasDragged) {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -142,7 +157,7 @@ export const DualSelector = ({
         onMouseUp={handleTouchEnd}
         onClick={(e) => {
           // 클릭 이벤트가 드래그 영역에서 발생했을 때만 처리
-          if (isDragging) {
+          if (isDragging || hasDragged) {
             e.preventDefault();
             e.stopPropagation();
           }

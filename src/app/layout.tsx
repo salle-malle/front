@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "bolle-malle!",
-  // description: "bolle-malle!",
+  description: "bolle-malle!",
   generator: "pda",
 };
 
@@ -26,8 +26,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem
-          disableTransitionOnChange
-        >
+          disableTransitionOnChange>
           <ConditionalLayout>{children}</ConditionalLayout>
           <Toaster />
         </ThemeProvider>
