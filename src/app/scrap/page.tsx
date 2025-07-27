@@ -996,6 +996,74 @@ export default function ScrapPage() {
     }
   };
 
+  const handleUpdateGroupName = async (groupId: number, newName: string) => {
+    console.log("=== handleUpdateGroupName Debug ===");
+    console.log("Updating group name:", { groupId, newName });
+
+    try {
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgroup/groupnameupdate`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ 
+            scrapGroupId: groupId, 
+            scrapGroupName: newName 
+          }),
+        },
+        router
+      );
+
+      console.log("Update group name response:", response);
+
+      if (response.status) {
+        // 그룹 목록 새로고침
+        await fetchGroups();
+      } else {
+        throw new Error(response.message || "그룹 이름 수정에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to update group name:", error);
+      throw error;
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: number) => {
+    console.log("=== handleDeleteGroup Debug ===");
+    console.log("Deleting group:", groupId);
+
+    try {
+      const response = await fetchWithAuthCheck(
+        `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrapgroup/delete`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ scrapGroupId: groupId }),
+        },
+        router
+      );
+
+      console.log("Delete group response:", response);
+
+      if (response.status) {
+        // 그룹 목록 새로고침
+        await fetchGroups();
+        
+        // 삭제된 그룹이 현재 선택된 그룹이면 전체로 변경
+        if (selectedGroupId === groupId) {
+          setSelectedGroupId(null);
+        }
+      } else {
+        throw new Error(response.message || "그룹 삭제에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to delete group:", error);
+      throw error;
+    }
+  };
+
   if (isLoading || !portfolio) {
     return (
       <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white">
@@ -1121,6 +1189,8 @@ export default function ScrapPage() {
           unifiedStocks={unifiedStocks}
           onStockClick={handleStockClick}
           selectedStockCode={selectedStockCode}
+          onGroupNameUpdate={handleUpdateGroupName}
+          onGroupDelete={handleDeleteGroup}
         />
       </div>
 
@@ -1160,7 +1230,7 @@ export default function ScrapPage() {
                 <div className="h-full flex items-center justify-center">
                   <p>그룹 상세 정보 로딩 중...</p>
                 </div>
-              ) : groupDetailSnapshots.length > 0 ? (
+              ) : selectedGroupId !== null && groupDetailSnapshots.length > 0 ? (
                 <ScrapCardViewer
                   cards={currentGroupDetailSnapshots.map(convertGroupDetailToSnapshotCard)}
                   currentIndex={currentGroupDetailIndex}
