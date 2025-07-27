@@ -41,7 +41,7 @@ export default function EditNicknamePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f9fafb]">
-      <TopNavigation />
+      <TopNavigation title="BLML" />
 
       <main className="flex-1 flex items-center justify-center px-4">
         <Card className="w-full max-w-md rounded-2xl shadow-sm">
@@ -58,15 +58,13 @@ export default function EditNicknamePage() {
             <div className="flex gap-2">
               <Button
                 onClick={handleSubmit}
-                className="bg-[#2978ee] hover:bg-[#539dff] w-full"
-              >
+                className="bg-[#2978ee] hover:bg-[#539dff] w-full">
                 저장
               </Button>
               <Button
                 variant="outline"
                 onClick={() => router.back()}
-                className="w-full"
-              >
+                className="w-full">
                 취소
               </Button>
             </div>

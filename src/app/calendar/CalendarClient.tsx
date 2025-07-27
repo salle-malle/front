@@ -560,7 +560,7 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <TopNavigation showBackButton={true} />
+      <TopNavigation title="" showBackButton={true} />
       <main className="flex-1 overflow-y-auto pb-20">
         <div
           className="max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2"

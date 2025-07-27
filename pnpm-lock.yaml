@@ -96,8 +96,8 @@ importers:
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@3.4.17)
       apexcharts:
-        specifier: ^5.2.0
-        version: 5.2.0
+        specifier: ^5.3.1
+        version: 5.3.1
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.21(postcss@8.5.6)
@@ -142,7 +142,7 @@ importers:
         version: 19.1.0
       react-apexcharts:
         specifier: ^1.7.0
-        version: 1.7.0(apexcharts@5.2.0)(react@19.1.0)
+        version: 1.7.0(apexcharts@5.3.1)(react@19.1.0)
       react-day-picker:
         specifier: 8.10.1
         version: 8.10.1(date-fns@4.1.0)(react@19.1.0)
@@ -1614,8 +1614,8 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  apexcharts@5.2.0:
-    resolution: {integrity: sha512-BZ+v4Wqf4BKVRKBatVghDVu9vu2SXhl/F7ujT2awnf7Zv6RT39FQWtAAV3bpH+G5c8IADw0PyOKG00+rN1UoNg==}
+  apexcharts@5.3.1:
+    resolution: {integrity: sha512-GMfVt9h8qNMqebZz1HOSyWcmdOKWPGnp/F7ta6IijXO3t2B/K25bS+Ml709zdw7yHO/45F1DgnKnDyK6uRZ2Ng==}
 
   arg@5.0.2:
     resolution: {integrity: sha512-PYjyFOLKQ9y57JvQ6QLo8dAgNqswh8M1RMJYdQduT6xbWSgK36P/Z/v+p888pM69jMMfS8Xd8F6I1kQ/I9HUGg==}
@@ -4944,7 +4944,7 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  apexcharts@5.2.0:
+  apexcharts@5.3.1:
     dependencies:
       '@svgdotjs/svg.draggable.js': 3.0.6(@svgdotjs/svg.js@3.2.4)
       '@svgdotjs/svg.filter.js': 3.0.9
@@ -6416,9 +6416,9 @@ snapshots:
 
   range-parser@1.2.1: {}
 
-  react-apexcharts@1.7.0(apexcharts@5.2.0)(react@19.1.0):
+  react-apexcharts@1.7.0(apexcharts@5.3.1)(react@19.1.0):
     dependencies:
-      apexcharts: 5.2.0
+      apexcharts: 5.3.1
       prop-types: 15.8.1
       react: 19.1.0
 

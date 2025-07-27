@@ -59,7 +59,7 @@ export const ScrapDateSelector = ({
     allowedDates.length === 0 || allowedDates.includes(formatDate(date));
 
   return (
-    <div className={`bg-gray-100 p-2 flex items-center space-x-2 h-full rounded-xl shadow-sm select-none ${
+    <div className={`p-2 flex items-center space-x-2 h-full select-none ${
       disabled ? "opacity-50" : ""
     }`}>
       <div className="flex-1 bg-white p-1.5 rounded-xl shadow-sm">
@@ -82,20 +82,24 @@ export const ScrapDateSelector = ({
                   key={i}
                   className="text-center flex flex-col items-center flex-1"
                 >
-                  <p className="text-xs text-gray-400 mb-1">{weekDays[i]}</p>
+                  <p className={`text-xs mb-1 ${
+                    weekDays[i] === "SUN" ? "text-red-500" : 
+                    weekDays[i] === "SAT" ? "text-blue-500" : 
+                    "text-gray-400"
+                  }`}>{weekDays[i]}</p>
                   <button
                     onClick={() => allowed && onDateSelect(dateStr)}
                     disabled={!allowed}
                     className={`w-9 h-9 rounded-full flex items-center justify-center font-bold transition-colors text-base
                     ${
                       selectedDate === dateStr && isToday(date)
-                        ? "bg-blue-600 text-red-500 shadow"
+                        ? "bg-black text-white shadow"
                         : selectedDate === dateStr
                         ? "bg-blue-600 text-white"
                         : isToday(date)
-                        ? "text-red-600 border-t-red-500"
+                        ? "bg-black text-white"
                         : allowed
-                        ? "bg-white text-gray-700 hover:bg-gray-100 border-t-red-500"
+                        ? "bg-white text-gray-700 hover:bg-gray-100"
                         : "bg-gray-100 text-gray-300 opacity-50"
                     }
                   `}
