@@ -72,7 +72,7 @@ const getCardDimensions = () => {
     };
   } else if (screenWidth < 1440) {
     // 중간 데스크톱 (1024px ~ 1440px)
-    const availableHeight = screenHeight - 140;
+    const availableHeight = screenHeight - 300;
     return { 
       width: Math.min(screenWidth - 100, 420), // 너비 제한
       imageHeight: Math.min(screenHeight * 0.35, 210),
@@ -110,16 +110,6 @@ export const ScrapCardViewer = ({
   onViewChange,
 }: ScrapCardViewerProps) => {
   const [internalCurrentIndex, setInternalCurrentIndex] = React.useState(0);
-  
-  console.log("=== ScrapCardViewer Render ===");
-  console.log("cards.length:", cards.length);
-  console.log("externalCurrentIndex:", externalCurrentIndex);
-  console.log("isGroupDetail:", isGroupDetail);
-  console.log("First few cards:", cards.slice(0, 3).map(card => ({
-    snapshotId: card.snapshotId,
-    stockCode: card.stockCode,
-    stockName: card.stockName
-  })));
   
   // 외부에서 currentIndex가 제공되면 사용, 아니면 내부 상태 사용
   const currentIndex = externalCurrentIndex !== undefined ? externalCurrentIndex : internalCurrentIndex;
@@ -251,13 +241,7 @@ export const ScrapCardViewer = ({
     opacity: Math.abs(i - adjustedCurrentIndex) > 1 ? 0 : 1,
   }), [cards.length, adjustedCurrentIndex, cardDimensions.width, cardSpacing]);
 
-  console.log("=== Springs Initialization ===");
-  console.log("cards.length:", cards.length);
-  console.log("currentIndex:", currentIndex);
-  console.log("adjustedCurrentIndex:", adjustedCurrentIndex);
-  console.log("cardDimensions.width:", cardDimensions.width);
-  console.log("cardSpacing:", cardSpacing);
-  console.log("springs array length:", springs.length);
+
 
   React.useEffect(() => {
     api.start((i) => {
@@ -481,17 +465,6 @@ export const ScrapCardViewer = ({
       {cards.length > 0 && springs.map((style, i) => {
         const card = cards[i];
         if (!card) return null;
-        
-        console.log(`Rendering card ${i}:`, {
-          snapshotId: card.snapshotId,
-          stockCode: card.stockCode,
-          stockName: card.stockName,
-          currentIndex: adjustedCurrentIndex,
-          opacity: style.opacity,
-          scale: style.scale,
-          x: style.x,
-          visible: Math.abs(i - adjustedCurrentIndex) <= 1
-        });
 
         return (
           <animated.div
@@ -521,7 +494,6 @@ export const ScrapCardViewer = ({
                   // 버튼 클릭이 아닌 카드 클릭일 때만 처리
                   if (!(e.target as HTMLElement).closest('button')) {
                     if (i !== adjustedCurrentIndex) {
-                      console.log(`Card clicked: index ${i}, currentIndex: ${adjustedCurrentIndex}`);
                       setCurrentIndex(i);
                       // 종목별 카드일 때는 DateSelector로, 그룹 카드일 때는 StockSelector로 전환
                       if (onViewChange) {

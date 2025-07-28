@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import { useSprings, animated } from "react-spring";
 import { useDrag } from "react-use-gesture";
 import { Card, CardContent } from "./card";
@@ -22,6 +22,7 @@ import { ScrapGroupDialog } from "./ScrapGroupDialog";
 import { CardDetailModal } from "./CardDetailModal";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import Image from "next/image";
 
 // 타이핑 애니메이션 훅 제거됨 (성능 최적화)
 
@@ -71,7 +72,7 @@ const getCardDimensions = () => {
     };
   } else if (screenWidth < 1440) {
     // 중간 데스크톱 (1024px ~ 1440px)
-    const availableHeight = screenHeight - 140;
+    const availableHeight = screenHeight - 300;
     return { 
       width: Math.min(screenWidth - 100, 420), // 너비 제한
       imageHeight: Math.min(screenHeight * 0.35, 210),
@@ -99,7 +100,8 @@ const getCardDimensions = () => {
 const CARD_WIDTH = getCardDimensions().width;
 const CARD_IMAGE_HEIGHT = getCardDimensions().imageHeight;
 
-export const CardViewer = ({
+
+export const CardViewerComponent = ({
   cards,
   currentIndex,
   onSwipe,
@@ -131,7 +133,6 @@ export const CardViewer = ({
   const [isLongPressing, setIsLongPressing] = React.useState(false);
   const [longPressingCardIndex, setLongPressingCardIndex] = React.useState<number | null>(null);
   
-  // 타이핑 애니메이션은 각 카드별로 개별 적용
   
   // 반응형 카드 크기 상태
   const [cardDimensions, setCardDimensions] = React.useState(() => getCardDimensions());
@@ -146,7 +147,6 @@ export const CardViewer = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // 카드 간격 계산 (화면 크기에 따라 조정)
   const getCardSpacing = () => {
     if (cardDimensions.width < 300) return 20; // 모바일
     if (cardDimensions.width < 400) return 30; // 태블릿
@@ -187,7 +187,6 @@ export const CardViewer = ({
     }
   };
 
-  // 컴포넌트 언마운트 시 타이머 정리
   React.useEffect(() => {
     return () => {
       if (longPressTimer) {
@@ -216,11 +215,12 @@ export const CardViewer = ({
   
   const buttonPosition = getButtonPosition();
   
-  const [springs, api] = useSprings(cards.length, (i) => ({
-    x: (i - currentIndex) * (cardDimensions.width + cardSpacing),
-    scale: i === currentIndex ? 1 : 0.85,
-    opacity: Math.abs(i - currentIndex) > 1 ? 0 : 1,
-  }), [cards.length, currentIndex, cardDimensions.width, cardSpacing]);
+  const [springs, api] = useSprings(cards.length, (i) => {
+    return ({
+      x: (i - currentIndex) * (cardDimensions.width + cardSpacing),
+      scale: i === currentIndex ? 1 : 0.85,
+      opacity: Math.abs(i - currentIndex) > 1 ? 0 : 1,
+    })}, [currentIndex, cardDimensions.width, cardSpacing]);
 
   React.useEffect(() => {
     // 카드 배열이 변경되거나 currentIndex가 변경될 때 스프링 애니메이션 리셋
@@ -427,10 +427,14 @@ export const CardViewer = ({
                       height: cardDimensions.imageHeight,
                       minHeight: cardDimensions.imageHeight - 15,
                     }}>
-                    {card.newsImage && (
-                                          <img
+                      {card.newsImage && (
+                      <Image
                       src={card.newsImage}
                       alt="News Image"
+                      width={cardDimensions.width}
+                      height={cardDimensions.imageHeight}
+
+
                       className="w-full h-full object-cover"
                       draggable="true"
                       style={{
@@ -442,6 +446,22 @@ export const CardViewer = ({
 
                     />
                     )}
+                    {/* {card.newsImage && (
+                                          <img
+                      src={card.newsImage}
+                      alt="News Image"
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                      draggable="true"
+                      style={{
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                        MozUserSelect: "none",
+                        msUserSelect: "none",
+                      }}
+
+                    />
+                    )} */}
                   </div>
 
                   <ScrollArea 
@@ -675,3 +695,5 @@ function fetchWithAuthCheck(
 ) {
   throw new Error("Function not implemented.");
 }
+
+export const CardViewer = memo(CardViewerComponent);

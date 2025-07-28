@@ -140,7 +140,9 @@ export const ScrapGroupSelector = memo(({
         <div className="flex items-center space-x-2 overflow-x-auto scrollbar-hide flex-1 pr-12">
           {/* 전체 버튼 */}
           <button
-            onClick={() => onGroupSelect(null)}
+            onClick={() => {
+              onGroupSelect(null);
+            }}
             className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-colors flex-shrink-0 ${
               selectedGroupId === null || selectedStockCode !== null
                 ? "bg-blue-600 text-white"
@@ -154,7 +156,9 @@ export const ScrapGroupSelector = memo(({
           {groups.map((group) => (
             <button
               key={group.id.toString()}
-              onClick={() => onGroupSelect(group.id as number)}
+              onClick={() => {
+                onGroupSelect(group.id as number);
+              }}
               onMouseDown={() => handleMouseDown(group.id as number)}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
