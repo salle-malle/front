@@ -114,7 +114,9 @@ export default function ScrapPage() {
     useState(0);
 
   // 그룹 상세 정보 관련 상태
-  const [groupDetailSnapshots, setGroupDetailSnapshots] = useState<GroupDetailResponseDto[]>([]);
+  const [groupDetailSnapshots, setGroupDetailSnapshots] = useState<
+    GroupDetailResponseDto[]
+  >([]);
   const [isGroupDetailLoading, setIsGroupDetailLoading] = useState(false);
   const [currentGroupDetailIndex, setCurrentGroupDetailIndex] = useState(0);
 
@@ -129,14 +131,13 @@ export default function ScrapPage() {
 
   // 종목별 스크랩을 선택된 날짜로 필터링 (종목별 카드에서는 필터링 제거)
   const filteredStockSnapshots = selectedStockSnapshots; // 모든 카드 표시
-  
-  // 날짜별 분류 확인
   const stockDates = selectedStockSnapshots.map(s => s.snapshotCreatedAt.split("T")[0]);
+
 
   // 그룹 상세 정보에서 날짜별로 스냅샷 분류
   const groupDetailSnapshotsByDate = useMemo(() => {
     const snapshotsByDate: { [date: string]: GroupDetailResponseDto[] } = {};
-    
+
     groupDetailSnapshots.forEach((snapshot) => {
       const date = snapshot.snapshotCreatedAt.split("T")[0];
       if (!snapshotsByDate[date]) {
@@ -144,7 +145,7 @@ export default function ScrapPage() {
       }
       snapshotsByDate[date].push(snapshot);
     });
-    
+
     return snapshotsByDate;
   }, [groupDetailSnapshots]);
 
@@ -283,12 +284,13 @@ export default function ScrapPage() {
 
       if (response?.status && response.data) {
         const snapshots: MemberStockSnapshotDetailResponseDto[] = response.data;
-        
         // 날짜순으로 정렬 (오래된 날짜가 먼저)
-        const sortedSnapshots = snapshots.sort((a, b) => 
-          new Date(a.snapshotCreatedAt).getTime() - new Date(b.snapshotCreatedAt).getTime()
+        const sortedSnapshots = snapshots.sort(
+          (a, b) =>
+            new Date(a.snapshotCreatedAt).getTime() -
+            new Date(b.snapshotCreatedAt).getTime()
         );
-        
+
         setSelectedStockSnapshots(sortedSnapshots);
         setCurrentStockSnapshotIndex(0);
 
@@ -307,7 +309,6 @@ export default function ScrapPage() {
 
         // 종목별 스크랩 날짜를 stockAllowedDates에 추가
         setStockAllowedDates(stockDates);
-        
         return sortedSnapshots;
       } else {
         setSelectedStockSnapshots([]);
@@ -386,8 +387,10 @@ export default function ScrapPage() {
     // 종목별 카드가 있는 가장 가까운 날짜로 이동하고 마지막 카드가 가운데에 위치하도록 설정
     if (snapshots && snapshots.length > 0) {
       // 날짜별로 그룹화
-      const snapshotsByDate: { [date: string]: MemberStockSnapshotDetailResponseDto[] } = {};
-      snapshots.forEach(snapshot => {
+      const snapshotsByDate: {
+        [date: string]: MemberStockSnapshotDetailResponseDto[];
+      } = {};
+      snapshots.forEach((snapshot) => {
         const date = snapshot.snapshotCreatedAt.split("T")[0];
         if (!snapshotsByDate[date]) {
           snapshotsByDate[date] = [];
@@ -477,6 +480,7 @@ export default function ScrapPage() {
             preloadImage(`/ticker-icon/${snapshot.stockCode}.png`);
           }
         });
+
       } else {
         setGroupDetailSnapshots([]);
       }
@@ -574,7 +578,7 @@ export default function ScrapPage() {
       const dates = selectedStockSnapshots
         .map((snapshot) => snapshot.snapshotCreatedAt.split("T")[0])
         .sort();
-      
+
       if (dates.length > 0) {
         const mostRecentDate = dates[dates.length - 1]; // 가장 최근 날짜
         setSelectedDate(mostRecentDate);
@@ -592,11 +596,13 @@ export default function ScrapPage() {
       if (dates.length > 0) {
         const mostRecentDate = dates[dates.length - 1]; // 가장 최근 날짜
         
+
         // 그룹이 처음 로드되었을 때만 최근 날짜로 이동
         // selectedDate가 오늘 날짜이거나 그룹 상세 정보의 날짜 범위에 없을 때만 이동
         const today = new Date().toISOString().split("T")[0];
-        const isTodayOrInvalidDate = selectedDate === today || !dates.includes(selectedDate);
-        
+        const isTodayOrInvalidDate =
+          selectedDate === today || !dates.includes(selectedDate);
+
         if (isTodayOrInvalidDate && mostRecentDate !== selectedDate) {
           setSelectedDate(mostRecentDate);
           setCurrentGroupDetailIndex(0); // 인덱스도 초기화
@@ -622,24 +628,23 @@ export default function ScrapPage() {
       handleGroupDetailDateChange(direction === "left" ? "prev" : "next");
       return;
     }
-    
+
     // 종목별 스크랩의 경우 단순 인덱스 기반 전환
     if (selectedStockSnapshots.length > 0) {
+
       const newIndex = direction === "left"
         ? Math.max(0, currentStockSnapshotIndex - 1)
         : Math.min(selectedStockSnapshots.length - 1, currentStockSnapshotIndex + 1);
-      
       if (newIndex !== currentStockSnapshotIndex) {
         // 인덱스 변경 시 날짜도 함께 업데이트
         const targetCard = selectedStockSnapshots[newIndex];
         const targetDate = targetCard.snapshotCreatedAt.split("T")[0];
-        
         setCurrentStockSnapshotIndex(newIndex);
         setSelectedDate(targetDate);
       }
       return;
     }
-    
+
     // 일반 종목 스크랩의 경우 (기존 로직 유지)
     const idx = allowedDates.indexOf(selectedDate);
     const nextDate =
@@ -653,12 +658,15 @@ export default function ScrapPage() {
 
   const handleStockSnapshotIndexChange = (newIndex: number) => {
     setCurrentStockSnapshotIndex(newIndex);
-    
+
     // 종목별 카드에서 인덱스가 변경될 때 해당 카드의 날짜를 추적
-    if (selectedStockSnapshots.length > 0 && newIndex < selectedStockSnapshots.length) {
+    if (
+      selectedStockSnapshots.length > 0 &&
+      newIndex < selectedStockSnapshots.length
+    ) {
       const currentCard = selectedStockSnapshots[newIndex];
       const cardDate = currentCard.snapshotCreatedAt.split("T")[0];
-      
+
       // 카드의 날짜가 현재 선택된 날짜와 다르면 업데이트
       if (cardDate !== selectedDate) {
         setSelectedDate(cardDate);
@@ -677,7 +685,9 @@ export default function ScrapPage() {
   const handleGroupDetailDelete = async (snapshotId: number) => {
     try {
       // 해당 스냅샷의 scrapGroupedId 찾기
-      const snapshot = groupDetailSnapshots.find(s => s.snapshotId === snapshotId);
+      const snapshot = groupDetailSnapshots.find(
+        (s) => s.snapshotId === snapshotId
+      );
       if (!snapshot || !snapshot.scrapGroupedId) {
         console.error("scrapGroupedId not found for snapshotId:", snapshotId);
         toast.error("삭제할 수 없습니다.");
@@ -698,15 +708,17 @@ export default function ScrapPage() {
 
       if (response.status) {
         toast.success("그룹에서 제거되었습니다.");
-        
+
         // 삭제된 카드를 목록에서 제거
         setGroupDetailSnapshots((prev) => {
-          const filteredSnapshots = prev.filter((snapshot) => snapshot.snapshotId !== snapshotId);
-          
+          const filteredSnapshots = prev.filter(
+            (snapshot) => snapshot.snapshotId !== snapshotId
+          );
+
           // 현재 인덱스 조정 - 자연스럽게 다음 카드로 이동
           setCurrentGroupDetailIndex((currentIndex) => {
             const deletedIndex = prev.findIndex(s => s.snapshotId === snapshotId);
-            
+
             if (filteredSnapshots.length === 0) {
               // 모든 카드가 삭제된 경우
               return 0;
@@ -717,6 +729,7 @@ export default function ScrapPage() {
                 const newIndex = Math.max(0, filteredSnapshots.length - 1);
                 return newIndex;
               } else {
+
                 return currentIndex; // 같은 위치의 다음 카드
               }
             } else if (deletedIndex < currentIndex) {
@@ -730,7 +743,7 @@ export default function ScrapPage() {
               return currentIndex;
             }
           });
-          
+
           return filteredSnapshots;
         });
       } else {
@@ -746,12 +759,14 @@ export default function ScrapPage() {
   const handleStockSnapshotDelete = (snapshotId: number) => {
     // 삭제된 카드를 목록에서 제거
     setSelectedStockSnapshots((prev) => {
-      const filteredSnapshots = prev.filter((snapshot) => snapshot.snapshotId !== snapshotId);
-      
+      const filteredSnapshots = prev.filter(
+        (snapshot) => snapshot.snapshotId !== snapshotId
+      );
+
       // 현재 인덱스 조정 - 자연스럽게 다음 카드로 이동
       setCurrentStockSnapshotIndex((currentIndex) => {
-        const deletedIndex = prev.findIndex(s => s.snapshotId === snapshotId);
-        
+        const deletedIndex = prev.findIndex((s) => s.snapshotId === snapshotId);
+
         if (filteredSnapshots.length === 0) {
           // 모든 카드가 삭제된 경우
           return 0;
@@ -773,7 +788,7 @@ export default function ScrapPage() {
           return currentIndex;
         }
       });
-      
+
       return filteredSnapshots;
     });
   };
@@ -783,14 +798,14 @@ export default function ScrapPage() {
     const newIndex = direction === "prev" 
       ? Math.max(0, currentStockSnapshotIndex - 1)
       : Math.min(selectedStockSnapshots.length - 1, currentStockSnapshotIndex + 1);
-    
+
     if (newIndex !== currentStockSnapshotIndex) {
       // 인덱스 변경 시 날짜도 함께 업데이트
       const targetCard = selectedStockSnapshots[newIndex];
-      const targetDate = targetCard.snapshotCreatedAt.split("T")[0];
-      
+      const targetDate = targetCard.snapshotCreatedAt.split("T")[0];    
       setCurrentStockSnapshotIndex(newIndex);
       setSelectedDate(targetDate);
+
     }
   };
 
@@ -904,9 +919,9 @@ export default function ScrapPage() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ 
-            scrapGroupId: groupId, 
-            scrapGroupName: newName 
+          body: JSON.stringify({
+            scrapGroupId: groupId,
+            scrapGroupName: newName,
           }),
         },
         router
@@ -940,8 +955,6 @@ export default function ScrapPage() {
       if (response.status) {
         // 그룹 목록 새로고침
         await fetchGroups();
-        
-        // 삭제된 그룹이 현재 선택된 그룹이면 /scrap으로 리다이렉팅
         if (selectedGroupId === groupId) {
           setSelectedGroupId(null);
           setSelectedStockCode(null);
@@ -961,7 +974,7 @@ export default function ScrapPage() {
 
   if (isLoading || !portfolio) {
     return (
-      <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-white">
+      <div className="flex flex-col h-screen mx-auto bg-white">
         <TopNavigation />
         <div className="flex-1 flex items-center justify-center">
           <p>Loading...</p>
@@ -1070,13 +1083,15 @@ export default function ScrapPage() {
       </div>
 
       <div className="relative flex-1">
-        <main 
+        <main
           className={`absolute inset-0 flex items-center justify-center ${
-            selectedGroupId === null && activeView === "stocklist" && unifiedStocks && unifiedStocks?.stocks 
-              ? "top-0" 
+            selectedGroupId === null &&
+            activeView === "stocklist" &&
+            unifiedStocks &&
+            unifiedStocks?.stocks
+              ? "top-0"
               : "top-[5px]"
-          }`}
-        >
+          }`}>
           {/* 보유 종목 리스트 표시 */}
           {selectedGroupId === null &&
           activeView === "stocklist" &&
@@ -1105,9 +1120,12 @@ export default function ScrapPage() {
                 <div className="h-full flex items-center justify-center">
                   <p>그룹 상세 정보 로딩 중...</p>
                 </div>
-              ) : selectedGroupId !== null && groupDetailSnapshots.length > 0 ? (
+              ) : selectedGroupId !== null &&
+                groupDetailSnapshots.length > 0 ? (
                 <ScrapCardViewer
-                  cards={currentGroupDetailSnapshots.map(convertGroupDetailToSnapshotCard)}
+                  cards={currentGroupDetailSnapshots.map(
+                    convertGroupDetailToSnapshotCard
+                  )}
                   currentIndex={currentGroupDetailIndex}
                   onScrap={handleScrapClick}
                   onUnscrap={handleGroupDetailDelete}
@@ -1180,8 +1198,8 @@ export default function ScrapPage() {
                   <p>스크랩이 없습니다.</p>
                 </div>
               ) : (!unifiedStocks ||
-                !unifiedStocks.stocks ||
-                unifiedStocks.stocks.length === 0) &&
+                  !unifiedStocks.stocks ||
+                  unifiedStocks.stocks.length === 0) &&
                 !isLoading ? (
                 <div className="h-full flex items-center justify-center">
                   <p>보유 종목이 없습니다.</p>
@@ -1198,8 +1216,7 @@ export default function ScrapPage() {
               activeView === "stocklist" && !selectedStockCode
                 ? "none"
                 : "block",
-          }}
-        >
+          }}>
           <TrebleSelector
             activeView={activeView as "date" | "stock"}
             onViewChange={setActiveView}
@@ -1211,7 +1228,9 @@ export default function ScrapPage() {
             onDateChange={handleDateChange}
             snapshotsForDate={
               groupDetailSnapshots.length > 0
-                ? currentGroupDetailSnapshots.map(convertGroupDetailToSnapshotCard)
+                ? currentGroupDetailSnapshots.map(
+                    convertGroupDetailToSnapshotCard
+                  )
                 : selectedStockSnapshots.length > 0
                 ? filteredStockSnapshots.map(convertToSnapshotCard)
                 : groupedSnapshots.length > 0
@@ -1220,11 +1239,13 @@ export default function ScrapPage() {
             }
             selectedSnapshotId={
               groupDetailSnapshots.length > 0
-                ? currentGroupDetailSnapshots[currentGroupDetailIndex]?.snapshotId
+                ? currentGroupDetailSnapshots[currentGroupDetailIndex]
+                    ?.snapshotId
                 : selectedStockSnapshots.length > 0
                 ? filteredStockSnapshots[currentStockSnapshotIndex]?.snapshotId
                 : groupedSnapshots.length > 0
-                ? groupedSnapshots[currentGroupedSnapshotIndex]?.memberStockSnapshotId
+                ? groupedSnapshots[currentGroupedSnapshotIndex]
+                    ?.memberStockSnapshotId
                 : currentSnapshot?.snapshotId
             }
             onStockChange={handleStockChange}
