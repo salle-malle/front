@@ -15,7 +15,7 @@ import "dayjs/locale/ko";
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
 
-export type NewsItem = { id: number; title: string; time: string };
+export type NewsItem = { id: number; title: string; time: string; uri: string };
 export type StockItem = {
   ticker: number;
   name: string;
@@ -84,6 +84,7 @@ export async function fetchNewsList(router: ReturnType<typeof useRouter>): Promi
   const news: NewsItem[] = (jsonResponse.data || []).map((item: any) => ({
     id: item.id,
     title: item.newsTitle,
+    uri: item.newsUri,
     time: getRelativeTime(item.newsDate),
   }));
   return { news };
@@ -312,6 +313,14 @@ export default function HomePage() {
     );
   }, [stocks]);
 
+  const handleNewsClick = () => {
+    if (newsItems.length === 0) return;
+    const currentNews = newsItems[newsIndex];
+    if (currentNews && currentNews.uri) {
+      window.open(currentNews.uri, "_blank");
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <TopNavigation />
@@ -324,7 +333,7 @@ export default function HomePage() {
             newsItems={newsItems}
             newsIndex={newsIndex}
             isAnimating={isAnimating}
-            onClick={() => handleSlide("up")}
+            onClick={handleNewsClick}
           />
         </div>
         <div
