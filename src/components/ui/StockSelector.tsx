@@ -52,28 +52,19 @@ export const StockSelector = ({
 
   // 좌/우 버튼 클릭 시 이전/다음 스냅샷을 선택하는 함수
   const changeStock = (direction: "left" | "right") => {
-    console.log("=== StockSelector changeStock 디버그 ===");
-    console.log("direction:", direction);
-    console.log("currentIndex:", currentIndex);
-    console.log("snapshots.length:", snapshots.length);
-    
     if (!snapshots || snapshots.length === 0) return;
 
     let newIndex = currentIndex + (direction === "left" ? -1 : 1);
-    console.log("newIndex:", newIndex);
     
     if (newIndex < 0) {
-      console.log("왼쪽 엣지 도달, onEdge('left') 호출");
       if (onEdge) onEdge("left");
       return;
     }
     if (newIndex >= snapshots.length) {
-      console.log("오른쪽 엣지 도달, onEdge('right') 호출");
       if (onEdge) onEdge("right");
       return;
     }
 
-    console.log("일반 스톡 변경");
     onStockSelect(snapshots[newIndex].snapshotId);
   };
 
@@ -182,6 +173,32 @@ export const StockSelector = ({
       >
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 relative flex-shrink-0">
+            {snapshots.map((snapshot)=>{
+              const isSelected = snapshot.snapshotId === selectedSnapshotId;
+              return (
+                <Image
+                  key={snapshot.snapshotId}
+                  src={`/ticker-icon/${snapshot.stockCode}.png`}
+                  alt={`${snapshot.stockName} logo`}
+                  fill
+                  loading="lazy"
+                  style={{ objectFit: "contain", display: isSelected ? "block" : "none" }}
+                  onError={() => setLogoError(true)}
+                />    
+              )
+            })}
+            {/* {
+              snapshots.length > 1 ? (
+            } */}
+            {/* <Image
+              src={`/ticker-icon/${currentSnapshot.stockCode}.png`}
+              alt={`${currentSnapshot.stockName} logo`}
+              fill
+              style={{ objectFit: "contain" }}
+              onError={() => setLogoError(true)}
+            /> */}
+          </div>
+          {/* <div className="w-9 h-9 relative flex-shrink-0">
             {!logoError && currentSnapshot.stockCode ? (
               <Image
                 src={`/ticker-icon/${currentSnapshot.stockCode}.png`}
@@ -192,10 +209,10 @@ export const StockSelector = ({
               />
             ) : (
               <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">
-                {/* {currentSnapshot.stockName.charAt(0)} */}
+                 {currentSnapshot.stockName.charAt(0)}
               </div>
             )}
-          </div>
+          </div> */}
 
           <div className="flex-1 text-left overflow-hidden">
             <p className="font-bold text-base truncate">

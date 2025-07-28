@@ -21,8 +21,6 @@ interface CardDetailModalProps {
   onUnscrap?: (snapshotId: number) => Promise<void>;
 }
 
-// 타이핑 애니메이션 훅 제거됨 (성능 최적화)
-
 export const CardDetailModal = ({
   isOpen,
   onClose,
@@ -34,11 +32,9 @@ export const CardDetailModal = ({
   const [currentScrapId, setCurrentScrapId] = useState<number | null>(null);
   const [localScrapState, setLocalScrapState] = useState(false);
   const [isAiCommentExpanded, setIsAiCommentExpanded] = useState(false);
-  const [dragProgress, setDragProgress] = useState(0); // 드래그 진행률 (0-1)
+  const [dragProgress, setDragProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
-
-  // 타이핑 애니메이션 제거됨
 
   useEffect(() => {
     if (card) {
@@ -198,7 +194,7 @@ export const CardDetailModal = ({
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
       </Dialog>
-      {/* 그룹 선택 다이얼로그 등은 그대로 유지 */}
+
       {currentScrapId && (
         <ScrapGroupDialog
           isOpen={showGroupDialog}
@@ -209,7 +205,6 @@ export const CardDetailModal = ({
           snapshotId={card.snapshotId}
           scrapId={currentScrapId}
           onScrapSuccess={() => {
-            // console.log("Group scrap success for:", card.snapshotId);
           }}
         />
       )}

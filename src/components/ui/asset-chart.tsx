@@ -116,7 +116,6 @@ export default function AssetChart() {
       })
       .filter((item) => item.title && item.content);
 
-    console.log("✅ parsedSummaries", parsed);
     return parsed;
   }, [summaryString]);
 
