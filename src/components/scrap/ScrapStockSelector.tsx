@@ -60,9 +60,6 @@ export const ScrapStockSelector = ({
 
   // 좌/우 버튼 클릭 시 이전/다음 스냅샷을 선택하는 함수
   const changeStock = (direction: "left" | "right") => {
-    // 종목별 카드일 때만 카드 넘기기 허용
-    if (!isStockDetail) return;
-    
     if (!snapshots || snapshots.length === 0) return;
 
     let newIndex = currentIndex + (direction === "left" ? -1 : 1);
