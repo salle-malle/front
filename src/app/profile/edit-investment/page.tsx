@@ -78,7 +78,7 @@ export default function EditInvestmentTypePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <TopNavigation />
-      <main className="flex-1 overflow-y-auto px-4 py-6">
+      <main className="flex-1 overflow-y-auto px-4 py-6 pb-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto w-full">
           {types.map(({ type, desc, img, risk }) => (
             <button
