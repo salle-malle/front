@@ -45,40 +45,54 @@ const getCardDimensions = () => {
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
   
+  // 화면 크기에 따른 카드 크기 조정
   if (screenWidth < 480) {
-    const availableHeight = screenHeight - 200;
+    // 모바일 세로 (세로 모드)
+    const availableHeight = screenHeight - 350; // 네비게이션, 헤더 등 제외
     return { 
       width: Math.min(screenWidth - 40, 280), 
       imageHeight: Math.min(screenHeight * 0.25, 140),
-      cardHeight: Math.min(availableHeight * 0.95, 576)
+      cardHeight: Math.min(availableHeight * 0.95, 576) // 320 * 1.8 = 576
     };
   } else if (screenWidth < 768) {
-    const availableHeight = screenHeight - 180;
+    // 모바일 가로 / 태블릿 세로
+    const availableHeight = screenHeight - 350;
     return { 
       width: Math.min(screenWidth - 60, 320), 
       imageHeight: Math.min(screenHeight * 0.28, 160),
-      cardHeight: Math.min(availableHeight * 0.95, 684)
+      cardHeight: Math.min(availableHeight * 0.95, 684) // 380 * 1.8 = 684
     };
   } else if (screenWidth < 1024) {
-    const availableHeight = screenHeight - 160;
+    // 태블릿 가로
+    const availableHeight = screenHeight - 300;
     return { 
       width: Math.min(screenWidth - 80, 400), 
       imageHeight: Math.min(screenHeight * 0.3, 200),
-      cardHeight: Math.min(availableHeight * 0.95, 756)
+      cardHeight: Math.min(availableHeight * 0.95, 756) // 420 * 1.8 = 756
     };
   } else if (screenWidth < 1440) {
-    const availableHeight = screenHeight - 140;
+    // 중간 데스크톱 (1024px ~ 1440px)
+    const availableHeight = screenHeight - 300;
     return { 
-      width: Math.min(screenWidth - 100, 520), 
-      imageHeight: Math.min(screenHeight * 0.35, 280),
-      cardHeight: Math.min(availableHeight * 0.95, 1000)
+      width: Math.min(screenWidth - 100, 420), // 너비 제한
+      imageHeight: Math.min(screenHeight * 0.35, 210),
+      cardHeight: Math.min(availableHeight * 0.95, 756) // 420 * 1.8 = 756
+    };
+  } else if (screenWidth < 1920) {
+    // 대형 데스크톱 (1440px ~ 1920px)
+    const availableHeight = screenHeight - 250;
+    return { 
+      width: Math.min(screenWidth - 120, 460), // 너비 제한
+      imageHeight: Math.min(screenHeight * 0.35, 230),
+      cardHeight: Math.min(availableHeight * 0.95, 828) // 460 * 1.8 = 828
     };
   } else {
-    const availableHeight = screenHeight - 140;
+    // 초대형 데스크톱 (1920px 이상)
+    const availableHeight = screenHeight - 300;
     return { 
-      width: Math.min(screenWidth - 120, 600), 
-      imageHeight: Math.min(screenHeight * 0.38, 320),
-      cardHeight: Math.min(availableHeight * 0.95, 1200)
+      width: Math.min(screenWidth - 140, 500), // 너비 제한
+      imageHeight: Math.min(screenHeight * 0.35, 250),
+      cardHeight: Math.min(availableHeight * 0.95, 900) // 500 * 1.8 = 900
     };
   }
 };
@@ -96,16 +110,6 @@ export const ScrapCardViewer = ({
   onViewChange,
 }: ScrapCardViewerProps) => {
   const [internalCurrentIndex, setInternalCurrentIndex] = React.useState(0);
-  
-  console.log("=== ScrapCardViewer Render ===");
-  console.log("cards.length:", cards.length);
-  console.log("externalCurrentIndex:", externalCurrentIndex);
-  console.log("isGroupDetail:", isGroupDetail);
-  console.log("First few cards:", cards.slice(0, 3).map(card => ({
-    snapshotId: card.snapshotId,
-    stockCode: card.stockCode,
-    stockName: card.stockName
-  })));
   
   // 외부에서 currentIndex가 제공되면 사용, 아니면 내부 상태 사용
   const currentIndex = externalCurrentIndex !== undefined ? externalCurrentIndex : internalCurrentIndex;
@@ -237,13 +241,7 @@ export const ScrapCardViewer = ({
     opacity: Math.abs(i - adjustedCurrentIndex) > 1 ? 0 : 1,
   }), [cards.length, adjustedCurrentIndex, cardDimensions.width, cardSpacing]);
 
-  console.log("=== Springs Initialization ===");
-  console.log("cards.length:", cards.length);
-  console.log("currentIndex:", currentIndex);
-  console.log("adjustedCurrentIndex:", adjustedCurrentIndex);
-  console.log("cardDimensions.width:", cardDimensions.width);
-  console.log("cardSpacing:", cardSpacing);
-  console.log("springs array length:", springs.length);
+
 
   React.useEffect(() => {
     api.start((i) => {
@@ -308,6 +306,14 @@ export const ScrapCardViewer = ({
       const isCurrentCard = originalIndex === adjustedCurrentIndex;
       if (!isCurrentCard) return;
 
+      // 드래그 시작 시 길게 누르기 타이머 취소
+      if (down && longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+        setIsLongPressing(false);
+        setLongPressingCardIndex(null);
+      }
+
       // 드래그 범위 제한 (카드 너비의 50%로 제한)
       const maxDragDistance = cardDimensions.width * 0.5;
       const clampedMx = Math.max(-maxDragDistance, Math.min(maxDragDistance, mx));
@@ -345,12 +351,12 @@ export const ScrapCardViewer = ({
       );
       
       // 스크롤 영역에서는 더 민감한 스와이프 감지, 텍스트 영역에서는 중간 민감도
-      const swipeThreshold = isScrollArea ? cardDimensions.width * 0.05 : 
-                           isTextArea ? cardDimensions.width * 0.1 : 
-                           cardDimensions.width * 0.2;
-      const velocityThreshold = isScrollArea ? 0.05 : 
-                              isTextArea ? 0.1 : 
-                              0.2;
+      const swipeThreshold = isScrollArea ? cardDimensions.width * 0.08 : 
+                           isTextArea ? cardDimensions.width * 0.15 : 
+                           cardDimensions.width * 0.25;
+      const velocityThreshold = isScrollArea ? 0.08 : 
+                              isTextArea ? 0.15 : 
+                              0.25;
       const trigger = Math.abs(clampedMx) > swipeThreshold || Math.abs(vx) > velocityThreshold;
 
       if (!down) {
@@ -358,8 +364,12 @@ export const ScrapCardViewer = ({
           const direction = dx > 0 ? -1 : 1;
           handleSwipe(direction);
         } else {
+          // 스와이프 취소 시 부드러운 애니메이션으로 원위치 복귀
           api.start((i) => ({
-            x: (i - currentIndex) * (cardDimensions.width + cardSpacing),
+            x: (i - adjustedCurrentIndex) * (cardDimensions.width + cardSpacing),
+            scale: i === adjustedCurrentIndex ? 1 : 0.85,
+            opacity: Math.abs(i - adjustedCurrentIndex) > 1 ? 0 : 1,
+            config: { tension: 300, friction: 30 } // 부드러운 스프링 애니메이션
           }));
         }
       } else {
@@ -385,8 +395,18 @@ export const ScrapCardViewer = ({
           api.start((i) => {
             if (i !== originalIndex) return;
             // 가운데 카드의 경우 기본 위치(0)에 드래그 거리를 더함
-            const baseX = (i - currentIndex) * (cardDimensions.width + cardSpacing);
-            return { x: baseX + clampedMx, immediate: true };
+            const baseX = (i - adjustedCurrentIndex) * (cardDimensions.width + cardSpacing);
+            const newX = baseX + clampedMx;
+            
+            // 스와이프 진행률에 따른 스케일 조정 (피드백 개선)
+            const swipeProgress = Math.abs(clampedMx) / (cardDimensions.width * 0.5);
+            const scaleAdjustment = 1 - (swipeProgress * 0.05); // 최대 5% 축소
+            
+            return { 
+              x: newX, 
+              scale: scaleAdjustment,
+              immediate: true 
+            };
           });
         }
       }
@@ -445,17 +465,6 @@ export const ScrapCardViewer = ({
       {cards.length > 0 && springs.map((style, i) => {
         const card = cards[i];
         if (!card) return null;
-        
-        console.log(`Rendering card ${i}:`, {
-          snapshotId: card.snapshotId,
-          stockCode: card.stockCode,
-          stockName: card.stockName,
-          currentIndex: adjustedCurrentIndex,
-          opacity: style.opacity,
-          scale: style.scale,
-          x: style.x,
-          visible: Math.abs(i - adjustedCurrentIndex) <= 1
-        });
 
         return (
           <animated.div
@@ -466,13 +475,15 @@ export const ScrapCardViewer = ({
               position: "absolute",
               width: cardDimensions.width,
               height: cardDimensions.cardHeight,
-              maxHeight: "85vh",
-              touchAction: "pan-y",
+              maxHeight: "85vh", // 뷰포트 높이의 85%로 제한
+              touchAction: "none", // 모바일에서 가로/세로 스와이프 모두 허용
               cursor: "grab",
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              MozUserSelect: "none",
-              msUserSelect: "none",
+              userSelect: "none", // 드래그 선택 방지
+              WebkitUserSelect: "none", // Safari 지원
+              MozUserSelect: "none", // Firefox 지원
+              msUserSelect: "none", // IE 지원
+              WebkitTouchCallout: "none", // iOS에서 컨텍스트 메뉴 방지
+              WebkitTapHighlightColor: "transparent", // 터치 하이라이트 제거
             }}>
             <Dialog>
               <Card 
@@ -483,7 +494,6 @@ export const ScrapCardViewer = ({
                   // 버튼 클릭이 아닌 카드 클릭일 때만 처리
                   if (!(e.target as HTMLElement).closest('button')) {
                     if (i !== adjustedCurrentIndex) {
-                      console.log(`Card clicked: index ${i}, currentIndex: ${adjustedCurrentIndex}`);
                       setCurrentIndex(i);
                       // 종목별 카드일 때는 DateSelector로, 그룹 카드일 때는 StockSelector로 전환
                       if (onViewChange) {
@@ -541,7 +551,7 @@ export const ScrapCardViewer = ({
 
                   <ScrollArea 
                     style={{ 
-                      touchAction: "pan-y",
+                      touchAction: "pan-y", // 세로 스크롤만 허용 (텍스트 영역)
                       height: cardDimensions.cardHeight - cardDimensions.imageHeight - 12,
                       minHeight: "250px",
                       maxHeight: Math.min(cardDimensions.cardHeight * 1.2, 1440)
@@ -554,7 +564,7 @@ export const ScrapCardViewer = ({
                         WebkitUserSelect: "none",
                         MozUserSelect: "none",
                         msUserSelect: "none",
-                        touchAction: "pan-y",
+                        touchAction: "pan-y", // 세로 스크롤만 허용
                         fontSize: cardDimensions.width < 480 ? "14px" : 
                                 cardDimensions.width < 768 ? "15px" : 
                                 cardDimensions.width <= 1024 ? "20px" : 
