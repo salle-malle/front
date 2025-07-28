@@ -38,7 +38,11 @@ export const SelectedDateDisplay = ({ date }: SelectedDateDisplayProps) => {
           {dateObj.toLocaleString("en-US", { month: "long" })}{" "}
           {dateObj.getDate()}
         </span>
-        <span className="text-gray-500">
+        <span className={`${
+          dateObj.toLocaleString("en-US", { weekday: "long" }) === "Sunday" ? "text-red-500" : 
+          dateObj.toLocaleString("en-US", { weekday: "long" }) === "Saturday" ? "text-blue-500" : 
+          "text-gray-500"
+        }`}>
           {dateObj.toLocaleString("en-US", { weekday: "long" })}
         </span>
       </div>

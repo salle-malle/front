@@ -75,7 +75,6 @@ export const ScrapGroupDialog = ({
         setGroups(response.data);
       }
     } catch (error) {
-      console.error("Failed to fetch groups:", error);
       toast.error("그룹 목록을 가져오는데 실패했습니다.");
     }
   };
@@ -97,7 +96,6 @@ export const ScrapGroupDialog = ({
         setGroupInclusionStatus(response.data);
       }
     } catch (error) {
-      console.error("Failed to fetch group inclusion status:", error);
       // 에러가 발생해도 그룹 목록은 표시하되, 포함 상태는 빈 배열로 설정
       setGroupInclusionStatus([]);
     }
@@ -107,16 +105,11 @@ export const ScrapGroupDialog = ({
   const addToGroup = async (groupId: number) => {
     setIsLoading(true);
     try {
-      console.log("=== Add to Group Debug ===");
-      console.log("Adding to groupId:", groupId);
-      console.log("snapshotId:", snapshotId);
-      console.log("scrapId:", scrapId);
       
       // 이미 스크랩 ID가 있으면 그것을 사용, 없으면 새로 생성
       let finalScrapId = scrapId;
       
       if (!finalScrapId) {
-        console.log("No scrapId provided, creating new scrap...");
         const scrapResponse = await fetchWithAuthCheck(
           `${process.env.NEXT_PUBLIC_BACK_API_URL}/scrap`,
           {
@@ -128,14 +121,11 @@ export const ScrapGroupDialog = ({
           router
         );
 
-        console.log("Scrap creation response:", scrapResponse);
-
         if (!scrapResponse.status) {
           throw new Error("스크랩 생성에 실패했습니다.");
         }
 
         finalScrapId = scrapResponse.data?.id || scrapResponse.data?.scrapId;
-        console.log("Created scrap ID:", finalScrapId);
       }
       
       const response = await fetchWithAuthCheck(
@@ -152,19 +142,14 @@ export const ScrapGroupDialog = ({
         router
       );
 
-      console.log("Group add API response:", response);
-
       if (response.status) {
-        console.log("Group add successful");
         toast.success("그룹에 추가되었습니다.");
         onScrapSuccess();
         onClose();
       } else {
-        console.error("Group add failed:", response.message);
         toast.error(response.message || "그룹 추가에 실패했습니다.");
       }
     } catch (error) {
-      console.error("Failed to add to group:", error);
       toast.error("그룹 추가 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
@@ -198,7 +183,7 @@ export const ScrapGroupDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogTitle className="text-lg font-semibold">
           그룹에 추가하기
         </DialogTitle>
