@@ -13,7 +13,6 @@ export default function useNotification(enabled: boolean) {
     );
 
     eventSource.onmessage = function (event) {
-      console.log("받은 데이터:", event.data);
 
       // 커스텀 toast 호출
       toast({
@@ -34,11 +33,9 @@ export default function useNotification(enabled: boolean) {
     };
 
     eventSource.onerror = function (err) {
-      console.error("[SSE 에러 발생] 자동 재연결 시도..", err);
     };
 
     return () => {
-      console.log("SSE 연결 해제");
       eventSource.close();
     };
   }, [enabled]);
