@@ -50,7 +50,6 @@ export function TopNavigation({
         }
 
         const data = await res.json();
-        console.log("알림 읽음 여부 응답:", data);
 
         setHasUnread(data?.data?.hasUnread ?? false);
       } catch (error) {
