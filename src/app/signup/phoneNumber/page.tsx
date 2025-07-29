@@ -190,7 +190,7 @@ export default function PhoneNumberPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TopNavigation showBackButton />
+      <TopNavigation showBackButton showRightIcons={false}/>
 
       <div className="flex flex-col justify-between flex-1 px-12 py-8">
         <div>

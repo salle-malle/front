@@ -26,12 +26,12 @@ export default function InfoTabs({
 
   const dataList = tab === "공시" ? disclosureData : earningCallData;
 
+  // earningcall은 상세 라우팅/클릭 없음
   const getDetailUrl = (item: InfoItem) => {
     if (tab === "공시") {
       return `/disclosure/${item.id}`;
-    } else {
-      return `/earningcall/${item.id}`;
     }
+    return "#";
   };
 
   return (
@@ -65,9 +65,20 @@ export default function InfoTabs({
               {dataList.map((item) => (
                 <div
                   key={item.id}
-                  className="cursor-pointer hover:bg-gray-100 transition rounded-lg px-4 py-2"
-                  onClick={() => router.push(getDetailUrl(item))}
-                  style={{ userSelect: "none" }}
+                  className={
+                    tab === "공시"
+                      ? "cursor-pointer hover:bg-gray-100 transition rounded-lg px-4 py-2"
+                      : "transition rounded-lg px-4 py-2"
+                  }
+                  onClick={
+                    tab === "공시"
+                      ? () => router.push(getDetailUrl(item))
+                      : undefined
+                  }
+                  style={{
+                    userSelect: "none",
+                    ...(tab === "어닝콜" ? { cursor: "default" } : {}),
+                  }}
                 >
                   <div className="flex flex-row items-center w-full">
                     <span
