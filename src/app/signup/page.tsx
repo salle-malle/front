@@ -21,7 +21,7 @@ export default function SignupLandingPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <TopNavigation showBackButton={true} />
+      <TopNavigation showBackButton={true} showRightIcons={false}/>
 
       <div className="flex flex-col justify-between flex-1 px-12 py-8">
         <div>

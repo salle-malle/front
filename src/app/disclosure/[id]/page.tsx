@@ -91,7 +91,7 @@ export default function DisclosureDetail() {
     return (
       <div className="flex flex-col min-h-screen bg-gray-100">
         <div className="fixed top-0 left-0 w-full z-30">
-          <TopNavigation showBackButton={true} title="공시정보" />
+          <TopNavigation showBackButton={true} title="" />
         </div>
         <div className="flex-1 flex items-center justify-center pt-[56px]">
           <span className="text-gray-400">공시 정보를 불러올 수 없습니다.</span>
@@ -105,7 +105,7 @@ export default function DisclosureDetail() {
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* TopNavigation을 고정 */}
       <div className="fixed top-0 left-0 w-full z-30">
-        <TopNavigation showBackButton={true} title="공시정보" />
+        <TopNavigation showBackButton={true} title="" />
       </div>
       <div
         className="flex-1 flex flex-col items-center max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto w-full px-2 mt-10 mb-5 overflow-y-auto pt-[56px]"
