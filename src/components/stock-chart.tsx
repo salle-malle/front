@@ -333,7 +333,6 @@ export function StockChart({ stockCode }: StockChartProps) {
         // 크로스헤어 라벨 업데이트 (가능한 경우)
         if (param.seriesData && param.seriesData.size > 0) {
           // 시리즈 데이터가 있을 때만 라벨 업데이트
-          console.log("크로스헤어 날짜:", formattedDate);
         }
       }
     });

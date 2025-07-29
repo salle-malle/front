@@ -39,7 +39,6 @@ export default function LoginPage() {
       setMember({
         userIsLogin: userStatus,
       });
-      console.log("로그인 성공", userStatus);
       router.replace("/home");
     } catch (error) {
       console.error("로그인 요청 중 에러 발생:", error);

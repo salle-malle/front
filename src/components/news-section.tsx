@@ -124,8 +124,6 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
 
           const apiData: NewsApiResponse = await response.json();
 
-          console.log("뉴스 API 응답:", apiData);
-
           if (
             apiData.status === false ||
             (apiData.code !== "SUCCESS" && apiData.code !== "SUCCESS-001")
@@ -134,8 +132,6 @@ export function NewsSection({ stockCode, companyName }: NewsSectionProps) {
               apiData.message || "뉴스 데이터 조회에 실패했습니다."
             );
           }
-
-          console.log("뉴스 데이터:", apiData.data);
           return apiData.data;
         });
 
