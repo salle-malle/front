@@ -6,7 +6,7 @@ export default function useNotification(enabled: boolean) {
     if (!enabled) return;
 
     const eventSource = new EventSource(
-      "http://localhost:8080/api/v1/notifications/stream",
+      `${process.env.NEXT_PUBLIC_BACK_API_URL}/notifications/stream`,
       {
         withCredentials: true,
       }
